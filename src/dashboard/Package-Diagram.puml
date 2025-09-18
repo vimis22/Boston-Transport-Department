@@ -1,0 +1,113 @@
+@startuml Package_Diagram
+allowmixing
+
+skinparam packageStyle rectangle
+skinparam backgroundColor #FFFFFF
+
+skinparam package {
+  BackgroundColor<<Frontend>> #E3F2FD
+  BackgroundColor<<Backend>> #E8F5E9
+  BackgroundColor<<Config>> #F3E5F5
+  BackgroundColor<<External>> #ECEFF1
+  BorderColor #424242
+  FontSize 12
+  FontStyle bold
+}
+
+package "Dashboard Application" {
+
+  package "public/" <<Frontend>> {
+    package "api/" {
+    }
+
+    package "components/" {
+      package "props/" {
+      }
+      package "screens/" {
+        package "parentscreens/" {
+        }
+        package "childscreens/" {
+        }
+      }
+      package "styling/" {
+      }
+    }
+
+    package "references/" {
+    }
+  }
+
+  package "src/" <<Backend>> {
+    package "routes/" {
+    }
+
+    package "services/" {
+    }
+  }
+
+  package "configuration/" <<Config>> {
+  }
+}
+
+package "External Dependencies" <<External>> {
+  package "React Ecosystem" {
+  }
+
+  package "Backend Runtime" {
+  }
+}
+
+package "External Services" <<External>> {
+  database "Timemanager API" as TMAPI
+  database "Hive API" as HiveAPI
+  database "Kafka Cluster" as KafkaCluster
+}
+
+' Frontend relationships
+"public/" --> "api/"
+"public/" --> "components/"
+"public/" --> "references/"
+
+"components/" --> "props/"
+"components/" --> "screens/"
+"components/" --> "styling/"
+
+"screens/" --> "parentscreens/"
+"screens/" --> "childscreens/"
+
+"parentscreens/" ..> "childscreens/" : uses
+
+"childscreens/" ..> "api/" : calls
+
+"api/" ..> "src/" : HTTP/REST
+
+' Backend relationships
+"src/" --> "routes/"
+"src/" --> "services/"
+
+"routes/" --> "services/"
+
+' External dependencies
+"public/" ..> "React Ecosystem" : uses
+"src/" ..> "Backend Runtime" : uses
+
+' External services
+"services/" ..> TMAPI : HTTP
+"services/" ..> HiveAPI : HTTP
+"services/" ..> KafkaCluster : Protocol
+
+note right of "public/"
+  Frontend Layer:
+  - React components
+  - API client
+  - UI styling
+end note
+
+note right of "src/"
+  Backend Layer:
+  - Elysia server
+  - API routes
+  - Business logic
+end note
+
+@enduml

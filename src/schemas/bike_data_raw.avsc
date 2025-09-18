@@ -1,0 +1,21 @@
+{
+  "type": "record",
+  "name": "BikeDataRaw",
+  "namespace": "bike",
+  "fields": [
+    { "name": "tripduration", "type": "double" },
+    { "name": "starttime", "type": "string" },
+    { "name": "stoptime", "type": "string" },
+    { "name": "start_station_id", "type": "string" },
+    { "name": "start_station_name", "type": "string" },
+    { "name": "start_station_latitude", "type": "double" },
+    { "name": "start_station_longitude", "type": "double" },
+    { "name": "end_station_id", "type": "string" },
+    { "name": "end_station_name", "type": "string" },
+    { "name": "end_station_latitude", "type": "double" },
+    { "name": "end_station_longitude", "type": "double" },
+    { "name": "usertype", "type": "string" },
+    { "name": "birth_year", "type": "int" },
+    { "name": "gender", "type": "int" }
+  ]
+}
