@@ -12,4 +12,4 @@ Please note, that this project is also a part of our Scientific Methods Course (
 
 <h2>How is our Architecture Structured?</h2>
 <p>The following image shows how we have structured our image.</p>
-<img src="BD_Architecture.png">
+<img src="src/assets/BD_Architecture.png">

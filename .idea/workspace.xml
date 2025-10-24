@@ -55,7 +55,7 @@
     "git-widget-placeholder": "startup__branch",
     "junie.onboarding.icon.badge.shown": "true",
     "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "D:/Projects/School_Projects/Boston-Transport-Department/accident",
+    "last_opened_file_path": "D:/Projects/School_Projects/Boston-Transport-Department",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -71,6 +71,7 @@
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\Projects\School_Projects\Boston-Transport-Department" />
       <recent name="D:\Projects\School_Projects\Boston-Transport-Department\accident" />
       <recent name="D:\Projects\School_Projects\Boston-Transport-Department\weather" />
       <recent name="D:\Projects\School_Projects\Boston-Transport-Department\taxi" />
@@ -98,7 +99,7 @@
       <workItem from="1761240953471" duration="1103000" />
       <workItem from="1761253630750" duration="1238000" />
       <workItem from="1761259473398" duration="1932000" />
-      <workItem from="1761296347253" duration="4444000" />
+      <workItem from="1761296347253" duration="4878000" />
     </task>
     <task id="LOCAL-00001" summary="Recently worked with Directory Setup">
       <option name="closed" value="true" />
