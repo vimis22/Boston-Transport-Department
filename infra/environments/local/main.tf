@@ -79,3 +79,8 @@ output "spark_master_ui_url" {
   description = "The Spark Master UI URL"
   value       = module.spark.spark_master_ui_url
 }
+
+output "jupyter_url" {
+  description = "The Jupyter URL"
+  value       = module.jupyter.jupyter_url
+}
