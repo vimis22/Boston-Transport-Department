@@ -33,3 +33,36 @@ yarn-error.log*
 # Lockfiles (keep only one, ignore others if not in use)
 yarn.lock
 pnpm-lock.yaml
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+.venv/
+uv.lock  # Optional: uncomment if not committing locks
+.venv/
+
+# Kubernetes
+k8s/*.log
+k8s/generated/
+
+# IDE
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+*.tmp
+
+# Terraform
+.terraform/
+.terraform.lock.hcl
+terraform.tfstate
+terraform.tfstate.backup
