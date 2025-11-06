@@ -1,0 +1,11 @@
+tripduration,starttime,stoptime,start station id,start station name,start station latitude,start station longitude,end station id,end station name,end station latitude,end station longitude,bikeid,usertype,birth year,gender
+600,2018-01-01 08:00:00,2018-01-01 08:10:00,22,Boylston St at Arlington St,42.35302,-71.07069,141,Washington St at Rutland St,42.342596,-71.081011,1234,Subscriber,1985,1
+720,2018-01-01 08:05:00,2018-01-01 08:17:00,67,South Station - 700 Atlantic Ave,42.352271,-71.05524,141,Washington St at Rutland St,42.342596,-71.081011,2345,Subscriber,1990,2
+900,2018-01-01 08:15:00,2018-01-01 08:30:00,141,Washington St at Rutland St,42.342596,-71.081011,22,Boylston St at Arlington St,42.35302,-71.07069,3456,Customer,,0
+540,2018-01-01 08:30:00,2018-01-01 08:39:00,22,Boylston St at Arlington St,42.35302,-71.07069,67,South Station - 700 Atlantic Ave,42.352271,-71.05524,1234,Subscriber,1987,1
+1200,2018-01-01 09:00:00,2018-01-01 09:20:00,67,South Station - 700 Atlantic Ave,42.352271,-71.05524,22,Boylston St at Arlington St,42.35302,-71.07069,4567,Subscriber,1992,2
+800,2018-01-01 09:15:00,2018-01-01 09:28:20,141,Washington St at Rutland St,42.342596,-71.081011,67,South Station - 700 Atlantic Ave,42.352271,-71.05524,2345,Customer,,1
+650,2018-01-01 09:30:00,2018-01-01 09:40:50,22,Boylston St at Arlington St,42.35302,-71.07069,141,Washington St at Rutland St,42.342596,-71.081011,3456,Subscriber,1988,2
+1100,2018-01-01 10:00:00,2018-01-01 10:18:20,67,South Station - 700 Atlantic Ave,42.352271,-71.05524,141,Washington St at Rutland St,42.342596,-71.081011,1234,Subscriber,1985,1
+750,2018-01-01 10:30:00,2018-01-01 10:42:30,141,Washington St at Rutland St,42.342596,-71.081011,22,Boylston St at Arlington St,42.35302,-71.07069,5678,Customer,,0
+920,2018-01-01 11:00:00,2018-01-01 11:15:20,22,Boylston St at Arlington St,42.35302,-71.07069,67,South Station - 700 Atlantic Ave,42.352271,-71.05524,2345,Subscriber,1990,2
