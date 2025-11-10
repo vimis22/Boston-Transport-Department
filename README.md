@@ -30,3 +30,12 @@ To forward the relevant ports to your local machine, use the `tools/forward-all.
 - Start by running `uv sync` to install all the dependencies.
 - Then execute `uv run tools/forward-all.py`
 
+
+## Connect VSCode to jupyter kernel
+1. Open a notebook and click on the kernel icon in the top right corner.
+2. Click "Select another kernel..."
+3. Click "Existing Jupyter server"
+4. Enter the URL `http://localhost:8080/`
+5. Type the token `adminadmin`
+6. Click "Select Kernel"
+Now you can run the notebook and it will connect to the jupyter kernel.

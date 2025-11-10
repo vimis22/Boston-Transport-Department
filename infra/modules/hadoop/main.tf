@@ -20,6 +20,7 @@ locals {
   zookeeper_znode_name   = "zookeeper-znode"
   hdfs_cluster_name      = "hdfs-cluster"
   hive_cluster_name      = "hive-cluster"
+  kafka_cluster_name     = "kafka-cluster"
 }
 
 
@@ -148,8 +149,6 @@ resource "helm_release" "hive-postgresql" {
   ]
 }
 
-
-
 // ZOOKEEPER
 resource "kubectl_manifest" "zookeeper-cluster" {
   yaml_body = <<YAML
@@ -250,7 +249,7 @@ http {
 
       proxy_set_header Host hdfs-cluster-namenode-default.${var.namespace}.svc.cluster.local;
 
-      proxy_redirect http://hdfs-cluster-namenode-default.bigdata.svc.cluster.local/ $scheme://$host:9870/;
+      proxy_redirect http://hdfs-cluster-namenode-default.${var.namespace}.svc.cluster.local/ $scheme://$host:9870/;
 
       proxy_set_header X-Real-IP $remote_addr;
       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -456,6 +455,7 @@ resource "kubectl_manifest" "spark_connect_server" {
             "spark.executor.memoryOverhead"   = "0m"
             "spark.sql.warehouse.dir"         = "/user/hive/warehouse"
             "spark.sql.catalogImplementation" = "hive"
+            "spark.jars.packages" = "org.apache.spark:spark-sql-kafka-0-10_2.13:4.0.1,org.apache.spark:spark-streaming-kafka-0-10_2.13:4.0.1"
           }
         }
         config = {
@@ -532,22 +532,6 @@ resource "kubernetes_deployment" "jupyterlab" {
             name           = "http"
             container_port = 8080
           }
-
-          volume_mount {
-            name       = "notebook"
-            mount_path = "/notebook"
-          }
-        }
-
-        init_container {
-          name  = "download-notebook"
-          image = "oci.stackable.tech/stackable/spark-connect-client:4.0.1-stackable0.0.0-dev"
-
-          command = ["bash"]
-          args = [
-            "-c",
-            "curl https://raw.githubusercontent.com/stackabletech/demos/main/stacks/jupyterhub-pyspark-hdfs/notebook.ipynb -o /notebook/notebook.ipynb"
-          ]
 
           volume_mount {
             name       = "notebook"
@@ -640,3 +624,189 @@ spec:
         replicas: 1
 YAML
 }
+
+// KAFKA
+resource "kubernetes_deployment" "kafka" {
+  metadata {
+    name      = "broker"
+    namespace = var.namespace
+    labels = {
+      app = "kafka"
+    }
+  }
+
+  spec {
+    replicas = 1
+    selector {
+      match_labels = {
+        app = "kafka"
+      }
+    }
+
+    template {
+      metadata {
+        labels = {
+          app = "kafka"
+        }
+      }
+
+      spec {
+        hostname = "broker"
+        container {
+          name  = "broker"
+          image = "apache/kafka:latest"
+          
+          # External client port (for port-forwarding)
+          port {
+            name           = "kafka-port"
+            container_port = 9092
+          }
+          
+          # Controller port (KRaft)
+          port {
+            name           = "controller-port"
+            container_port = 29093
+          }
+          
+          # Internal broker communication port
+          port {
+            name           = "internal-port"
+            container_port = 29092
+          }
+
+          env {
+            name  = "KAFKA_BROKER_ID"
+            value = "1"
+          }
+
+          env {
+            name  = "KAFKA_LISTENER_SECURITY_PROTOCOL_MAP"
+            value = "PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT"
+          }
+
+          env {
+            name  = "KAFKA_ADVERTISED_LISTENERS"
+            value = "PLAINTEXT://broker:29092,PLAINTEXT_HOST://kafka-broker.${var.namespace}.svc.cluster.local:9092"
+          }
+
+          env {
+            name  = "KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR"
+            value = "1"
+          }
+
+          env {
+            name  = "KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS"
+            value = "0"
+          }
+
+          env {
+            name  = "KAFKA_TRANSACTION_STATE_LOG_MIN_ISR"
+            value = "1"
+          }
+
+          env {
+            name  = "KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR"
+            value = "1"
+          }
+
+          env {
+            name  = "KAFKA_PROCESS_ROLES"
+            value = "broker,controller"
+          }
+
+          env {
+            name  = "KAFKA_NODE_ID"
+            value = "1"
+          }
+
+          env {
+            name  = "KAFKA_CONTROLLER_QUORUM_VOTERS"
+            value = "1@broker:29093"
+          }
+
+          env {
+            name  = "KAFKA_LISTENERS"
+            value = "PLAINTEXT://broker:29092,CONTROLLER://broker:29093,PLAINTEXT_HOST://0.0.0.0:9092"
+          }
+
+          env {
+            name  = "KAFKA_INTER_BROKER_LISTENER_NAME"
+            value = "PLAINTEXT"
+          }
+
+          env {
+            name  = "KAFKA_CONTROLLER_LISTENER_NAMES"
+            value = "CONTROLLER"
+          }
+
+          env {
+            name  = "KAFKA_LOG_DIRS"
+            value = "/tmp/kraft-combined-logs"
+          }
+
+          env {
+            name  = "CLUSTER_ID"
+            value = "MkU3OEVBNTcwNTJENDM2Qk"
+          }
+        }
+      }
+    }
+  }
+}
+
+# Service to expose Kafka broker within the cluster
+# Other resources (Hive, Spark, etc.) connect to this using: broker:29092
+# For external access, developers use port-forward to localhost:9092
+resource "kubernetes_service" "kafka" {
+  metadata {
+    name      = "kafka-broker"
+    namespace = var.namespace
+    labels = {
+      app = "kafka"
+    }
+  }
+
+  spec {
+    selector = {
+      app = "kafka"
+    }
+
+    # Internal cluster communication (other pods use this)
+    port {
+      name        = "internal"
+      port        = 29092
+      target_port = "internal-port"
+      protocol    = "TCP"
+    }
+
+    # External port-forward access (developer tools use this)
+    port {
+      name        = "external"
+      port        = 9092
+      target_port = "kafka-port"
+      protocol    = "TCP"
+    }
+
+    # Controller port for KRaft coordination
+    port {
+      name        = "controller"
+      port        = 29093
+      target_port = "controller-port"
+      protocol    = "TCP"
+    }
+
+    # ClusterIP service - internal only, no external load balancer
+    type = "ClusterIP"
+  }
+}
+
+# Helper instructions for creating Kafka topics:
+# The apache/kafka image has scripts in /opt/kafka/bin/
+# To create a topic from within the cluster, use:
+# kubectl exec -n ${var.namespace} -it deployment/broker -- /opt/kafka/bin/kafka-topics.sh --create --topic <topic-name> --bootstrap-server broker:29092 --partitions 1 --replication-factor 1
+#
+# To list topics:
+# kubectl exec -n ${var.namespace} -it deployment/broker -- /opt/kafka/bin/kafka-topics.sh --list --bootstrap-server broker:29092
+#
+# Example: Create the "sparktest" topic:
+# kubectl exec -n ${var.namespace} -it deployment/broker -- /opt/kafka/bin/kafka-topics.sh --create --topic sparktest --bootstrap-server broker:29092 --partitions 1 --replication-factor 1

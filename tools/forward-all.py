@@ -10,7 +10,7 @@ def run_port_forward(namespace: str, service: str, local_port: int, remote_port:
     """Run a kubectl port-forward command and return the process."""
     cmd = [
         "kubectl", "port-forward",
-        f"-n", namespace,
+        "-n", namespace,
         f"svc/{service}",
         f"{local_port}:{remote_port}"
     ]
@@ -38,6 +38,7 @@ def main():
         ("spark-ui", "spark-connect-server", 4040, 4040),
         ("jupyter", "jupyterlab", 8080, 8080),
         ("hive-metastore", "hive-cluster-metastore", 9083, 9083),
+        ("kafka", "kafka-broker", 9092, 9092),
     ]
     
     processes = []
