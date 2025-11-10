@@ -39,6 +39,7 @@ def main():
         ("jupyter", "jupyterlab", 8080, 8080),
         ("hive-metastore", "hive-cluster-metastore", 9083, 9083),
         ("kafka", "kafka-broker", 9092, 9092),
+        ("kafka-ui", "kafka-ui", 8081, 8080),
     ]
     
     processes = []
