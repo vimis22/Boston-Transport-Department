@@ -10,7 +10,7 @@ def run_port_forward(namespace: str, service: str, local_port: int, remote_port:
     """Run a kubectl port-forward command and return the process."""
     cmd = [
         "kubectl", "port-forward",
-        f"-n", namespace,
+        "-n", namespace,
         f"svc/{service}",
         f"{local_port}:{remote_port}"
     ]
@@ -26,33 +26,19 @@ def print_forwarding_info(forwardings: List[Tuple[str, str, int, int]]):
     for service, _, local, remote in forwardings:
         print(f"{service:<20} {local:<12} {remote:<12} {'RUNNING' if True else 'ERROR'}")
     print("="*60)
-    print("\nAvailable services:\n")
-    print("HDFS:")
-    print(f"  - HDFS Server: localhost:9000")
-    print(f"  - HDFS UI: http://localhost:9870")
-    print("\nHive:")
-    print(f"  - Hive Server: localhost:10000")
-    print(f"  - Hive UI: http://localhost:10002")
-    print("\nSpark:")
-    print(f"  - Spark Master: localhost:7077")
-    print(f"  - Spark UI: http://localhost:8080")
-    print("\nJupyter:")
-    print(f"  - Jupyter: http://localhost:8888")
     print("\nPress Ctrl+C to stop all forwarding.")
-    print("="*60)
 
 def main():
     namespace = "bigdata"
     
     # Define all port forwardings
     forwardings = [
-        ("namenode-hdfs", "namenode", 9000, 9000),
-        ("namenode-ui", "namenode", 9870, 9870),
-        ("hive-server", "hive-server-service", 10000, 10000),
-        ("hive-ui", "hive-server-service", 10002, 10002),
-        ("spark-master", "spark-primary", 7077, 7077),
-        ("spark-ui", "spark-primary", 8080, 8080),
-        ("jupyter", "jupyter", 8888, 8888),
+        ("hdfs-ui", "hdfs-proxy-service", 9870, 80),
+        ("spark-connect", "spark-connect-server", 15002, 15002),
+        ("spark-ui", "spark-connect-server", 4040, 4040),
+        ("jupyter", "jupyterlab", 8080, 8080),
+        ("hive-metastore", "hive-cluster-metastore", 9083, 9083),
+        ("kafka", "kafka-broker", 9092, 9092),
     ]
     
     processes = []
