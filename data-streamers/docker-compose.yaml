@@ -1,0 +1,95 @@
+# Example: Docker Compose file to set up Kafka, Zookeeper, and multiple dataset streamers
+services:
+  # Kafka Broker using Redpanda
+  redpanda:
+    image: redpandadata/console:latest 
+    container_name: redpanda
+    restart: unless-stopped
+    ports:
+      - "8094:8080"
+    environment:
+      KAFKA_BROKERS: "kafka:9092"        
+      KAFKA_TLS_ENABLED: "false"
+      KAFKA_SASL_ENABLED: "false"
+    depends_on:
+      - kafka
+
+  kafka:
+    image: apache/kafka:3.8.0
+    container_name: kafka
+    restart: unless-stopped
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: controller,broker
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+    ports:
+      - "9092:9092"
+    volumes:
+      - ./kafka-data:/var/lib/kafka/data
+
+# Dataset Streamers (Kafka-only)
+  streamer1:
+    container_name: streamer-accidents
+    image: dataset-streamer
+    environment:
+      DATA_FILE: data/accident/tmpw8i0zd4_.csv
+      KAFKA_TOPIC: accidents
+      KAFKA_BROKER: kafka:9092
+      STREAM_DELAY: 1
+    depends_on:
+      - kafka
+      - redpanda
+    volumes:
+      - ./data:/app/data
+
+  streamer2:
+    container_name: streamer-biketrips
+    image: dataset-streamer
+    environment:
+      DATA_FILE: data/bikedata/201501-hubway-tripdata.csv
+      KAFKA_TOPIC: biketrips
+      KAFKA_BROKER: kafka:9092
+      STREAM_DELAY: 1
+    depends_on:
+      - kafka
+      - redpanda
+    volumes:
+      - ./data:/app/data
+
+  streamer3:
+    container_name: streamer-taxirides
+    image: dataset-streamer
+    environment:
+      DATA_FILE: data/taxi/rideshare_kaggle.csv
+      KAFKA_TOPIC: taxirides
+      KAFKA_BROKER: kafka:9092
+      STREAM_DELAY: 1
+    depends_on:
+      - kafka
+      - redpanda
+    volumes:
+      - ./data:/app/data
+
+  streamer4:
+    container_name: streamer-weather
+    image: dataset-streamer
+    environment:
+      DATA_FILE: data/weather/72509014739.csv
+      KAFKA_TOPIC: weather
+      KAFKA_BROKER: kafka:9092
+      STREAM_DELAY: 1
+    depends_on:
+      - kafka
+      - redpanda
+    volumes:
+      - ./data:/app/data
