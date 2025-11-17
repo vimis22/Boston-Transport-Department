@@ -166,6 +166,9 @@ resource "helm_release" "hive-postgresql" {
 
 // ZOOKEEPER
 resource "kubectl_manifest" "zookeeper-cluster" {
+  depends_on = [
+    helm_release.zookeeper-operator  # Wait for operator to install CRDs
+  ]
   yaml_body = <<YAML
 apiVersion: zookeeper.stackable.tech/v1alpha1
 kind: ZookeeperCluster
@@ -183,6 +186,10 @@ YAML
 }
 
 resource "kubectl_manifest" "zookeeper-znode" {
+  depends_on = [
+    helm_release.zookeeper-operator,
+    kubectl_manifest.zookeeper-cluster
+  ]
   yaml_body = <<YAML
 apiVersion: zookeeper.stackable.tech/v1alpha1
 kind: ZookeeperZnode
@@ -492,6 +499,7 @@ EOF
 
 resource "kubectl_manifest" "spark_connect_server" {
   depends_on = [
+    helm_release.spark-operator,  # Wait for operator to install CRDs
     kubernetes_config_map.spark_connect_log_config
   ]
 

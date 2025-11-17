@@ -1,0 +1,106 @@
+{
+  "type": "record",
+  "name": "BikeTrip",
+  "namespace": "com.boston.transport.bike",
+  "doc": "Schema for Blue Bikes (Hubway) trip data",
+  "fields": [
+    {
+      "name": "trip_id",
+      "type": "string",
+      "doc": "Unique identifier for the trip"
+    },
+    {
+      "name": "duration",
+      "type": "int",
+      "doc": "Trip duration in seconds"
+    },
+    {
+      "name": "start_time",
+      "type": "long",
+      "logicalType": "timestamp-millis",
+      "doc": "Trip start timestamp"
+    },
+    {
+      "name": "end_time",
+      "type": "long",
+      "logicalType": "timestamp-millis",
+      "doc": "Trip end timestamp"
+    },
+    {
+      "name": "start_station_id",
+      "type": "int",
+      "doc": "Starting station ID"
+    },
+    {
+      "name": "start_station_name",
+      "type": "string",
+      "doc": "Starting station name"
+    },
+    {
+      "name": "start_station_latitude",
+      "type": "double",
+      "doc": "Starting station latitude"
+    },
+    {
+      "name": "start_station_longitude",
+      "type": "double",
+      "doc": "Starting station longitude"
+    },
+    {
+      "name": "end_station_id",
+      "type": "int",
+      "doc": "Ending station ID"
+    },
+    {
+      "name": "end_station_name",
+      "type": "string",
+      "doc": "Ending station name"
+    },
+    {
+      "name": "end_station_latitude",
+      "type": "double",
+      "doc": "Ending station latitude"
+    },
+    {
+      "name": "end_station_longitude",
+      "type": "double",
+      "doc": "Ending station longitude"
+    },
+    {
+      "name": "bike_id",
+      "type": "string",
+      "doc": "Bike identifier"
+    },
+    {
+      "name": "user_type",
+      "type": {
+        "type": "enum",
+        "name": "UserType",
+        "symbols": ["Registered", "Casual"]
+      },
+      "doc": "Type of user - registered subscriber or casual user"
+    },
+    {
+      "name": "birth_year",
+      "type": ["null", "int"],
+      "default": null,
+      "doc": "Birth year of user (optional, only for registered users)"
+    },
+    {
+      "name": "gender",
+      "type": ["null", {
+        "type": "enum",
+        "name": "Gender",
+        "symbols": ["Male", "Female", "Unknown"]
+      }],
+      "default": null,
+      "doc": "Gender of user (optional, only for registered users)"
+    },
+    {
+      "name": "zip_code",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "ZIP code (optional, only for registered users)"
+    }
+  ]
+}
