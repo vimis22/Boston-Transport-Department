@@ -91,6 +91,21 @@ resource "helm_release" "spark-operator" {
   wait       = true
 }
 
+resource "helm_release" "confluent-operator" {
+  depends_on = [
+    helm_release.commons-operator,
+    helm_release.secret-operator,
+    helm_release.listener-operator,
+    helm_release.zookeeper-operator,
+  ]
+  name       = "confluent-operator"
+  repository = "https://packages.confluent.io/helm"
+  version    = "0.1351.24"
+  chart      = "confluent-for-kubernetes"
+  namespace  = var.namespace
+  wait       = true
+}
+
 resource "helm_release" "hive-operator" {
   depends_on = [
     helm_release.commons-operator,
@@ -342,6 +357,113 @@ resource "kubernetes_service" "hdfs_proxy_service" {
   }
 }
 
+# KAFKA
+resource "kubectl_manifest" "kafka-cluster" {
+  depends_on = [
+    kubectl_manifest.zookeeper-znode
+  ]
+  yaml_body = <<YAML
+apiVersion: platform.confluent.io/v1beta1
+kind: Kafka
+metadata:
+  name: kafka-broker
+  namespace: ${var.namespace}
+spec:
+  replicas: 3
+  image:
+    application: confluentinc/cp-server:7.9.0
+    init: confluentinc/confluent-init-container:3.1.0
+  dataVolumeCapacity: 5Gi
+  metricReporter:
+    enabled: true
+  dependencies:
+    zookeeper:
+      endpoint: zookeeper-cluster-server.${var.namespace}.svc.cluster.local:2282
+YAML
+}
+
+# KAFKA UI
+resource "kubernetes_deployment" "kafka_ui" {
+  metadata {
+    name      = "kafka-ui"
+    namespace = var.namespace
+    labels = {
+      app = "kafka-ui"
+    }
+  }
+
+  spec {
+    replicas = 1
+    selector {
+      match_labels = {
+        app = "kafka-ui"
+      }
+    }
+
+    template {
+      metadata {
+        labels = {
+          app = "kafka-ui"
+        }
+      }
+
+      spec {
+        container {
+          name  = "kafka-ui"
+          image = "provectuslabs/kafka-ui:latest"
+
+          port {
+            name           = "http"
+            container_port = 8080
+            protocol       = "TCP"
+          }
+
+          env {
+            name  = "KAFKA_CLUSTERS_0_NAME"
+            value = "kafka-broker"
+          }
+
+          env {
+            name  = "KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS"
+            value = "kafka-broker.${var.namespace}.svc.cluster.local:9092"
+          }
+
+          env {
+            name  = "DYNAMIC_CONFIG_ENABLED"
+            value = "true"
+          }
+        }
+      }
+    }
+  }
+}
+
+resource "kubernetes_service" "kafka_ui" {
+  metadata {
+    name      = "kafka-ui"
+    namespace = var.namespace
+    labels = {
+      app = "kafka-ui"
+    }
+  }
+
+  spec {
+    type = "ClusterIP"
+    selector = {
+      app = "kafka-ui"
+    }
+
+    port {
+      name        = "http"
+      port        = 8080
+      target_port = 8080
+      protocol    = "TCP"
+    }
+  }
+}
+
+
+
 # SPARK
 resource "kubernetes_config_map" "spark_connect_log_config" {
   metadata {
@@ -455,7 +577,7 @@ resource "kubectl_manifest" "spark_connect_server" {
             "spark.executor.memoryOverhead"   = "0m"
             "spark.sql.warehouse.dir"         = "/user/hive/warehouse"
             "spark.sql.catalogImplementation" = "hive"
-            "spark.jars.packages" = "org.apache.spark:spark-sql-kafka-0-10_2.13:4.0.1,org.apache.spark:spark-streaming-kafka-0-10_2.13:4.0.1"
+            "spark.jars.packages"             = "org.apache.spark:spark-sql-kafka-0-10_2.13:4.0.1,org.apache.spark:spark-streaming-kafka-0-10_2.13:4.0.1"
           }
         }
         config = {
@@ -626,179 +748,179 @@ YAML
 }
 
 // KAFKA
-resource "kubernetes_deployment" "kafka" {
-  metadata {
-    name      = "broker"
-    namespace = var.namespace
-    labels = {
-      app = "kafka"
-    }
-  }
+# resource "kubernetes_deployment" "kafka" {
+#   metadata {
+#     name      = "broker"
+#     namespace = var.namespace
+#     labels = {
+#       app = "kafka"
+#     }
+#   }
 
-  spec {
-    replicas = 1
-    selector {
-      match_labels = {
-        app = "kafka"
-      }
-    }
+#   spec {
+#     replicas = 1
+#     selector {
+#       match_labels = {
+#         app = "kafka"
+#       }
+#     }
 
-    template {
-      metadata {
-        labels = {
-          app = "kafka"
-        }
-      }
+#     template {
+#       metadata {
+#         labels = {
+#           app = "kafka"
+#         }
+#       }
 
-      spec {
-        hostname = "broker"
-        container {
-          name  = "broker"
-          image = "apache/kafka:latest"
-          
-          # External client port (for port-forwarding)
-          port {
-            name           = "kafka-port"
-            container_port = 9092
-          }
-          
-          # Controller port (KRaft)
-          port {
-            name           = "controller-port"
-            container_port = 29093
-          }
-          
-          # Internal broker communication port
-          port {
-            name           = "internal-port"
-            container_port = 29092
-          }
+#       spec {
+#         hostname = "broker"
+#         container {
+#           name  = "broker"
+#           image = "apache/kafka:latest"
 
-          env {
-            name  = "KAFKA_BROKER_ID"
-            value = "1"
-          }
+#           # External client port (for port-forwarding)
+#           port {
+#             name           = "kafka-port"
+#             container_port = 9092
+#           }
 
-          env {
-            name  = "KAFKA_LISTENER_SECURITY_PROTOCOL_MAP"
-            value = "PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT"
-          }
+#           # Controller port (KRaft)
+#           port {
+#             name           = "controller-port"
+#             container_port = 29093
+#           }
 
-          env {
-            name  = "KAFKA_ADVERTISED_LISTENERS"
-            value = "PLAINTEXT://broker:29092,PLAINTEXT_HOST://kafka-broker.${var.namespace}.svc.cluster.local:9092"
-          }
+#           # Internal broker communication port
+#           port {
+#             name           = "internal-port"
+#             container_port = 29092
+#           }
 
-          env {
-            name  = "KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR"
-            value = "1"
-          }
+#           env {
+#             name  = "KAFKA_BROKER_ID"
+#             value = "1"
+#           }
 
-          env {
-            name  = "KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS"
-            value = "0"
-          }
+#           env {
+#             name  = "KAFKA_LISTENER_SECURITY_PROTOCOL_MAP"
+#             value = "PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT"
+#           }
 
-          env {
-            name  = "KAFKA_TRANSACTION_STATE_LOG_MIN_ISR"
-            value = "1"
-          }
+#           env {
+#             name  = "KAFKA_ADVERTISED_LISTENERS"
+#             value = "PLAINTEXT://broker:29092,PLAINTEXT_HOST://kafka-broker.${var.namespace}.svc.cluster.local:9092"
+#           }
 
-          env {
-            name  = "KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR"
-            value = "1"
-          }
+#           env {
+#             name  = "KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR"
+#             value = "1"
+#           }
 
-          env {
-            name  = "KAFKA_PROCESS_ROLES"
-            value = "broker,controller"
-          }
+#           env {
+#             name  = "KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS"
+#             value = "0"
+#           }
 
-          env {
-            name  = "KAFKA_NODE_ID"
-            value = "1"
-          }
+#           env {
+#             name  = "KAFKA_TRANSACTION_STATE_LOG_MIN_ISR"
+#             value = "1"
+#           }
 
-          env {
-            name  = "KAFKA_CONTROLLER_QUORUM_VOTERS"
-            value = "1@broker:29093"
-          }
+#           env {
+#             name  = "KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR"
+#             value = "1"
+#           }
 
-          env {
-            name  = "KAFKA_LISTENERS"
-            value = "PLAINTEXT://broker:29092,CONTROLLER://broker:29093,PLAINTEXT_HOST://0.0.0.0:9092"
-          }
+#           env {
+#             name  = "KAFKA_PROCESS_ROLES"
+#             value = "broker,controller"
+#           }
 
-          env {
-            name  = "KAFKA_INTER_BROKER_LISTENER_NAME"
-            value = "PLAINTEXT"
-          }
+#           env {
+#             name  = "KAFKA_NODE_ID"
+#             value = "1"
+#           }
 
-          env {
-            name  = "KAFKA_CONTROLLER_LISTENER_NAMES"
-            value = "CONTROLLER"
-          }
+#           env {
+#             name  = "KAFKA_CONTROLLER_QUORUM_VOTERS"
+#             value = "1@broker:29093"
+#           }
 
-          env {
-            name  = "KAFKA_LOG_DIRS"
-            value = "/tmp/kraft-combined-logs"
-          }
+#           env {
+#             name  = "KAFKA_LISTENERS"
+#             value = "PLAINTEXT://broker:29092,CONTROLLER://broker:29093,PLAINTEXT_HOST://0.0.0.0:9092"
+#           }
 
-          env {
-            name  = "CLUSTER_ID"
-            value = "MkU3OEVBNTcwNTJENDM2Qk"
-          }
-        }
-      }
-    }
-  }
-}
+#           env {
+#             name  = "KAFKA_INTER_BROKER_LISTENER_NAME"
+#             value = "PLAINTEXT"
+#           }
+
+#           env {
+#             name  = "KAFKA_CONTROLLER_LISTENER_NAMES"
+#             value = "CONTROLLER"
+#           }
+
+#           env {
+#             name  = "KAFKA_LOG_DIRS"
+#             value = "/tmp/kraft-combined-logs"
+#           }
+
+#           env {
+#             name  = "CLUSTER_ID"
+#             value = "MkU3OEVBNTcwNTJENDM2Qk"
+#           }
+#         }
+#       }
+#     }
+#   }
+# }
 
 # Service to expose Kafka broker within the cluster
 # Other resources (Hive, Spark, etc.) connect to this using: broker:29092
 # For external access, developers use port-forward to localhost:9092
-resource "kubernetes_service" "kafka" {
-  metadata {
-    name      = "kafka-broker"
-    namespace = var.namespace
-    labels = {
-      app = "kafka"
-    }
-  }
+# resource "kubernetes_service" "kafka" {
+#   metadata {
+#     name      = "kafka-broker"
+#     namespace = var.namespace
+#     labels = {
+#       app = "kafka"
+#     }
+#   }
 
-  spec {
-    selector = {
-      app = "kafka"
-    }
+#   spec {
+#     selector = {
+#       app = "kafka"
+#     }
 
-    # Internal cluster communication (other pods use this)
-    port {
-      name        = "internal"
-      port        = 29092
-      target_port = "internal-port"
-      protocol    = "TCP"
-    }
+#     # Internal cluster communication (other pods use this)
+#     port {
+#       name        = "internal"
+#       port        = 29092
+#       target_port = "internal-port"
+#       protocol    = "TCP"
+#     }
 
-    # External port-forward access (developer tools use this)
-    port {
-      name        = "external"
-      port        = 9092
-      target_port = "kafka-port"
-      protocol    = "TCP"
-    }
+#     # External port-forward access (developer tools use this)
+#     port {
+#       name        = "external"
+#       port        = 9092
+#       target_port = "kafka-port"
+#       protocol    = "TCP"
+#     }
 
-    # Controller port for KRaft coordination
-    port {
-      name        = "controller"
-      port        = 29093
-      target_port = "controller-port"
-      protocol    = "TCP"
-    }
+#     # Controller port for KRaft coordination
+#     port {
+#       name        = "controller"
+#       port        = 29093
+#       target_port = "controller-port"
+#       protocol    = "TCP"
+#     }
 
-    # ClusterIP service - internal only, no external load balancer
-    type = "ClusterIP"
-  }
-}
+#     # ClusterIP service - internal only, no external load balancer
+#     type = "ClusterIP"
+#   }
+# }
 
 # Helper instructions for creating Kafka topics:
 # The apache/kafka image has scripts in /opt/kafka/bin/
