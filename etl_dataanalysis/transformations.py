@@ -143,11 +143,17 @@ def parse_taxi_stream(df: DataFrame) -> DataFrame:
 
 def parse_weather_stream(df: DataFrame) -> DataFrame:
     """
-    Parse weather streaming data from Kafka
+    Parse weather streaming data from Kafka (NCEI format)
 
     Kafka message format:
     {
-        "data": {<transformed_record>},
+        "data": {
+            "station": "...",
+            "datetime": "...",
+            "location": {...},
+            "station_info": {...},
+            "observations": {...}
+        },
         "timestamp": "ISO timestamp",
         "source": "weather-streamer"
     }
@@ -161,34 +167,24 @@ def parse_weather_stream(df: DataFrame) -> DataFrame:
     # Cast Kafka value to string
     string_df = df.selectExpr("CAST(value AS STRING) as json_str", "timestamp as kafka_timestamp")
 
-    # Extract nested fields from JSON
+    # Extract nested fields from JSON (NCEI format)
     result_df = string_df.select(
-        get_json_object(col("json_str"), "$.data.observation_id").alias("observation_id"),
+        get_json_object(col("json_str"), "$.data.station").alias("station"),
         get_json_object(col("json_str"), "$.data.datetime").alias("datetime"),
-        get_json_object(col("json_str"), "$.data.temperature.max_f").cast("double").alias("temp_max_f"),
-        get_json_object(col("json_str"), "$.data.temperature.min_f").cast("double").alias("temp_min_f"),
-        get_json_object(col("json_str"), "$.data.temperature.avg_f").cast("double").alias("temp_avg_f"),
-        get_json_object(col("json_str"), "$.data.temperature.feels_like_max_f").cast("double").alias("feels_like_max_f"),
-        get_json_object(col("json_str"), "$.data.temperature.feels_like_min_f").cast("double").alias("feels_like_min_f"),
-        get_json_object(col("json_str"), "$.data.temperature.feels_like_avg_f").cast("double").alias("feels_like_avg_f"),
-        get_json_object(col("json_str"), "$.data.temperature.dew_point_f").cast("double").alias("dew_point_f"),
-        get_json_object(col("json_str"), "$.data.precipitation.amount_inches").cast("double").alias("precip_amount_inches"),
-        get_json_object(col("json_str"), "$.data.precipitation.probability_pct").cast("double").alias("precip_prob_pct"),
-        get_json_object(col("json_str"), "$.data.precipitation.coverage_pct").cast("double").alias("precip_coverage_pct"),
-        get_json_object(col("json_str"), "$.data.precipitation.type").alias("precip_type"),
-        get_json_object(col("json_str"), "$.data.snow.amount_inches").cast("double").alias("snow_amount_inches"),
-        get_json_object(col("json_str"), "$.data.snow.depth_inches").cast("double").alias("snow_depth_inches"),
-        get_json_object(col("json_str"), "$.data.wind.speed_mph").cast("double").alias("wind_speed_mph"),
-        get_json_object(col("json_str"), "$.data.wind.gust_mph").cast("double").alias("wind_gust_mph"),
-        get_json_object(col("json_str"), "$.data.wind.direction_deg").cast("double").alias("wind_direction_deg"),
-        get_json_object(col("json_str"), "$.data.atmosphere.humidity_pct").cast("double").alias("humidity_pct"),
-        get_json_object(col("json_str"), "$.data.atmosphere.pressure_mb").cast("double").alias("pressure_mb"),
-        get_json_object(col("json_str"), "$.data.atmosphere.visibility_miles").cast("double").alias("visibility_miles"),
-        get_json_object(col("json_str"), "$.data.atmosphere.cloud_cover_pct").cast("double").alias("cloud_cover_pct"),
-        get_json_object(col("json_str"), "$.data.solar.radiation").cast("double").alias("solar_radiation"),
-        get_json_object(col("json_str"), "$.data.solar.energy").cast("double").alias("solar_energy"),
-        get_json_object(col("json_str"), "$.data.solar.uv_index").cast("double").alias("uv_index"),
-        get_json_object(col("json_str"), "$.data.conditions").alias("conditions"),
+        get_json_object(col("json_str"), "$.data.source").alias("data_source"),
+        get_json_object(col("json_str"), "$.data.location.latitude").cast("double").alias("latitude"),
+        get_json_object(col("json_str"), "$.data.location.longitude").cast("double").alias("longitude"),
+        get_json_object(col("json_str"), "$.data.location.elevation").cast("double").alias("elevation"),
+        get_json_object(col("json_str"), "$.data.station_info.name").alias("station_name"),
+        get_json_object(col("json_str"), "$.data.station_info.report_type").alias("report_type"),
+        get_json_object(col("json_str"), "$.data.station_info.call_sign").alias("call_sign"),
+        get_json_object(col("json_str"), "$.data.station_info.quality_control").alias("quality_control"),
+        get_json_object(col("json_str"), "$.data.observations.wind").alias("wind"),
+        get_json_object(col("json_str"), "$.data.observations.ceiling").alias("ceiling"),
+        get_json_object(col("json_str"), "$.data.observations.visibility").alias("visibility"),
+        get_json_object(col("json_str"), "$.data.observations.temperature").alias("temperature"),
+        get_json_object(col("json_str"), "$.data.observations.dew_point").alias("dew_point"),
+        get_json_object(col("json_str"), "$.data.observations.sea_level_pressure").alias("sea_level_pressure"),
         get_json_object(col("json_str"), "$.timestamp").alias("event_timestamp"),
         get_json_object(col("json_str"), "$.source").alias("source"),
         col("kafka_timestamp")
@@ -196,7 +192,7 @@ def parse_weather_stream(df: DataFrame) -> DataFrame:
 
     # Convert datetime to timestamp and extract date parts for partitioning
     final_df = result_df.withColumn(
-        "datetime_ts", to_timestamp(col("datetime"), "yyyy-MM-dd HH:mm:ss")
+        "datetime_ts", to_timestamp(col("datetime"), "yyyy-MM-dd'T'HH:mm:ss")
     ).withColumn(
         "year", year(col("datetime_ts"))
     ).withColumn(
