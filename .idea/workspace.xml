@@ -4,12 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7addc0cd-6864-4d5d-ac20-9361fb97fb93" name="Changes" comment="Recently worked with Directory Setup">
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/etl_dataanalysis/transformations.py" beforeDir="false" afterPath="$PROJECT_DIR$/etl_dataanalysis/transformations.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/streamers/weather_streamer.py" beforeDir="false" afterPath="$PROJECT_DIR$/streamers/weather_streamer.py" afterDir="false" />
-    </list>
+    <list default="true" id="7addc0cd-6864-4d5d-ac20-9361fb97fb93" name="Changes" comment="Recently worked with Directory Setup" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -242,7 +237,7 @@
       <workItem from="1763739994993" duration="52000" />
       <workItem from="1763983278775" duration="7283000" />
       <workItem from="1763990921408" duration="1242000" />
-      <workItem from="1763992628849" duration="727000" />
+      <workItem from="1763992628849" duration="1679000" />
     </task>
     <task id="LOCAL-00001" summary="Recently worked with Directory Setup">
       <option name="closed" value="true" />
