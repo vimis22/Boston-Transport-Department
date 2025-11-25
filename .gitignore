@@ -1,0 +1,8 @@
+# Binary artifacts (local only, do not commit)
+lib/postgresql-jdbc.jar
+tez/*.jar
+
+# Editors / OS
+.DS_Store
+Thumbs.db
+
