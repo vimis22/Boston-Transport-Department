@@ -18,6 +18,22 @@ from pyspark.sql.types import (
     IntegerType
 )
 
+#What initially is happening here is that we are trying to format the data from JSON-Format to a Column-Based Format.
+#In ths context, we parse the JSON String to Column-Based Format, via. the bike_data_schema.
+#This results, that we get the following structural change.
+
+# +----------------------------------------+
+# | value                                  |
+# +----------------------------------------+
+# | {"trip_id": "123", "duration": 600...} |
+# +----------------------------------------+
+
+# To this structural change:
+# +---------+------------------+-------------+
+# | trip_id | duration_seconds | start_time  |
+# +---------+------------------+-------------+
+# | 123     | 600              | 2018-01-... |
+# +---------+------------------+-------------+
 
 def parse_bike_stream(df: DataFrame) -> DataFrame:
     """

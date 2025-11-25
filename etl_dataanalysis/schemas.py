@@ -8,6 +8,10 @@ from pyspark.sql.types import (
     DoubleType,
 )
 
+#The purpose with this code is to show how the data looks when they arrive from Kafka.
+#In this context, we see that all the data values are wrapped in a JSON object.
+#This means, that all these data values will turn into an envelop for each dataset that is stream.
+#Example can be taken here, where bike_data_schema would have envelope: {"data": {...}, "timestamp": "ISO timestamp", "source": "bike-streamer""}
 bike_data_schema = StructType([
     StructField("tripduration", IntegerType(), True),
     StructField("starttime", StringType(), True),

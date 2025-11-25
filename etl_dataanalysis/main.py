@@ -1,6 +1,7 @@
 import logging
 from pyspark.sql import SparkSession
 
+#Here we begin all 3 streams.
 from . import config
 from .transformations import (
     parse_bike_stream,

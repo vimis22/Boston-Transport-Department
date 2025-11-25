@@ -1,6 +1,8 @@
 import os
 from pyspark import SparkConf
 
+#This is here where the ETL-Component is connected to Kafka.
+#The ETL-Analysis listens on 3 topics and in this context the 3 datasets are defined in the KAFKA_TOPIC.
 KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 KAFKA_TOPICS = {
     "bike": "bike-trips",
@@ -8,7 +10,10 @@ KAFKA_TOPICS = {
     "weather": "weather-data",
 }
 
+#This is where Spark Structured Streaming runs and saves the state here.
+#If the system crashes, then we are able to start again.
 SPARK_APP_NAME = "ETL Data Analysis"
+#The Processed Data is saved in the /data/processed folder.
 OUTPUT_BASE_PATH = os.getenv("OUTPUT_BASE_PATH", "/data/processed_simple")
 CHECKPOINT_BASE_PATH = os.getenv("CHECKPOINT_BASE_PATH", "/tmp/spark_checkpoints_simple")
 BATCH_INTERVAL = "10 seconds"
