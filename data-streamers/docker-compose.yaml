@@ -42,10 +42,11 @@ services:
     container_name: streamer-accidents
     image: dataset-streamer
     environment:
+      TIME_MANAGER_URL: http://time-manager:5000
       DATA_FILE: data/accident/tmpw8i0zd4_.csv
       KAFKA_TOPIC: accidents
       KAFKA_BROKER: kafka:9092
-      STREAM_DELAY: 1
+      UPDATE_DELAY: 1
     depends_on:
       - kafka
       - redpanda
@@ -56,10 +57,11 @@ services:
     container_name: streamer-biketrips
     image: dataset-streamer
     environment:
+      TIME_MANAGER_URL: http://time-manager:5000
       DATA_FILE: data/bikedata/201501-hubway-tripdata.csv
       KAFKA_TOPIC: biketrips
       KAFKA_BROKER: kafka:9092
-      STREAM_DELAY: 1
+      UPDATE_DELAY: 1
     depends_on:
       - kafka
       - redpanda
@@ -70,10 +72,11 @@ services:
     container_name: streamer-taxirides
     image: dataset-streamer
     environment:
+      TIME_MANAGER_URL: http://time-manager:5000
       DATA_FILE: data/taxi/rideshare_kaggle.csv
       KAFKA_TOPIC: taxirides
       KAFKA_BROKER: kafka:9092
-      STREAM_DELAY: 1
+      UPDATE_DELAY: 1
     depends_on:
       - kafka
       - redpanda
@@ -84,10 +87,11 @@ services:
     container_name: streamer-weather
     image: dataset-streamer
     environment:
+      TIME_MANAGER_URL: http://time-manager:5000
       DATA_FILE: data/weather/72509014739.csv
       KAFKA_TOPIC: weather
       KAFKA_BROKER: kafka:9092
-      STREAM_DELAY: 1
+      UPDATE_DELAY: 1
     depends_on:
       - kafka
       - redpanda
