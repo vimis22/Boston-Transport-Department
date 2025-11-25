@@ -1,30 +1,71 @@
 import os
 import time
-import csv
-import json
 import requests
-from kafka import KafkaProducer
-from kafka.errors import KafkaError
+import duckdb
+from confluent_kafka.avro import AvroProducer
+from confluent_kafka import avro
 
-# --- Configuration ---
-DATA_FILE = os.getenv("DATA_FILE", "data/accident/tmpw8i0zd4_.csv")
+# ==========================================================
+# CONFIGURATION
+# ==========================================================
+DATA_PATH = os.getenv("DATA_FILE", "data/*.csv.gz")
 UPDATE_DELAY = float(os.getenv("UPDATE_DELAY", 1))
 KAFKA_BROKER = os.getenv("KAFKA_BROKER", "kafka:9092")
 KAFKA_TOPIC = os.getenv("KAFKA_TOPIC", "default_topic")
-TIME_MANAGER_URL = os.getenv("TIME_MANAGER_URL", "http://localhost:5000")
+TIME_MANAGER_URL = os.getenv("TIME_MANAGER_URL", "http://time-manager:5000")
+SCHEMA_REGISTRY_URL = os.getenv("SCHEMA_REGISTRY_URL", "http://schema-registry:8081")
 
 # Defaults (will be overwritten by time-manager API)
 DELAY = 1
 TIME_VALUE = 0
 
 print(f"Starting dataset streamer...")
-print(f"Data file: {DATA_FILE}")
+print(f"Data path: {DATA_PATH}")
 print(f"Kafka broker: {KAFKA_BROKER}")
 print(f"Kafka topic: {KAFKA_TOPIC}")
+print(f"Schema Registry : {SCHEMA_REGISTRY_URL}")
 print(f"Update delay: {UPDATE_DELAY}s")
 print(f"Time manager URL: {TIME_MANAGER_URL}")
 
-# --- Function to fetch DELAY & TIME from the API ---
+# ==========================================================
+# AVRO SCHEMA DEFINITION
+# ==========================================================
+
+value_schema_str = """
+{
+  "namespace": "accidents.avro",
+  "type": "record",
+  "name": "AccidentRecord",
+  "fields": [
+    { "name": "timestamp", "type": "long" },
+    { "name": "lat",       "type": "double" },
+    { "name": "lon",       "type": "double" },
+    { "name": "severity",  "type": "int" },
+    { "name": "city",      "type": "string" }
+  ]
+}
+"""
+
+value_schema = avro.loads(value_schema_str)
+
+# ==========================================================
+# DUCKDB — LOAD COMPRESSED CSV DATA
+# ==========================================================
+duckdbConnection = duckdb.connect()
+
+print(f"Loading dataset with DuckDB from: {DATA_PATH}")
+
+# Register the compressed CSV files as a DuckDB view
+duckdbConnection.execute(f"""
+    CREATE OR REPLACE VIEW data AS 
+    SELECT * FROM read_csv('{DATA_PATH}', AUTO_DETECT=TRUE, SAMPLE_SIZE=20000000);
+""")
+
+print("[INFO] DuckDB view created over CSV files")
+
+# ==========================================================
+# TIME MANAGER STATUS FETCH
+# ==========================================================
 def update_clock_values():
     global DELAY, TIME_VALUE
 
@@ -40,46 +81,69 @@ def update_clock_values():
     except Exception as e:
         print(f"[WARN] Failed to fetch clock status: {e}")
 
-# --- Kafka Producer with retry ---
+# ==========================================================
+# KAFKA AVRO PRODUCER with retry (Schema Registry)
+# ==========================================================
 producer = None
 while producer is None:
     try:
-        producer = KafkaProducer(
-            bootstrap_servers=[KAFKA_BROKER],
-            value_serializer=lambda v: json.dumps(v).encode("utf-8")
+        producer = AvroProducer(
+            {
+                "bootstrap.servers": KAFKA_BROKER,
+                "schema.registry.url": SCHEMA_REGISTRY_URL,
+            },
+            default_value_schema=value_schema,
         )
-        print(f"[INFO] Connected to Kafka broker at {KAFKA_BROKER}")
-    except KafkaError as e:
-        print(f"[WARN] Kafka not ready yet: {e}. Retrying in 5 seconds...")
+        print("[INFO] Connected to Kafka and Schema Registry")
+    except Exception as e:
+        print(f"[WARN] Kafka/Schema registry unavailable: {e}. Retrying...")
         time.sleep(5)
 
-# --- Stream data to Kafka ---
-try:
-    with open(DATA_FILE, newline='', encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        row_count = 0
-        last_update = 0
+# ==========================================================
+# MAIN STREAMING LOOP
+# ==========================================================
+last_update = 0
+last_sent_timestamp = -1 
 
-        for row in reader:
+while True:
+    now = time.time()
 
-            # Update DELAY/TIME every UPDATE_DELAY seconds
-            now = time.time()
-            if now - last_update >= UPDATE_DELAY:
-                update_clock_values()
-                last_update = now
+    # Sync clock
+    if now - last_update >= UPDATE_DELAY:
+        update_clock_values()
+        last_update = now
 
-            # Send row to Kafka
-            json_msg = dict(row)
-            try:
-                producer.send(KAFKA_TOPIC, json_msg)
-                producer.flush()
-                row_count += 1
-                print(f"[KAFKA] Sent row {row_count} with DELAY={DELAY}: {json_msg}")
-            except KafkaError as e:
-                print(f"[ERROR] Failed to send message: {e}")
-            time.sleep(DELAY)
-    print(f"[INFO] Finished streaming {row_count} rows to Kafka topic '{KAFKA_TOPIC}'")
-except FileNotFoundError:
-    print(f"[ERROR] Data file not found: {DATA_FILE}")
-except Exception as e:
-    print(f"[ERROR] Unexpected error: {e}")
+    # Query next row AFTER the last data sent
+    query = f"""
+        SELECT *
+        FROM data
+        WHERE timestamp > {last_sent_timestamp}
+          AND timestamp >= {TIME_VALUE}
+        ORDER BY timestamp
+        LIMIT 1
+    """
+
+    rows = con.execute(query).fetchall()
+
+    if not rows:
+        print("[INFO] No new matching rows yet… waiting...")
+        time.sleep(DELAY)
+        continue
+
+    row = rows[0]
+
+    # Convert row → dict for Avro
+    record = dict(zip(col_names, row))
+
+    # Send to Kafka
+    try:
+        producer.produce(topic=KAFKA_TOPIC, value=record)
+        producer.flush()
+        print(f"[KAFKA-AVRO] Sent row (timestamp={record['timestamp']}): {record}")
+    except Exception as e:
+        print(f"[ERROR] Failed to send Avro record: {e}")
+
+    # Update progress marker
+    last_sent_timestamp = record["timestamp"]
+
+    time.sleep(DELAY)
