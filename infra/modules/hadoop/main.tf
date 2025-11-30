@@ -214,7 +214,7 @@ spec:
     dfsReplication: 1
   nameNodes:
     config:
-      listenerClass: "external-stable"
+      listenerClass: "external-unstable"
       resources:
         storage:
           data:

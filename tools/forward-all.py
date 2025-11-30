@@ -2,7 +2,6 @@
 # Forward all relevant ports from the cluster to the local machine, and pretty print the output
 
 import subprocess
-import sys
 import time
 from typing import List, Tuple
 
@@ -33,7 +32,8 @@ def main():
     
     # Define all port forwardings
     forwardings = [
-        ("hdfs-ui", "hdfs-proxy-service", 9870, 80),
+        ("webhdfs", "hdfs-proxy-service", 9870, 80),
+        ("webhdfs-datanode", "hdfs-cluster-datanode-default", 9864, 9864),
         ("spark-connect", "spark-connect-server", 15002, 15002),
         ("spark-ui", "spark-connect-server", 4040, 4040),
         ("jupyter", "jupyterlab", 8080, 8080),
