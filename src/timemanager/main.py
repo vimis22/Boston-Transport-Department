@@ -6,6 +6,7 @@ Provides REST API for clock control and synchronization.
 
 import asyncio
 import logging
+import os
 import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
@@ -19,12 +20,20 @@ from starlette.responses import RedirectResponse
 class SimulationClock:
     """Manages the simulation clock state"""
 
-    def __init__(self):
+    def __init__(self, initial_time: str | None = None, initial_speed: float | None = None):
         self.run_id = str(uuid.uuid4())
-        self.current_time = datetime.fromisoformat("2018-01-01T00:00:00")
-        self.speed = 1.0
+        # Use provided initial_time or default to 2018-01-01T00:00:00
+        if initial_time:
+            self.current_time = datetime.fromisoformat(initial_time.replace("Z", "+00:00"))
+        else:
+            self.current_time = datetime.fromisoformat("2018-01-01T00:00:00")
+        # Use provided initial_speed or default to 1.0
+        self.speed = initial_speed if initial_speed is not None else 1.0
         self.last_update = datetime.now(timezone.utc)
-        logging.getLogger(__name__).info(f"Simulation initialized with run_id: {self.run_id}")
+        logging.getLogger(__name__).info(
+            f"Simulation initialized with run_id: {self.run_id}, "
+            f"initial_time: {self.current_time.isoformat()}, speed: {self.speed}x"
+        )
 
     def get_state(self) -> "SimulationState":
         """Get current simulation state"""
@@ -83,7 +92,12 @@ async def lifespan(app: FastAPI):
     """Lifespan context manager for startup/shutdown"""
     logger = logging.getLogger(__name__)
     # Startup: Create clock and start ticker task
-    clock = SimulationClock()
+    # Read initial configuration from environment variables
+    initial_time = os.getenv("INITIAL_TIME")
+    initial_speed_str = os.getenv("INITIAL_SPEED")
+    initial_speed = float(initial_speed_str) if initial_speed_str else None
+    
+    clock = SimulationClock(initial_time=initial_time, initial_speed=initial_speed)
     app.state.simulation_clock = clock
     task = asyncio.create_task(clock_ticker(clock))
     logger.info("Application startup complete")

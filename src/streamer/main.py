@@ -2,6 +2,8 @@ import logging
 import os
 import time
 import json
+import requests
+import urllib.parse
 from datetime import datetime
 from streamers import WeatherStreamer, TaxiStreamer, BikeStreamer
 from utils import TimeManager, KafkaProxy, SchemaRegistry
@@ -33,17 +35,75 @@ def check_datasets_exist() -> bool:
     return all_exist
 
 
+def download_file_from_hdfs(hdfs_path: str, local_path: str) -> bool:
+    """Download a file from HDFS using WebHDFS REST API."""
+    # Ensure parent directory exists
+    parent_dir = os.path.dirname(local_path)
+    if parent_dir:
+        os.makedirs(parent_dir, exist_ok=True)
+    
+    # Step 1: Initial request to get redirect URL
+    webhdfs_base = config.webhdfs_url.rstrip('/')
+    url = f"{webhdfs_base}/webhdfs/v1{hdfs_path}?user.name=stackable&op=OPEN"
+    
+    try:
+        response = requests.get(url, allow_redirects=False, timeout=30)
+        
+        if response.status_code != 307:
+            logger.error(f"Failed to get redirect for {hdfs_path}: {response.status_code}")
+            if response.status_code == 404:
+                logger.error(f"File not found in HDFS: {hdfs_path}")
+            return False
+        
+        # Step 2: Rewrite redirect URL to use configured datanode URL
+        redirect_url = response.headers["Location"]
+        parts = urllib.parse.urlparse(redirect_url)
+        datanode_parts = urllib.parse.urlparse(config.webhdfs_datanode_url)
+        new_redirect_url = parts._replace(netloc=datanode_parts.netloc, scheme=datanode_parts.scheme).geturl()
+        
+        logger.info(f"Downloading {hdfs_path} to {local_path}...")
+        
+        # Step 3: Follow redirect to actually download the file
+        response = requests.get(new_redirect_url, allow_redirects=False, timeout=300, stream=True)
+        
+        if response.status_code == 200:
+            with open(local_path, "wb") as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+            logger.info(f"Successfully downloaded {hdfs_path} to {local_path}")
+            return True
+        else:
+            logger.error(f"Failed to download file: {response.status_code}")
+            return False
+    except Exception as e:
+        logger.error(f"Error downloading {hdfs_path}: {e}", exc_info=True)
+        return False
+
+
 def download_datasets_from_hadoop():
     """
-    Download datasets from hadoop cluster.
-    TODO: Implement actual download logic when needed.
-    For now, just log that datasets should be downloaded.
+    Download datasets from hadoop cluster using WebHDFS.
     """
-    logger.info("TODO: Implement dataset download from hadoop cluster")
-    logger.info("For now, ensure datasets are available at:")
-    logger.info(f"  Weather: {config.weather_data_path}")
-    logger.info(f"  Taxi: {config.taxi_data_path}")
-    logger.info(f"  Bike: {config.bike_data_path}")
+    logger.info("Downloading datasets from Hadoop cluster...")
+    
+    # Map of dataset names to their HDFS paths and local paths
+    datasets = {
+        "weather": ("/bigdata/weather_data.parquet", config.weather_data_path),
+        "taxi": ("/bigdata/taxi_data.parquet", config.taxi_data_path),
+        "bike": ("/bigdata/bike_data.parquet", config.bike_data_path),
+    }
+    
+    success_count = 0
+    for dataset_name, (hdfs_path, local_path) in datasets.items():
+        if download_file_from_hdfs(hdfs_path, local_path):
+            success_count += 1
+        else:
+            logger.warning(f"Failed to download {dataset_name} dataset")
+    
+    if success_count == len(datasets):
+        logger.info(f"Successfully downloaded all {success_count} datasets")
+    else:
+        logger.warning(f"Downloaded {success_count} out of {len(datasets)} datasets")
 
 
 def main():
