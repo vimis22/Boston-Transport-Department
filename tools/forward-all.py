@@ -38,8 +38,9 @@ def main():
         ("spark-ui", "spark-connect-server", 4040, 4040),
         ("jupyter", "jupyterlab", 8080, 8080),
         ("hive-metastore", "hive-cluster-metastore", 9083, 9083),
-        ("kafka", "kafka-broker", 9092, 9092),
-        ("kafka-ui", "kafka-ui", 8081, 8080),
+        ("kafka-rest-proxy", "kafkarestproxy", 8082, 8082),
+        ("kafka-ui", "kafka-ui", 8083, 8080),
+        ("schema-registry", "schema-registry", 8081, 8081),
     ]
     
     processes = []

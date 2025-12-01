@@ -1,0 +1,18 @@
+{
+  "type": "record",
+  "name": "TaxiDataRaw",
+  "namespace": "taxi",
+  "fields": [
+    { "name": "id", "type": "string" },
+    { "name": "timestamp", "type": "string" },
+    { "name": "hour", "type": "int" },
+    { "name": "day", "type": "int" },
+    { "name": "month", "type": "int" },
+    { "name": "datetime", "type": "string" },
+    { "name": "timezone", "type": "string" },
+    { "name": "source", "type": "string" },
+    { "name": "destination", "type": "string" },
+    { "name": "cab_type", "type": "string" },
+    { "name": "product_id", "type": "string" }
+  ]
+}

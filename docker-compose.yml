@@ -1,0 +1,9 @@
+services:
+  timemanager:
+    build: src/timemanager
+    environment:
+      - PORT=8000
+    ports:
+      - 8000:8000
+  streamer:
+    build: src/streamer

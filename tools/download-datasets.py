@@ -8,7 +8,7 @@ import os
 import requests
 import urllib.parse
 
-DATASETS_DIR = "boston_datasets/bigdata"
+DATASETS_DIR = "./boston_datasets/bigdata"
 
 def download_datasets():
     output = "boston_datasets.zip"
