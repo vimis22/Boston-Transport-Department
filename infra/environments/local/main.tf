@@ -43,3 +43,7 @@ module "hadoop" {
   namespace = local.namespace
 }
 
+module "bigdata" {
+  source = "../../modules/bigdata"
+  namespace = local.namespace
+}

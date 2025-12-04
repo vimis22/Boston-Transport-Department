@@ -72,6 +72,7 @@ jobs:
         with:
           context: ./src/timemanager
           file: ./src/timemanager/Dockerfile
+          platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta-timemanager.outputs.tags }}
           labels: ${{ steps.meta-timemanager.outputs.labels }}
@@ -83,6 +84,7 @@ jobs:
         with:
           context: ./src/streamer
           file: ./src/streamer/Dockerfile
+          platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta-streamer.outputs.tags }}
           labels: ${{ steps.meta-streamer.outputs.labels }}
