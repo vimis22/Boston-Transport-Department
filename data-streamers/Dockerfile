@@ -8,7 +8,11 @@ WORKDIR /app
 COPY streamer.py .
 
 # Install Python dependencies
-RUN pip install --no-cache-dir kafka-python
+RUN pip install --no-cache-dir \
+    duckdb \
+    confluent-kafka[avro] \
+    fastavro \
+    requests
 
 # Run the streamer
 CMD ["python", "streamer.py"]
