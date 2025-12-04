@@ -38,12 +38,23 @@ resource "kubernetes_namespace" "default" {
   }
 }
 
+# Deploy Hadoop cluster
 module "hadoop" {
   source = "../../modules/hadoop"
   namespace = local.namespace
 }
 
+# Publish schemas to Schema Registry
+resource "null_resource" "publish_schemas" {
+  depends_on = [module.hadoop]
+  provisioner "local-exec" {
+    command = "uv run ../../../tools/create-schemas.py"
+  }
+}
+
+# Deploy BigData services
 module "bigdata" {
   source = "../../modules/bigdata"
   namespace = local.namespace
+  depends_on = [null_resource.publish_schemas]
 }

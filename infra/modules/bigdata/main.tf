@@ -36,7 +36,7 @@ resource "kubernetes_deployment" "timemanager" {
       spec {
         container {
           name  = "timemanager"
-          image = "ghcr.io/vimis22/timemanager:1.0.0"
+          image = "ghcr.io/vimis22/timemanager:1.0.1"
           image_pull_policy = "IfNotPresent"
 
           port {
@@ -120,12 +120,12 @@ resource "kubernetes_deployment" "streamer" {
       spec {
         container {
           name  = "streamer"
-          image = "ghcr.io/vimis22/streamer:1.0.0"
+          image = "ghcr.io/vimis22/streamer:1.0.1"
           image_pull_policy = "IfNotPresent"
 
           env {
             name  = "WEBHDFS_URL"
-            value = "http://hdfs-proxy-service.${var.namespace}.svc.cluster.local:80"
+            value = "http://hdfs-cluster-namenode-default.${var.namespace}.svc.cluster.local:9870"
           }
 
           env {
@@ -168,6 +168,12 @@ resource "kubernetes_service" "streamer" {
 
     selector = {
       app = "streamer"
+    }
+
+    port {
+      port        = 8080
+      target_port = 8080
+      protocol    = "TCP"
     }
   }
 }
