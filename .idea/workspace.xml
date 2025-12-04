@@ -6,10 +6,10 @@
   <component name="ChangeListManager">
     <list default="true" id="7addc0cd-6864-4d5d-ac20-9361fb97fb93" name="Changes" comment="Recently worked with Directory Setup">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/etl_dataanalysis/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/etl_dataanalysis/config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/etl_dataanalysis/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/etl_dataanalysis/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/etl_dataanalysis/schemas.py" beforeDir="false" afterPath="$PROJECT_DIR$/etl_dataanalysis/schemas.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/etl_dataanalysis/transformations.py" beforeDir="false" afterPath="$PROJECT_DIR$/etl_dataanalysis/transformations.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/infra/modules/kafka/schemas/accident.avsc" beforeDir="false" afterPath="$PROJECT_DIR$/infra/modules/kafka/schemas/accident.avsc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/infra/modules/kafka/schemas/bike.avsc" beforeDir="false" afterPath="$PROJECT_DIR$/infra/modules/kafka/schemas/bike.avsc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/infra/modules/kafka/schemas/taxi.avsc" beforeDir="false" afterPath="$PROJECT_DIR$/infra/modules/kafka/schemas/taxi.avsc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/infra/modules/kafka/schemas/weather.avsc" beforeDir="false" afterPath="$PROJECT_DIR$/infra/modules/kafka/schemas/weather.avsc" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

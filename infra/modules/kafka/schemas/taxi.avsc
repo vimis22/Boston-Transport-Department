@@ -5,15 +5,14 @@
   "doc": "Schema for Uber and Lyft ride data in Boston",
   "fields": [
     {
-      "name": "ride_id",
+      "name": "id",
       "type": "string",
       "doc": "Unique identifier for each ride"
     },
     {
       "name": "timestamp",
-      "type": "long",
-      "logicalType": "timestamp-millis",
-      "doc": "Unix timestamp of the ride"
+      "type": "string",
+      "doc": "Unix timestamp of the ride in seconds (as decimal string, e.g. '1544952607.89')"
     },
     {
       "name": "hour",
@@ -21,9 +20,9 @@
       "doc": "Hour of the day (0-23)"
     },
     {
-      "name": "day_of_week",
+      "name": "day",
       "type": "int",
-      "doc": "Day of the week (0-6, where 0 is Monday)"
+      "doc": "Day of the month (1-31)"
     },
     {
       "name": "month",
@@ -31,7 +30,7 @@
       "doc": "Month of the year (1-12)"
     },
     {
-      "name": "date",
+      "name": "datetime",
       "type": "string",
       "doc": "Date value in string format"
     },
@@ -60,6 +59,16 @@
       "doc": "The type of cab service (Uber or Lyft)"
     },
     {
+      "name": "product_id",
+      "type": "string",
+      "doc": "Product ID - either a UUID for Uber products or a code for Lyft (e.g. 'lyft_line', 'lyft_premier')"
+    },
+    {
+      "name": "name",
+      "type": "string",
+      "doc": "Product display name (e.g. 'UberX', 'Shared', 'Lux Black', 'WAV')"
+    },
+    {
       "name": "price",
       "type": ["null", "double"],
       "default": null,
@@ -70,6 +79,221 @@
       "type": ["null", "double"],
       "default": null,
       "doc": "Distance of the ride in miles (optional)"
+    },
+    {
+      "name": "surge_multiplier",
+      "type": ["null", "double"],
+      "default": null
+    },
+    {
+      "name": "latitude",
+      "type": ["null", "double"],
+      "default": null
+    },
+    {
+      "name": "longitude",
+      "type": ["null", "double"],
+      "default": null
+    },
+    {
+      "name": "temperature",
+      "type": ["null", "double"],
+      "default": null
+    },
+    {
+      "name": "apparentTemperature",
+      "type": ["null", "double"],
+      "default": null
+    },
+    {
+      "name": "short_summary",
+      "type": ["null", "string"],
+      "default": null
+    },
+    {
+      "name": "long_summary",
+      "type": ["null", "string"],
+      "default": null
+    },
+    {
+      "name": "precipIntensity",
+      "type": ["null", "double"],
+      "default": null
+    },
+    {
+      "name": "precipProbability",
+      "type": ["null", "double"],
+      "default": null
+    },
+    {
+      "name": "humidity",
+      "type": ["null", "double"],
+      "default": null
+    },
+    {
+      "name": "windSpeed",
+      "type": ["null", "double"],
+      "default": null
+    },
+    {
+      "name": "windGust",
+      "type": ["null", "double"],
+      "default": null
+    },
+    {
+      "name": "windGustTime",
+      "type": ["null", "double"],
+      "default": null
+    },
+    {
+      "name": "visibility",
+      "type": ["null", "double"],
+      "default": null
+    },
+    {
+      "name": "temperatureHigh",
+      "type": ["null", "double"],
+      "default": null
+    },
+    {
+      "name": "temperatureHighTime",
+      "type": ["null", "double"],
+      "default": null
+    },
+    {
+      "name": "temperatureLow",
+      "type": ["null", "double"],
+      "default": null
+    },
+    {
+      "name": "temperatureLowTime",
+      "type": ["null", "double"],
+      "default": null
+    },
+    {
+      "name": "apparentTemperatureHigh",
+      "type": ["null", "double"],
+      "default": null
+    },
+    {
+      "name": "apparentTemperatureHighTime",
+      "type": ["null", "double"],
+      "default": null
+    },
+    {
+      "name": "apparentTemperatureLow",
+      "type": ["null", "double"],
+      "default": null
+    },
+    {
+      "name": "apparentTemperatureLowTime",
+      "type": ["null", "double"],
+      "default": null
+    },
+    {
+      "name": "icon",
+      "type": ["null", "string"],
+      "default": null
+    },
+    {
+      "name": "dewPoint",
+      "type": ["null", "double"],
+      "default": null
+    },
+    {
+      "name": "pressure",
+      "type": ["null", "double"],
+      "default": null
+    },
+    {
+      "name": "windBearing",
+      "type": ["null", "double"],
+      "default": null
+    },
+    {
+      "name": "cloudCover",
+      "type": ["null", "double"],
+      "default": null
+    },
+    {
+      "name": "uvIndex",
+      "type": ["null", "double"],
+      "default": null
+    },
+    {
+      "name": "visibility.1",
+      "type": ["null", "double"],
+      "default": null
+    },
+    {
+      "name": "ozone",
+      "type": ["null", "double"],
+      "default": null
+    },
+    {
+      "name": "sunriseTime",
+      "type": ["null", "double"],
+      "default": null
+    },
+    {
+      "name": "sunsetTime",
+      "type": ["null", "double"],
+      "default": null
+    },
+    {
+      "name": "moonPhase",
+      "type": ["null", "double"],
+      "default": null
+    },
+    {
+      "name": "precipIntensityMax",
+      "type": ["null", "double"],
+      "default": null
+    },
+    {
+      "name": "uvIndexTime",
+      "type": ["null", "double"],
+      "default": null
+    },
+    {
+      "name": "temperatureMin",
+      "type": ["null", "double"],
+      "default": null
+    },
+    {
+      "name": "temperatureMinTime",
+      "type": ["null", "double"],
+      "default": null
+    },
+    {
+      "name": "temperatureMax",
+      "type": ["null", "double"],
+      "default": null
+    },
+    {
+      "name": "temperatureMaxTime",
+      "type": ["null", "double"],
+      "default": null
+    },
+    {
+      "name": "apparentTemperatureMin",
+      "type": ["null", "double"],
+      "default": null
+    },
+    {
+      "name": "apparentTemperatureMinTime",
+      "type": ["null", "double"],
+      "default": null
+    },
+    {
+      "name": "apparentTemperatureMax",
+      "type": ["null", "double"],
+      "default": null
+    },
+    {
+      "name": "apparentTemperatureMaxTime",
+      "type": ["null", "double"],
+      "default": null
     }
   ]
 }
