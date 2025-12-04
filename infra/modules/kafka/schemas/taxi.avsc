@@ -1,0 +1,75 @@
+{
+  "type": "record",
+  "name": "TaxiRide",
+  "namespace": "com.boston.transport.taxi",
+  "doc": "Schema for Uber and Lyft ride data in Boston",
+  "fields": [
+    {
+      "name": "ride_id",
+      "type": "string",
+      "doc": "Unique identifier for each ride"
+    },
+    {
+      "name": "timestamp",
+      "type": "long",
+      "logicalType": "timestamp-millis",
+      "doc": "Unix timestamp of the ride"
+    },
+    {
+      "name": "hour",
+      "type": "int",
+      "doc": "Hour of the day (0-23)"
+    },
+    {
+      "name": "day_of_week",
+      "type": "int",
+      "doc": "Day of the week (0-6, where 0 is Monday)"
+    },
+    {
+      "name": "month",
+      "type": "int",
+      "doc": "Month of the year (1-12)"
+    },
+    {
+      "name": "date",
+      "type": "string",
+      "doc": "Date value in string format"
+    },
+    {
+      "name": "timezone",
+      "type": "string",
+      "doc": "Timezone of the ride"
+    },
+    {
+      "name": "source",
+      "type": "string",
+      "doc": "Initial source/pickup location of the ride"
+    },
+    {
+      "name": "destination",
+      "type": "string",
+      "doc": "Destination/dropoff location of the ride"
+    },
+    {
+      "name": "cab_type",
+      "type": {
+        "type": "enum",
+        "name": "CabType",
+        "symbols": ["Uber", "Lyft"]
+      },
+      "doc": "The type of cab service (Uber or Lyft)"
+    },
+    {
+      "name": "price",
+      "type": ["null", "double"],
+      "default": null,
+      "doc": "Price of the ride (optional)"
+    },
+    {
+      "name": "distance",
+      "type": ["null", "double"],
+      "default": null,
+      "doc": "Distance of the ride in miles (optional)"
+    }
+  ]
+}

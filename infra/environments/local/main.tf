@@ -43,3 +43,12 @@ module "hadoop" {
   namespace = local.namespace
 }
 
+module "kafka" {
+  source    = "../../modules/kafka"
+  namespace = local.namespace
+  
+  depends_on = [
+    module.hadoop
+  ]
+}
+

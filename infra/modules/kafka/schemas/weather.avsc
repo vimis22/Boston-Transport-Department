@@ -1,0 +1,54 @@
+{
+  "type": "record",
+  "name": "WeatherData",
+  "namespace": "com.boston.transport.weather",
+  "doc": "Schema for Boston weather data",
+  "fields": [
+    {
+      "name": "date",
+      "type": "string",
+      "doc": "The date in string format (YYYY-MM-DD)"
+    },
+    {
+      "name": "timestamp",
+      "type": "long",
+      "logicalType": "timestamp-millis",
+      "doc": "Unix timestamp for the date"
+    },
+    {
+      "name": "temp_avg",
+      "type": "float",
+      "doc": "The average air temperature in Celsius"
+    },
+    {
+      "name": "temp_min",
+      "type": "float",
+      "doc": "The minimum air temperature in Celsius"
+    },
+    {
+      "name": "temp_max",
+      "type": "float",
+      "doc": "The maximum air temperature in Celsius"
+    },
+    {
+      "name": "precipitation",
+      "type": "float",
+      "doc": "The daily precipitation total in millimeters"
+    },
+    {
+      "name": "wind_direction",
+      "type": "float",
+      "doc": "The average wind direction in degrees"
+    },
+    {
+      "name": "wind_speed",
+      "type": "float",
+      "doc": "The average wind speed in kilometers per hour"
+    },
+    {
+      "name": "pressure",
+      "type": "float",
+      "doc": "The average sea-level air pressure in hectopascals"
+    }
+  ]
+}
