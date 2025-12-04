@@ -18,6 +18,12 @@ dependencies = [
     "grpcio-status>=1.66.0",
     "pyspark>=4.0.1",
     "ipykernel>=6.28.0",
+    "gdown>=5.2.0",
+    "duckdb>=1.4.2",
+    "requests>=2.32.5",
+    "fastapi>=0.123.0",
+    "uvicorn>=0.38.0",
+    "fastavro>=1.12.1",
 ]
 requires-python = ">=3.10"
 
@@ -27,3 +33,9 @@ dev-dependencies = []  # Add extras here if needed
 [[tool.uv.index]] 
 url = "https://pypi.python.org/simple" 
 default = true
+
+[tool.uv.workspace]
+members = [
+    "src/streamer",
+    "src/time-manager",
+]

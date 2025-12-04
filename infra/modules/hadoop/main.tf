@@ -214,7 +214,7 @@ spec:
     dfsReplication: 1
   nameNodes:
     config:
-      listenerClass: "external-stable"
+      listenerClass: "external-unstable"
       resources:
         storage:
           data:
@@ -382,6 +382,64 @@ spec:
 YAML
 }
 
+# KAFKA CONNECT
+resource "kubectl_manifest" "kafka-connect" {
+  depends_on = [
+    kubectl_manifest.kafka-cluster
+  ]
+  yaml_body = <<YAML
+apiVersion: platform.confluent.io/v1beta1
+kind: Connect
+metadata:
+  name: connect
+  namespace: ${var.namespace}
+spec:
+  replicas: 1
+  image:
+    application: confluentinc/cp-server-connect:7.9.0
+    init: confluentinc/confluent-init-container:3.1.0
+  dependencies:
+    kafka:
+      bootstrapEndpoint: kafka-broker.${var.namespace}.svc.cluster.local:9092
+YAML
+}
+
+# SCHEMA REGISTRY
+resource "kubectl_manifest" "schema-registry" {
+  yaml_body = <<YAML
+apiVersion: platform.confluent.io/v1beta1
+kind: SchemaRegistry
+metadata:
+  name: schema-registry
+  namespace: ${var.namespace}
+spec:
+  replicas: 1
+  image:
+    application: confluentinc/cp-schema-registry:7.9.0
+    init: confluentinc/confluent-init-container:3.1.0
+YAML
+}
+
+# KAFKA PROXY
+resource "kubectl_manifest" "kafka-rest-proxy" {
+  yaml_body = <<YAML
+apiVersion: platform.confluent.io/v1beta1
+kind: KafkaRestProxy
+metadata:
+  name: kafkarestproxy
+  namespace: ${var.namespace}
+spec:
+  replicas: 1
+  image:
+    application: confluentinc/cp-kafka-rest:7.9.0
+    init: confluentinc/confluent-init-container:3.1.0
+  dependencies:
+    schemaRegistry:
+      url: http://schema-registry.${var.namespace}.svc.cluster.local:8081
+YAML
+}
+
+
 # KAFKA UI
 resource "kubernetes_deployment" "kafka_ui" {
   metadata {
@@ -426,6 +484,11 @@ resource "kubernetes_deployment" "kafka_ui" {
           env {
             name  = "KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS"
             value = "kafka-broker.${var.namespace}.svc.cluster.local:9092"
+          }
+
+          env {
+            name  = "KAFKA_CLUSTERS_0_SCHEMAREGISTRY"
+            value = "http://schema-registry.${var.namespace}.svc.cluster.local:8081"
           }
 
           env {
