@@ -13,6 +13,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from starlette.responses import RedirectResponse
 
@@ -112,6 +113,13 @@ app = FastAPI(
     description="Coordinates simulation clock for replaying historical transportation data",
     version="1.0.0",
     lifespan=lifespan,
+)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # adjust if you need stricter origin control
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Configure logging - use force=True to avoid duplicate handlers when running under uvicorn

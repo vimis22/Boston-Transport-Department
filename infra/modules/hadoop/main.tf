@@ -120,6 +120,15 @@ resource "helm_release" "hive-operator" {
   wait       = true
 }
 
+resource "helm_release" "trino-operator" {
+
+  name       = "trino-operator"
+  repository = "oci://oci.stackable.tech/sdp-charts"
+  version    = "25.7.0"
+  chart      = "trino-operator"
+  wait       = true
+}
+
 resource "helm_release" "hive-postgresql" {
   name       = "hive-postgresql"
   repository = "https://charts.bitnami.com/bitnami"
@@ -586,8 +595,15 @@ resource "kubectl_manifest" "spark_connect_server" {
       server = {
         configOverrides = {
           "spark-defaults.conf" = {
-            "spark.jars.ivy"      = "/tmp/ivy2"
-            "spark.driver.memory" = "2g"
+            "spark.jars.ivy"                     = "/tmp/ivy2"
+            "spark.driver.memory"                = "2g"
+            "spark.sql.catalogImplementation"    = "hive"
+            "spark.sql.catalog.hive"             = "org.apache.spark.sql.hive.HiveCatalog"
+            "spark.sql.warehouse.dir"            = "/user/hive/warehouse"
+            "hive.metastore.uris"                = "thrift://${local.hive_cluster_name}-metastore.${var.namespace}.svc.cluster.local:9083"
+            "spark.hadoop.hive.metastore.uris"   = "thrift://${local.hive_cluster_name}-metastore.${var.namespace}.svc.cluster.local:9083"
+            "spark.hadoop.hive.metastore.warehouse.dir" = "/user/hive/warehouse"
+            "spark.jars.packages"                = "org.apache.spark:spark-hive_2.13:4.0.1"
           }
         }
         podOverrides = {
@@ -643,12 +659,16 @@ resource "kubectl_manifest" "spark_connect_server" {
       executor = {
         configOverrides = {
           "spark-defaults.conf" = {
-            "spark.executor.instances"        = "4"
+            "spark.executor.instances"        = "1"
             "spark.executor.memory"           = "3g"
             "spark.executor.memoryOverhead"   = "0m"
             "spark.sql.warehouse.dir"         = "/user/hive/warehouse"
             "spark.sql.catalogImplementation" = "hive"
-            "spark.jars.packages"             = "org.apache.spark:spark-sql-kafka-0-10_2.13:4.0.1,org.apache.spark:spark-streaming-kafka-0-10_2.13:4.0.1"
+            "spark.sql.catalog.hive"          = "org.apache.spark.sql.hive.HiveCatalog"
+            "hive.metastore.uris"             = "thrift://${local.hive_cluster_name}-metastore.${var.namespace}.svc.cluster.local:9083"
+            "spark.hadoop.hive.metastore.uris" = "thrift://${local.hive_cluster_name}-metastore.${var.namespace}.svc.cluster.local:9083"
+            "spark.hadoop.hive.metastore.warehouse.dir" = "/user/hive/warehouse"
+            "spark.jars.packages"             = "org.apache.spark:spark-hive_2.13:4.0.1,org.apache.spark:spark-sql-kafka-0-10_2.13:4.0.1,org.apache.spark:spark-streaming-kafka-0-10_2.13:4.0.1"
           }
         }
         config = {
@@ -803,7 +823,7 @@ metadata:
   namespace: ${var.namespace}
 spec:
   image:
-    productVersion: 4.0.1
+    productVersion: 3.1.3
   clusterConfig:
     database:
       connString: jdbc:postgresql://hive-postgresql:5432/hive
@@ -818,188 +838,188 @@ spec:
 YAML
 }
 
-// KAFKA
-# resource "kubernetes_deployment" "kafka" {
-#   metadata {
-#     name      = "broker"
-#     namespace = var.namespace
-#     labels = {
-#       app = "kafka"
-#     }
-#   }
+// SPARK THRIFT SERVER
+resource "kubernetes_service" "spark_thrift" {
+  metadata {
+    name      = "spark-thrift-service"
+    namespace = var.namespace
+    labels = {
+      app = "spark-thrift-server"
+    }
+  }
 
-#   spec {
-#     replicas = 1
-#     selector {
-#       match_labels = {
-#         app = "kafka"
-#       }
-#     }
+  spec {
+    cluster_ip = "None"
 
-#     template {
-#       metadata {
-#         labels = {
-#           app = "kafka"
-#         }
-#       }
+    selector = {
+      app = "spark-thrift-server"
+    }
 
-#       spec {
-#         hostname = "broker"
-#         container {
-#           name  = "broker"
-#           image = "apache/kafka:latest"
+    port {
+      name        = "thrift-server-port"
+      protocol    = "TCP"
+      port        = 10000
+      target_port = 10000
+    }
 
-#           # External client port (for port-forwarding)
-#           port {
-#             name           = "kafka-port"
-#             container_port = 9092
-#           }
+    port {
+      name        = "http-server-port"
+      protocol    = "TCP"
+      port        = 10001
+      target_port = 10001
+    }
 
-#           # Controller port (KRaft)
-#           port {
-#             name           = "controller-port"
-#             container_port = 29093
-#           }
+    port {
+      name        = "spark-driver-port"
+      protocol    = "TCP"
+      port        = 7078
+      target_port = 7078
+    }
+  }
+}
 
-#           # Internal broker communication port
-#           port {
-#             name           = "internal-port"
-#             container_port = 29092
-#           }
+resource "kubernetes_role" "spark_server" {
+  metadata {
+    name      = "spark-server"
+    namespace = var.namespace
+  }
 
-#           env {
-#             name  = "KAFKA_BROKER_ID"
-#             value = "1"
-#           }
+  rule {
+    api_groups = [""]
+    resources  = ["pods", "persistentvolumeclaims", "configmaps", "services"]
+    verbs      = ["get", "deletecollection", "create", "list", "watch", "delete"]
+  }
+}
 
-#           env {
-#             name  = "KAFKA_LISTENER_SECURITY_PROTOCOL_MAP"
-#             value = "PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT"
-#           }
+resource "kubernetes_service_account" "spark" {
+  metadata {
+    name      = "spark"
+    namespace = var.namespace
+  }
+}
 
-#           env {
-#             name  = "KAFKA_ADVERTISED_LISTENERS"
-#             value = "PLAINTEXT://broker:29092,PLAINTEXT_HOST://kafka-broker.${var.namespace}.svc.cluster.local:9092"
-#           }
+resource "kubernetes_role_binding" "spark" {
+  metadata {
+    name      = "spark-rolebinding"
+    namespace = var.namespace
+  }
 
-#           env {
-#             name  = "KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR"
-#             value = "1"
-#           }
+  subject {
+    kind      = "ServiceAccount"
+    name      = kubernetes_service_account.spark.metadata[0].name
+    namespace = var.namespace
+  }
 
-#           env {
-#             name  = "KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS"
-#             value = "0"
-#           }
+  role_ref {
+    api_group = "rbac.authorization.k8s.io"
+    kind      = "Role"
+    name      = kubernetes_role.spark_server.metadata[0].name
+  }
+}
+resource "kubernetes_stateful_set" "spark_thrift_server" {
+  metadata {
+    name      = "spark-thrift-server"
+    namespace = var.namespace
+    labels = {
+      app       = "spark-thrift-server"
+      namespace = var.namespace
+    }
+  }
 
-#           env {
-#             name  = "KAFKA_TRANSACTION_STATE_LOG_MIN_ISR"
-#             value = "1"
-#           }
+  spec {
+    service_name = kubernetes_service.spark_thrift.metadata[0].name
+    replicas     = 1
 
-#           env {
-#             name  = "KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR"
-#             value = "1"
-#           }
+    selector {
+      match_labels = {
+        app       = "spark-thrift-server"
+        namespace = var.namespace
+      }
+    }
 
-#           env {
-#             name  = "KAFKA_PROCESS_ROLES"
-#             value = "broker,controller"
-#           }
+    template {
+      metadata {
+        labels = {
+          app       = "spark-thrift-server"
+          namespace = var.namespace
+        }
+      }
 
-#           env {
-#             name  = "KAFKA_NODE_ID"
-#             value = "1"
-#           }
+      spec {
+        service_account_name = kubernetes_service_account.spark.metadata[0].name
 
-#           env {
-#             name  = "KAFKA_CONTROLLER_QUORUM_VOTERS"
-#             value = "1@broker:29093"
-#           }
+        container {
+          name  = "thrift-server"
+          image = "apache/spark:4.0.1"
 
-#           env {
-#             name  = "KAFKA_LISTENERS"
-#             value = "PLAINTEXT://broker:29092,CONTROLLER://broker:29093,PLAINTEXT_HOST://0.0.0.0:9092"
-#           }
+          env {
+            name  = "HADOOP_CONF_DIR"
+            value = "/hdfs-config"
+          }
 
-#           env {
-#             name  = "KAFKA_INTER_BROKER_LISTENER_NAME"
-#             value = "PLAINTEXT"
-#           }
+          volume_mount {
+            name       = "hdfs-discovery-configmap"
+            mount_path = "/hdfs-config"
+          }
 
-#           env {
-#             name  = "KAFKA_CONTROLLER_LISTENER_NAMES"
-#             value = "CONTROLLER"
-#           }
+          command = [
+            "bash",
+            "-c",
+            <<-EOT
+              set -euo pipefail
+              LOG_DIR=/opt/spark/logs
+              LOG_FILE="$${LOG_DIR}/spark--org.apache.spark.sql.hive.thriftserver.HiveThriftServer2-1-$${HOSTNAME}.out"
+              mkdir -p "$${LOG_DIR}"
 
-#           env {
-#             name  = "KAFKA_LOG_DIRS"
-#             value = "/tmp/kraft-combined-logs"
-#           }
+              /opt/spark/sbin/start-thriftserver.sh \
+              --master k8s://https://kubernetes.default.svc.cluster.local:443 \
+              --hiveconf hive.server2.thrift.port=10000 \
+              --hiveconf hive.server2.thrift.bind.host=0.0.0.0 \
+              --hiveconf hive.metastore.uris=thrift://hive-cluster-metastore:9083 \
+              --conf spark.hadoop.hive.metastore.uris=thrift://hive-cluster-metastore:9083 \
+              --conf spark.hadoop.fs.defaultFS=hdfs://hdfs-cluster-namenode-default-0.hdfs-cluster-namenode-default.bigdata.svc.cluster.local:8020 \
+              --conf spark.sql.warehouse.dir=hdfs://hdfs-cluster-namenode-default-0.hdfs-cluster-namenode-default.bigdata.svc.cluster.local:8020/user/hive/warehouse \
+              --conf spark.sql.catalogImplementation=hive \
+              --conf spark.hadoop.fs.permissions.umask-mode=022 \
+              --conf spark.yarn.submit.waitAppCompletion=true \
+              --conf spark.hadoop.fs.defaultFS=hdfs://hdfs-cluster-namenode-default-0.hdfs-cluster-namenode-default.bigdata.svc.cluster.local:8020 \
+              --proxy-user stackable \
+              --conf spark.dynamicAllocation.enabled=true \
+              --conf spark.kubernetes.container.image=apache/spark:4.0.1 \
+              --conf spark.kubernetes.driver.pod.name=spark-thrift-server-0 \
+              --conf spark.kubernetes.executor.request.cores=500m \
+              --conf spark.kubernetes.executor.request.memory=1g \
+              --conf spark.kubernetes.namespace=${var.namespace} \
+              --conf spark.driver.host=spark-thrift-service \
+              --conf spark.driver.bindAddress=spark-thrift-server-0 \
+              --conf spark.driver.port=7078
 
-#           env {
-#             name  = "CLUSTER_ID"
-#             value = "MkU3OEVBNTcwNTJENDM2Qk"
-#           }
-#         }
-#       }
-#     }
-#   }
-# }
+              # Wait for log file then stream it
+              for i in $(seq 1 30); do
+                [ -f "$${LOG_FILE}" ] && break
+                sleep 1
+              done
+              touch "$${LOG_FILE}"
+              tail -n 200 -f "$${LOG_FILE}"
+            EOT
+          ]
+        }
 
-# Service to expose Kafka broker within the cluster
-# Other resources (Hive, Spark, etc.) connect to this using: broker:29092
-# For external access, developers use port-forward to localhost:9092
-# resource "kubernetes_service" "kafka" {
-#   metadata {
-#     name      = "kafka-broker"
-#     namespace = var.namespace
-#     labels = {
-#       app = "kafka"
-#     }
-#   }
+        volume {
+          name = "hdfs-discovery-configmap"
+          config_map {
+            name = local.hdfs_cluster_name
+          }
+        }
+      }
+    }
+  }
 
-#   spec {
-#     selector = {
-#       app = "kafka"
-#     }
-
-#     # Internal cluster communication (other pods use this)
-#     port {
-#       name        = "internal"
-#       port        = 29092
-#       target_port = "internal-port"
-#       protocol    = "TCP"
-#     }
-
-#     # External port-forward access (developer tools use this)
-#     port {
-#       name        = "external"
-#       port        = 9092
-#       target_port = "kafka-port"
-#       protocol    = "TCP"
-#     }
-
-#     # Controller port for KRaft coordination
-#     port {
-#       name        = "controller"
-#       port        = 29093
-#       target_port = "controller-port"
-#       protocol    = "TCP"
-#     }
-
-#     # ClusterIP service - internal only, no external load balancer
-#     type = "ClusterIP"
-#   }
-# }
-
-# Helper instructions for creating Kafka topics:
-# The apache/kafka image has scripts in /opt/kafka/bin/
-# To create a topic from within the cluster, use:
-# kubectl exec -n ${var.namespace} -it deployment/broker -- /opt/kafka/bin/kafka-topics.sh --create --topic <topic-name> --bootstrap-server broker:29092 --partitions 1 --replication-factor 1
-#
-# To list topics:
-# kubectl exec -n ${var.namespace} -it deployment/broker -- /opt/kafka/bin/kafka-topics.sh --list --bootstrap-server broker:29092
-#
-# Example: Create the "sparktest" topic:
-# kubectl exec -n ${var.namespace} -it deployment/broker -- /opt/kafka/bin/kafka-topics.sh --create --topic sparktest --bootstrap-server broker:29092 --partitions 1 --replication-factor 1
+  depends_on = [
+    kubectl_manifest.hive-cluster,
+    kubernetes_service_account.spark,
+    kubernetes_role_binding.spark,
+    kubernetes_service.spark_thrift,
+    kubectl_manifest.hdfs-cluster
+  ]
+}

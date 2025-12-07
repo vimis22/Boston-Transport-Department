@@ -1,20 +1,18 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "useDefineForClassFields": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "module": "ESNext",
-    "skipLibCheck": true,
+    "target": "ES2021",
+    "module": "ES2022",
+    "moduleResolution": "node",
     "jsx": "react-jsx",
-    "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "allowSyntheticDefaultImports": true,
+    "types": ["bun-types"],
+    "strict": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "strict": true
-  },
-  "include": ["src", "App.tsx", "components"],
-  "references": []
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@server/*": ["./src/*"],
+      "@public/*": ["./public/*"]
+    }
+  }
 }

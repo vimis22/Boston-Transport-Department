@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """Upload Avro schemas to the Schema Registry"""
 
-import os
 import sys
 import json
 import argparse
 import requests
+import socket
+import subprocess
+import time
 from pathlib import Path
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
@@ -227,8 +229,8 @@ def main():
     parser.add_argument(
         "--schema-registry-url",
         type=str,
-        default=os.getenv("SCHEMA_REGISTRY_URL", "http://localhost:8081"),
-        help="Schema Registry base URL (default: http://localhost:8081 or SCHEMA_REGISTRY_URL env var)",
+        default=None,
+        help="Schema Registry base URL (default: auto-detect via kubectl port-forward)",
     )
     parser.add_argument(
         "--recreate",
@@ -238,14 +240,39 @@ def main():
     
     args = parser.parse_args()
     
-    try:
-        upload_schemas(
-            schema_registry_url=args.schema_registry_url,
-            recreate=args.recreate,
+    # If no URL provided, set up kubectl port-forward
+    if args.schema_registry_url is None:
+        # Find available port
+        with socket.socket() as s:
+            s.bind(('', 0))
+            local_port = s.getsockname()[1]
+        
+        # Start port-forward
+        proc = subprocess.Popen(
+            ["kubectl", "-n", "bigdata", "port-forward", "svc/schema-registry", f"{local_port}:8081"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
         )
-    except Exception as e:
-        print(f"\n❌ Error: {e}", file=sys.stderr)
-        sys.exit(1)
+        time.sleep(2)
+        schema_registry_url = f"http://localhost:{local_port}"
+        
+        try:
+            upload_schemas(schema_registry_url=schema_registry_url, recreate=args.recreate)
+        except Exception as e:
+            print(f"\n❌ Error: {e}", file=sys.stderr)
+            sys.exit(1)
+        finally:
+            proc.terminate()
+            proc.wait()
+    else:
+        try:
+            upload_schemas(
+                schema_registry_url=args.schema_registry_url,
+                recreate=args.recreate,
+            )
+        except Exception as e:
+            print(f"\n❌ Error: {e}", file=sys.stderr)
+            sys.exit(1)
 
 
 if __name__ == "__main__":

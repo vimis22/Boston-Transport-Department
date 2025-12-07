@@ -202,6 +202,20 @@ services:
     networks:
       hadoop:
 
+  dashboard:
+    build: src/dashboard
+    environment:
+      - PORT=3000
+      - TIMEMANAGER_URL=http://timemanager:8000
+      - HIVE_HTTP_PROXY_URL=http://hive-http-proxy:10001
+      - KAFKA_REST_PROXY_URL=http://host.docker.internal:8082
+    ports:
+      - 3000:3000
+    depends_on:
+      - timemanager
+    networks:
+      hadoop:
+
 networks:
   hadoop:
     driver: bridge

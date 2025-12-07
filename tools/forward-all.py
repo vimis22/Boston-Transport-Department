@@ -5,31 +5,40 @@ import subprocess
 import time
 from typing import List, Tuple
 
-def run_port_forward(namespace: str, service: str, local_port: int, remote_port: int) -> subprocess.Popen:
+
+def run_port_forward(
+    namespace: str, service: str, local_port: int, remote_port: int
+) -> subprocess.Popen:
     """Run a kubectl port-forward command and return the process."""
     cmd = [
-        "kubectl", "port-forward",
-        "-n", namespace,
+        "kubectl",
+        "port-forward",
+        "-n",
+        namespace,
         f"svc/{service}",
-        f"{local_port}:{remote_port}"
+        f"{local_port}:{remote_port}",
     ]
     return subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
+
 def print_forwarding_info(forwardings: List[Tuple[str, str, int, int]]):
     """Pretty print the port forwarding information."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("PORT FORWARDING STATUS")
-    print("="*60)
+    print("=" * 60)
     print(f"{'Service':<20} {'Local Port':<12} {'Remote Port':<12} {'Status':<10}")
-    print("-"*60)
+    print("-" * 60)
     for service, _, local, remote in forwardings:
-        print(f"{service:<20} {local:<12} {remote:<12} {'RUNNING' if True else 'ERROR'}")
-    print("="*60)
+        print(
+            f"{service:<20} {local:<12} {remote:<12} {'RUNNING' if True else 'ERROR'}"
+        )
+    print("=" * 60)
     print("\nPress Ctrl+C to stop all forwarding.")
+
 
 def main():
     namespace = "bigdata"
-    
+
     # Define all port forwardings
     forwardings = [
         ("webhdfs", "hdfs-proxy-service", 9870, 80),
@@ -41,24 +50,27 @@ def main():
         ("kafka-rest-proxy", "kafkarestproxy", 8082, 8082),
         ("kafka-ui", "kafka-ui", 8083, 8080),
         ("schema-registry", "schema-registry", 8081, 8081),
+        ("hive", "spark-thrift-service", 10000, 10000),
+        ("hive-http-proxy", "hive-http-proxy", 10001, 10001),
+        ("timemanager", "timemanager", 8000, 8000),
     ]
-    
+
     processes = []
-    
+
     try:
         # Start all port forwards
         for service, resource, local, remote in forwardings:
             print(f"Starting port forward for {service}...")
             process = run_port_forward(namespace, resource, local, remote)
             processes.append(process)
-        
+
         # Print info
         print_forwarding_info(forwardings)
-        
+
         # Keep processes running
         while True:
             time.sleep(1)
-            
+
     except KeyboardInterrupt:
         print("\nStopping port forwards...")
     finally:
@@ -71,6 +83,7 @@ def main():
                 except subprocess.TimeoutExpired:
                     process.kill()
         print("All port forwards stopped.")
+
 
 if __name__ == "__main__":
     main()
