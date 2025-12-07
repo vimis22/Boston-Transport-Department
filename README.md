@@ -50,6 +50,3 @@ To upload the schemas to the Schema Registry, you can use the `tools/create-sche
 5. Type the token `adminadmin`
 6. Click "Select Kernel"
 Now you can run the notebook and it will connect to the jupyter kernel.
-
-## Services still needed:
-1. Trino

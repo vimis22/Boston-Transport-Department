@@ -40,6 +40,7 @@ resource "kubernetes_namespace" "default" {
 
 # Deploy Hadoop cluster
 module "hadoop" {
+  depends_on = [kubernetes_namespace.default]
   source = "../../modules/hadoop"
   namespace = local.namespace
 }

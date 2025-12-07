@@ -35,3 +35,6 @@ terraform.tfstate.backup
 # Datasets
 boston_datasets/
 boston_datasets.zip
+
+# Node Modules
+node_modules/
