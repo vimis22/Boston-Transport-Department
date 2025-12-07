@@ -8,7 +8,8 @@ from pyspark.sql.functions import (
     dayofmonth,
     hour,
     date_format,
-    get_json_object
+    get_json_object,
+    when
 )
 from pyspark.sql.types import (
     StructType,
@@ -17,6 +18,9 @@ from pyspark.sql.types import (
     DoubleType,
     IntegerType
 )
+
+# Import weather enrichment functions
+from .weather_enrichment import enrich_weather_data, add_precipitation_indicator
 
 #What initially is happening here is that we are trying to format the data from JSON-Format to a Column-Based Format.
 #In ths context, we parse the JSON String to Column-Based Format, via. the bike_data_schema.
@@ -218,6 +222,10 @@ def parse_weather_stream(df: DataFrame) -> DataFrame:
     ).withColumn(
         "hour", hour(col("datetime_ts"))
     )
+
+    # Apply weather enrichment to parse and categorize weather data
+    final_df = enrich_weather_data(final_df)
+    final_df = add_precipitation_indicator(final_df)
 
     return final_df
 

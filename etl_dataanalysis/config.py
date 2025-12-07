@@ -18,6 +18,22 @@ OUTPUT_BASE_PATH = os.getenv("OUTPUT_BASE_PATH", "/data/processed_simple")
 CHECKPOINT_BASE_PATH = os.getenv("CHECKPOINT_BASE_PATH", "/tmp/spark_checkpoints_simple")
 BATCH_INTERVAL = "10 seconds"
 
+# Analytics Configuration
+ANALYTICS_OUTPUT_PATH = os.getenv("ANALYTICS_OUTPUT_PATH", "/data/analytics")
+ANALYTICS_CHECKPOINT_PATH = os.getenv("ANALYTICS_CHECKPOINT_PATH", "/tmp/spark_checkpoints_analytics")
+
+# Windowing Configuration for Analytics
+WINDOW_DURATION_SHORT = "5 minutes"   # For real-time metrics
+WINDOW_DURATION_MEDIUM = "15 minutes" # For correlations
+WINDOW_DURATION_LONG = "1 hour"       # For safety analysis
+SLIDE_DURATION = "5 minutes"          # Sliding window interval
+
+# Enable/Disable Analytics Streams
+ENABLE_WEATHER_TRANSPORT_CORRELATION = os.getenv("ENABLE_WEATHER_TRANSPORT_CORRELATION", "true").lower() == "true"
+ENABLE_WEATHER_SAFETY_ANALYSIS = os.getenv("ENABLE_WEATHER_SAFETY_ANALYSIS", "true").lower() == "true"
+ENABLE_SURGE_WEATHER_CORRELATION = os.getenv("ENABLE_SURGE_WEATHER_CORRELATION", "true").lower() == "true"
+ENABLE_TRANSPORT_USAGE_SUMMARY = os.getenv("ENABLE_TRANSPORT_USAGE_SUMMARY", "true").lower() == "true"
+
 # Spark Configuration in order to forward it to the SparkSession
 spark_config = (
     SparkConf()
