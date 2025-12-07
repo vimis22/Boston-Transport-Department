@@ -36,7 +36,7 @@ resource "kubernetes_deployment" "timemanager" {
       spec {
         container {
           name              = "timemanager"
-          image             = "ghcr.io/vimis22/timemanager:1.0.1"
+          image             = "ghcr.io/vimis22/timemanager:1.0.3"
           image_pull_policy = "IfNotPresent"
 
           port {
@@ -120,17 +120,17 @@ resource "kubernetes_deployment" "streamer" {
       spec {
         container {
           name              = "streamer"
-          image             = "ghcr.io/vimis22/streamer:1.0.1"
+          image             = "ghcr.io/vimis22/streamer:1.0.3"
           image_pull_policy = "IfNotPresent"
 
           env {
             name  = "WEBHDFS_URL"
-            value = "http://hdfs-cluster-namenode-default.${var.namespace}.svc.cluster.local:9870"
+            value = "http://hdfs-cluster-namenode-default-0.hdfs-cluster-namenode-default.${var.namespace}.svc.cluster.local:9870"
           }
 
           env {
             name  = "WEBHDFS_DATANODE_URL"
-            value = "http://hdfs-cluster-datanode-default.${var.namespace}.svc.cluster.local:9864"
+            value = "http://hdfs-cluster-datanode-default-0.hdfs-cluster-datanode-default.${var.namespace}.svc.cluster.local:9864"
           }
 
           env {
@@ -208,7 +208,7 @@ resource "kubernetes_deployment" "hive_http_proxy" {
       spec {
         container {
           name              = "hive-http-proxy"
-          image             = "ghcr.io/vimis22/hive-http-proxy:1.0.2"
+          image             = "ghcr.io/vimis22/hive-http-proxy:1.0.3"
           image_pull_policy = "IfNotPresent"
 
           env {
