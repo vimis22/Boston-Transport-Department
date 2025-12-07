@@ -51,6 +51,7 @@ def main():
         ("kafka-ui", "kafka-ui", 8083, 8080),
         ("schema-registry", "schema-registry", 8081, 8081),
         ("hive", "spark-thrift-service", 10000, 10000),
+        ("hive-http-proxy", "hive-http-proxy", 10001, 10001),
     ]
 
     processes = []

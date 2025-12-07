@@ -1,12 +1,22 @@
 import os
+from contextlib import contextmanager
+
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from pyhive import hive
-from contextlib import contextmanager
+from starlette.responses import RedirectResponse
 import uvicorn
 
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # adjust if you need stricter origin control
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 class QueryRequest(BaseModel):
@@ -68,6 +78,10 @@ async def execute_query(request: QueryRequest):
             }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Query execution failed: {str(e)}")
+
+@app.get("/", include_in_schema=False)
+async def docs_redirect():
+    return RedirectResponse(url="/docs")
 
 
 def main():

@@ -35,8 +35,8 @@ resource "kubernetes_deployment" "timemanager" {
 
       spec {
         container {
-          name  = "timemanager"
-          image = "ghcr.io/vimis22/timemanager:1.0.1"
+          name              = "timemanager"
+          image             = "ghcr.io/vimis22/timemanager:1.0.1"
           image_pull_policy = "IfNotPresent"
 
           port {
@@ -119,8 +119,8 @@ resource "kubernetes_deployment" "streamer" {
 
       spec {
         container {
-          name  = "streamer"
-          image = "ghcr.io/vimis22/streamer:1.0.1"
+          name              = "streamer"
+          image             = "ghcr.io/vimis22/streamer:1.0.1"
           image_pull_policy = "IfNotPresent"
 
           env {
@@ -173,6 +173,85 @@ resource "kubernetes_service" "streamer" {
     port {
       port        = 8080
       target_port = 8080
+      protocol    = "TCP"
+    }
+  }
+}
+
+
+# Hive HTTP Proxy Deployment
+resource "kubernetes_deployment" "hive_http_proxy" {
+  metadata {
+    name      = "hive-http-proxy"
+    namespace = var.namespace
+    labels = {
+      app = "hive-http-proxy"
+    }
+  }
+
+  spec {
+    replicas = 1
+
+    selector {
+      match_labels = {
+        app = "hive-http-proxy"
+      }
+    }
+
+    template {
+      metadata {
+        labels = {
+          app = "hive-http-proxy"
+        }
+      }
+
+      spec {
+        container {
+          name              = "hive-http-proxy"
+          image             = "ghcr.io/vimis22/hive-http-proxy:1.0.2"
+          image_pull_policy = "IfNotPresent"
+
+          env {
+            name  = "HIVE_HOST"
+            value = "spark-thrift-service"
+          }
+
+          env {
+            name  = "HIVE_PORT"
+            value = "10000"
+          }
+
+          env {
+            name  = "HIVE_USERNAME"
+            value = "stackable"
+          }
+        }
+      }
+    }
+  }
+}
+
+# Hive HTTP Proxy Service
+resource "kubernetes_service" "hive_http_proxy" {
+  metadata {
+    name      = "hive-http-proxy"
+    namespace = var.namespace
+    labels = {
+      app = "hive-http-proxy"
+    }
+  }
+
+  spec {
+    type = "ClusterIP"
+
+    selector = {
+      app = "hive-http-proxy"
+    }
+
+    port {
+      name        = "http"
+      port        = 10001
+      target_port = 10001
       protocol    = "TCP"
     }
   }
