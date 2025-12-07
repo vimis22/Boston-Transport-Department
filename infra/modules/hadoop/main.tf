@@ -831,7 +831,6 @@ YAML
 }
 
 // SPARK THRIFT SERVER
-
 resource "kubernetes_service" "spark_thrift" {
   metadata {
     name      = "spark-thrift-service"
@@ -853,6 +852,13 @@ resource "kubernetes_service" "spark_thrift" {
       protocol    = "TCP"
       port        = 10000
       target_port = 10000
+    }
+
+    port {
+      name        = "http-server-port"
+      protocol    = "TCP"
+      port        = 10001
+      target_port = 10001
     }
 
     port {
@@ -902,7 +908,6 @@ resource "kubernetes_role_binding" "spark" {
     name      = kubernetes_role.spark_server.metadata[0].name
   }
 }
-
 resource "kubernetes_stateful_set" "spark_thrift_server" {
   metadata {
     name      = "spark-thrift-server"
@@ -964,17 +969,12 @@ resource "kubernetes_stateful_set" "spark_thrift_server" {
               --hiveconf hive.server2.thrift.bind.host=0.0.0.0 \
               --hiveconf hive.metastore.uris=thrift://hive-cluster-metastore:9083 \
               --conf spark.hadoop.hive.metastore.uris=thrift://hive-cluster-metastore:9083 \
-              --conf spark.hadoop.fs.defaultFS=hdfs://${local.hdfs_cluster_name} \
-              --conf spark.sql.warehouse.dir=hdfs://${local.hdfs_cluster_name}/user/hive/warehouse \
+              --conf spark.hadoop.fs.defaultFS=hdfs://hdfs-cluster-namenode-default-0.hdfs-cluster-namenode-default.bigdata.svc.cluster.local:8020 \
+              --conf spark.sql.warehouse.dir=hdfs://hdfs-cluster-namenode-default-0.hdfs-cluster-namenode-default.bigdata.svc.cluster.local:8020/user/hive/warehouse \
               --conf spark.sql.catalogImplementation=hive \
-              --conf spark.hadoop.dfs.nameservices=${local.hdfs_cluster_name} \
-              --conf spark.hadoop.dfs.ha.namenodes.${local.hdfs_cluster_name}=hdfs-cluster-namenode-default-0,hdfs-cluster-namenode-default-1 \
-              --conf spark.hadoop.dfs.namenode.rpc-address.${local.hdfs_cluster_name}.hdfs-cluster-namenode-default-0=hdfs-cluster-namenode-default-0.hdfs-cluster-namenode-default.${var.namespace}.svc.cluster.local:8020 \
-              --conf spark.hadoop.dfs.namenode.rpc-address.${local.hdfs_cluster_name}.hdfs-cluster-namenode-default-1=hdfs-cluster-namenode-default-1.hdfs-cluster-namenode-default.${var.namespace}.svc.cluster.local:8020 \
-              --conf spark.hadoop.dfs.client.failover.proxy.provider.${local.hdfs_cluster_name}=org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider \
               --conf spark.hadoop.fs.permissions.umask-mode=022 \
               --conf spark.yarn.submit.waitAppCompletion=true \
-              --conf spark.hadoop.fs.defaultFS=hdfs://${local.hdfs_cluster_name} \
+              --conf spark.hadoop.fs.defaultFS=hdfs://hdfs-cluster-namenode-default-0.hdfs-cluster-namenode-default.bigdata.svc.cluster.local:8020 \
               --proxy-user stackable \
               --conf spark.dynamicAllocation.enabled=true \
               --conf spark.kubernetes.container.image=apache/spark:4.0.1 \
@@ -1015,4 +1015,3 @@ resource "kubernetes_stateful_set" "spark_thrift_server" {
     kubectl_manifest.hdfs-cluster
   ]
 }
-

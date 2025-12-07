@@ -17,6 +17,7 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME_TIMEMANAGER: timemanager
   IMAGE_NAME_STREAMER: streamer
+  IMAGE_NAME_HIVE_HTTP_PROXY: hive-http-proxy
 
 jobs:
   build-and-push:
@@ -67,6 +68,20 @@ jobs:
             type=sha,prefix=sha-
             type=raw,value=latest,enable={{is_default_branch}}
 
+      - name: Extract metadata (hive-http-proxy)
+        id: meta-hive-http-proxy
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME_HIVE_HTTP_PROXY }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable={{is_default_branch}}
+
       - name: Build and push timemanager image
         uses: docker/build-push-action@v5
         with:
@@ -91,3 +106,14 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Build and push hive-http-proxy image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./src/hive-http-proxy
+          file: ./src/hive-http-proxy/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta-hive-http-proxy.outputs.tags }}
+          labels: ${{ steps.meta-hive-http-proxy.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
