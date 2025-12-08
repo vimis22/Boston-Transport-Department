@@ -31,9 +31,9 @@ To forward the relevant ports to your local machine, use the `tools/forward-all.
 - Then execute `uv run tools/forward-all.py`
 
 ## Add the datasets to the Hadoop cluster
-To add the datasets to the Hadoop cluster, you can use the `tools/download-datasets.py` script.
+To add the datasets to the Hadoop cluster, you can use the `tools/create-datasets.py` script.
 - Start by running `uv sync` to install all the dependencies.
-- Then execute `uv run tools/download-datasets.py`
+- Then execute `uv run tools/create-datasets.py`
 
 This will download the datasets, convert them to parquet and upload them to the Hadoop cluster.
 
@@ -41,6 +41,8 @@ This will download the datasets, convert them to parquet and upload them to the 
 To upload the schemas to the Schema Registry, you can use the `tools/create-schemas.py` script.
 - Start by running `uv sync` to install all the dependencies.
 - Then execute `uv run tools/create-schemas.py`
+
+## Check the streamer pod in kubernetes
 
 ## Connect VSCode to jupyter kernel
 1. Open a notebook and click on the kernel icon in the top right corner.
@@ -50,3 +52,8 @@ To upload the schemas to the Schema Registry, you can use the `tools/create-sche
 5. Type the token `adminadmin`
 6. Click "Select Kernel"
 Now you can run the notebook and it will connect to the jupyter kernel.
+
+## TODO:
+- Kafka connect HDFS sink and query via. hive
+- Update streamer to not duplicate weather data
+- Basic ETL(temperature, precipitation, trip distance and average trip speed)

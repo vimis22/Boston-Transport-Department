@@ -5,6 +5,8 @@ export const env = {
   kafkaRestUrl: process.env.KAFKA_REST_PROXY_URL ?? "http://localhost:8082",
   kafkaClusterId: process.env.KAFKA_CLUSTER_ID ?? undefined,
   kafkaSampleLimit: parseInt(process.env.KAFKA_SAMPLE_LIMIT ?? "20", 10),
+  kafkaUiUrl: process.env.KAFKA_UI_URL ?? "http://localhost:8083",
+  kafkaUiClusterId: process.env.KAFKA_UI_CLUSTER_ID ?? "kafka-broker",
 };
 
 export const topics = {

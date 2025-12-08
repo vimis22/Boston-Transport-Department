@@ -222,6 +222,9 @@ spec:
     zookeeperConfigMapName: ${local.zookeeper_znode_name}
     dfsReplication: 1
   nameNodes:
+    configOverrides:
+      hdfs-site.xml:
+        dfs.permissions.enabled: "false"
     config:
       listenerClass: "external-unstable"
       resources:
@@ -232,6 +235,9 @@ spec:
       default:
         replicas: 2
   dataNodes:
+    configOverrides:
+      hdfs-site.xml:
+        dfs.permissions.enabled: "false"
     config:
       listenerClass: "external-unstable"
       resources:
@@ -269,11 +275,11 @@ http {
     server_name _;
 
     location / {
-      proxy_pass http://hdfs-cluster-namenode-default.${var.namespace}.svc.cluster.local:9870;
+      proxy_pass http://hdfs-cluster-namenode-default-0.hdfs-cluster-namenode-default.${var.namespace}.svc.cluster.local:9870;
 
-      proxy_set_header Host hdfs-cluster-namenode-default.${var.namespace}.svc.cluster.local;
+      proxy_set_header Host hdfs-cluster-namenode-default-0.hdfs-cluster-namenode-default.${var.namespace}.svc.cluster.local;
 
-      proxy_redirect http://hdfs-cluster-namenode-default.${var.namespace}.svc.cluster.local/ $scheme://$host:9870/;
+      proxy_redirect http://hdfs-cluster-namenode-default-0.hdfs-cluster-namenode-default.${var.namespace}.svc.cluster.local/ $scheme://$host:9870/;
 
       proxy_set_header X-Real-IP $remote_addr;
       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -407,9 +413,74 @@ spec:
   image:
     application: confluentinc/cp-server-connect:7.9.0
     init: confluentinc/confluent-init-container:3.1.0
+  keyConverterType: io.confluent.connect.avro.AvroConverter
+  valueConverterType: io.confluent.connect.avro.AvroConverter
+  build:
+    type: onDemand
+    onDemand:
+      plugins:
+        locationType: confluentHub
+        confluentHub:
+          - name: kafka-connect-hdfs
+            owner: confluentinc
+            version: 10.2.17 # Latest compatible version with hive 3.1.3
+
   dependencies:
     kafka:
       bootstrapEndpoint: kafka-broker.${var.namespace}.svc.cluster.local:9092
+    schemaRegistry:
+      url: http://schema-registry.${var.namespace}.svc.cluster.local:8081
+  podTemplate:
+    podSecurityContext:
+      fsGroup: 1000
+      runAsUser: 1000
+      runAsNonRoot: true
+    envVars:
+      - name: KAFKA_OPTS
+        value: "--add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED"
+YAML
+}
+
+## HDFS CONNECTOR
+resource "kubectl_manifest" "hdfs_sink_connector" {
+  depends_on = [
+    kubectl_manifest.kafka-connect,
+    kubectl_manifest.hdfs-cluster,
+    kubectl_manifest.hive-cluster
+  ]
+
+  yaml_body = <<YAML
+apiVersion: platform.confluent.io/v1beta1
+kind: Connector
+metadata:
+  name: hdfs-sink
+  namespace: ${var.namespace}
+spec:
+  class: "io.confluent.connect.hdfs.HdfsSinkConnector"
+  taskMax: 1
+  connectClusterRef:
+    name: connect
+  configs:
+    topics: "weather-data, bike-data, taxi-data"
+    hdfs.url: "hdfs://hdfs-cluster-namenode-default-0.hdfs-cluster-namenode-default.${var.namespace}.svc.cluster.local:8020"
+    flush.size: "3"
+    hadoop.conf.dir: "/etc/hadoop/"
+    format.class: "io.confluent.connect.hdfs.parquet.ParquetFormat"
+    partitioner.class: "io.confluent.connect.storage.partitioner.FieldPartitioner"
+    partition.field.name: "station_id"
+    rotate.interval.ms: "120000"
+    hadoop.home: "/opt/hadoop-3.1.3/share/hadoop/common"
+    logs.dir: "/tmp"
+    hive.integration: "true"
+    hive.metastore.uris: "thrift://${local.hive_cluster_name}-metastore.${var.namespace}.svc.cluster.local:9083"
+    hive.database: "default"
+    confluent.license: ""
+    confluent.topic.bootstrap.servers: "kafka-broker.${var.namespace}.svc.cluster.local:9092"
+    confluent.topic.replication.factor: "1"
+    key.converter: "org.apache.kafka.connect.storage.StringConverter"
+    value.converter: "io.confluent.connect.avro.AvroConverter"
+    value.converter.schema.registry.url: "http://schema-registry.${var.namespace}.svc.cluster.local:8081"
+    schema.compatibility: "BACKWARD"
 YAML
 }
 
@@ -815,7 +886,7 @@ metadata:
   namespace: ${var.namespace}
 spec:
   image:
-    productVersion: 3.1.3
+    productVersion: 3.1.3 # We cannot upgrade to 4.0.1 yet due to spark compatibility issues: https://github.com/apache/iceberg/issues/12878
   clusterConfig:
     database:
       connString: jdbc:postgresql://hive-postgresql:5432/hive
