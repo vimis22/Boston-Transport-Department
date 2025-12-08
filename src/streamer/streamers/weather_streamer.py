@@ -43,17 +43,12 @@ def parse_temperature(temp_str: str | None) -> float | None:
 
 
 def get_rows_from_weather_data(dataset_path: str, start_time: datetime, end_time: datetime) -> list[dict[str, Any]]:
-    """
-    Get the latest weather observation before end_time.
-    Always returns at most one row (the most recent observation).
-    """
+    """Get weather observations within the interval [start_time, end_time]."""
     with duckdb.connect(":memory:") as conn:
-        # Get the latest observation before end_time, sorted by date descending
         conn.execute(
             f"SELECT * FROM read_parquet('{dataset_path}') "
-            f"WHERE date < '{end_time}' "
-            f"ORDER BY date DESC "
-            f"LIMIT 1"
+            f"WHERE date >= '{start_time}' AND date <= '{end_time}' "
+            f"ORDER BY date"
         )
         rows = conn.fetchall()
         columns = [desc[0] for desc in conn.description]
