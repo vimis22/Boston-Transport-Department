@@ -10,7 +10,8 @@ COPY streamer.py .
 # Install Python dependencies
 RUN pip install --no-cache-dir \
     duckdb \
-    confluent-kafka[avro] \
+    confluent-kafka \
+    "confluent-kafka[schemaregistry]" \
     fastavro \
     requests
 
