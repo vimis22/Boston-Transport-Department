@@ -54,6 +54,9 @@ To upload the schemas to the Schema Registry, you can use the `tools/create-sche
 Now you can run the notebook and it will connect to the jupyter kernel.
 
 ## TODO:
-- Kafka connect HDFS sink and query via. hive
-- Update streamer to not duplicate weather data
 - Basic ETL(temperature, precipitation, trip distance and average trip speed)
+- Quick queries in ui for hive (e.g. show tables, select * from table limit n, )
+
+Release strategy:
+- git tag -f v1.0.4 HEAD
+- git push origin v1.0.4

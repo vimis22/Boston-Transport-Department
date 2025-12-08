@@ -463,7 +463,7 @@ spec:
   configs:
     topics: "weather-data, bike-data, taxi-data"
     hdfs.url: "hdfs://hdfs-cluster-namenode-default-0.hdfs-cluster-namenode-default.${var.namespace}.svc.cluster.local:8020"
-    flush.size: "3"
+    flush.size: "500"
     hadoop.conf.dir: "/etc/hadoop/"
     format.class: "io.confluent.connect.hdfs.parquet.ParquetFormat"
     partitioner.class: "io.confluent.connect.storage.partitioner.DefaultPartitioner"
