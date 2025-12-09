@@ -1,4 +1,5 @@
 import React from 'react';
+import { createGlobalStyle } from 'styled-components';
 
 export type Theme = 'light' | 'dark'
 
@@ -75,3 +76,24 @@ export const styles = {
         bottom: 0,
     },
 }
+
+export const AdditionalStyles = createGlobalStyle`
+  @keyframes pulse {
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    min-height: 100%;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+  }
+`;
