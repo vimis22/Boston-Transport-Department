@@ -37,7 +37,6 @@ spec:
   partitionCount: 1
 YAML
 }
-
 // Create ETL Jobs
 resource "kubernetes_job" "bike-weather-data-aggregation" {
   metadata {
@@ -50,9 +49,24 @@ resource "kubernetes_job" "bike-weather-data-aggregation" {
       spec {
         restart_policy          = "OnFailure"
         active_deadline_seconds = 600
+        init_container {
+          name  = "init-container"
+          image = "ghcr.io/vimis22/etl:1.0.10"
+          command = [
+            "cp",
+            "-r",
+            "/app/jobs",
+            "/mnt/scripts"
+          ]
+          volume_mount {
+            name       = "scripts-volume"
+            mount_path = "/mnt/scripts"
+          }
+        }
+
         container {
           name              = "bike-weather-data-aggregation"
-          image             = "ghcr.io/vimis22/etl:1.0.9"
+          image             = "oci.stackable.tech/stackable/spark-connect-client:4.0.1-stackable0.0.0-dev"
           image_pull_policy = "IfNotPresent"
           command = [
             "python",
@@ -78,6 +92,16 @@ resource "kubernetes_job" "bike-weather-data-aggregation" {
             name  = "CHECKPOINT_LOCATION"
             value = "/tmp/bike-weather-aggregate-checkpoint"
           }
+          volume_mount {
+            name       = "scripts-volume"
+            mount_path = "/app/jobs"
+          }
+        }
+        volume {
+          name = "scripts-volume"
+          empty_dir {
+            size_limit = "500Mi"
+          }
         }
       }
     }
@@ -95,9 +119,24 @@ resource "kubernetes_job" "bike-weather-distance" {
       spec {
         restart_policy          = "OnFailure"
         active_deadline_seconds = 600
+        init_container {
+          name  = "init-container"
+          image = "ghcr.io/vimis22/etl:1.0.10"
+          command = [
+            "cp",
+            "-r",
+            "/app/jobs",
+            "/mnt/scripts"
+          ]
+          volume_mount {
+            name       = "scripts-volume"
+            mount_path = "/mnt/scripts"
+          }
+        }
+
         container {
           name              = "bike-weather-distance"
-          image             = "ghcr.io/vimis22/etl:1.0.9"
+          image             = "oci.stackable.tech/stackable/spark-connect-client:4.0.1-stackable0.0.0-dev"
           image_pull_policy = "IfNotPresent"
           command = [
             "python",
@@ -115,10 +154,20 @@ resource "kubernetes_job" "bike-weather-distance" {
             name  = "KAFKA_BOOTSTRAP"
             value = "kafka-broker.${var.namespace}.svc.cluster.local:9092"
           }
-
           env {
             name  = "CHECKPOINT_LOCATION"
             value = "/tmp/bike-weather-distance-checkpoint"
+          }
+          volume_mount {
+            name       = "scripts-volume"
+            mount_path = "/app/jobs"
+          }
+        }
+
+        volume {
+          name = "scripts-volume"
+          empty_dir {
+            size_limit = "500Mi"
           }
         }
       }

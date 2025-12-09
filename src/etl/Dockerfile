@@ -1,4 +1,4 @@
-FROM oci.stackable.tech/stackable/spark-connect-client:4.0.1-stackable0.0.0-dev
+FROM alpine:3.22
 
 WORKDIR /app
 
