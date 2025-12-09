@@ -361,7 +361,7 @@ spec:
   connectClusterRef:
     name: connect
   configs:
-    topics: "weather-data, bike-data, taxi-data"
+    topics: "weather-data, bike-data, taxi-data, bike-weather-aggregate, bike-weather-distance"
     # NOTE: Not high-availability due to connecting to namenode-0 directly
     hdfs.url: "hdfs://hdfs-cluster-namenode-default-0.hdfs-cluster-namenode-default.${var.namespace}.svc.cluster.local:8020"
     flush.size: "500"

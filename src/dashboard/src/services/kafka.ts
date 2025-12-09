@@ -30,8 +30,6 @@ type KafkaRecord = {
 
 export class KafkaService {
   private discoveredClusterId: string | undefined;
-  private readonly v3Base = `${env.kafkaRestUrl.replace(/\/$/, "")}/v3`;
-  private readonly v2Base = env.kafkaRestUrl.replace(/\/$/, "");
   private readonly kafkaUiBase = env.kafkaUiUrl.replace(/\/$/, "");
   private readonly sampleConsumers = new Map<
     string,
@@ -46,10 +44,10 @@ export class KafkaService {
     if (env.kafkaClusterId) return env.kafkaClusterId;
     if (this.discoveredClusterId) return this.discoveredClusterId;
 
-    const data = await fetchJson<{ data: { cluster_id: string }[] }>(
-      `${this.v3Base}/clusters`
+    const data = await fetchJson<Array<{ name: string }>>(
+      `${this.kafkaUiBase}/api/clusters`
     );
-    const id = data.data?.[0]?.cluster_id;
+    const id = data?.[0]?.name;
     if (!id) throw new Error("Kafka cluster_id not found");
     this.discoveredClusterId = id;
     return id;
@@ -57,26 +55,31 @@ export class KafkaService {
 
   async listTopics(): Promise<KafkaTopicItem[]> {
     const clusterId = await this.getClusterId();
-    const result = await fetchJson<KafkaTopicResponse>(
-      `${this.v3Base}/clusters/${clusterId}/topics`
+    const result = await fetchJson<{ topics: Array<{ name: string; internal: boolean; partitionCount: number; replicationFactor: number }> }>(
+      `${this.kafkaUiBase}/api/clusters/${clusterId}/topics`
     );
-    return result.data ?? [];
+    return (result.topics ?? []).map(topic => ({
+      topic_name: topic.name,
+      is_internal: topic.internal,
+      partitions_count: topic.partitionCount,
+      replication_factor: topic.replicationFactor,
+    }));
   }
 
   async getTopicDetail(topic: string): Promise<KafkaTopicDetail> {
     const clusterId = await this.getClusterId();
     const detail = await fetchJson<{
-      topic_name: string;
-      partitions_count: number;
-      replication_factor: number;
-      is_internal: boolean;
-    }>(`${this.v3Base}/clusters/${clusterId}/topics/${topic}`);
+      name: string;
+      partitionCount: number;
+      replicationFactor: number;
+      internal: boolean;
+    }>(`${this.kafkaUiBase}/api/clusters/${clusterId}/topics/${topic}`);
 
     return {
-      topic_name: detail.topic_name,
-      partitions_count: detail.partitions_count,
-      replication_factor: detail.replication_factor,
-      is_internal: detail.is_internal,
+      topic_name: detail.name,
+      partitions_count: detail.partitionCount,
+      replication_factor: detail.replicationFactor,
+      is_internal: detail.internal,
     };
   }
 

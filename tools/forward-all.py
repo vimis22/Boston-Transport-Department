@@ -53,6 +53,7 @@ def main():
         ("hive", "spark-thrift-service", 10000, 10000),
         ("hive-http-proxy", "hive-http-proxy", 10001, 10001),
         ("timemanager", "timemanager", 8000, 8000),
+        # ("dashboard", "dashboard", 3000, 3000),
     ]
 
     processes = []

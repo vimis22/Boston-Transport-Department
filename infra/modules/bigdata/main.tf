@@ -256,3 +256,90 @@ resource "kubernetes_service" "hive_http_proxy" {
     }
   }
 }
+
+# Dashboard Deployment
+resource "kubernetes_deployment" "dashboard" {
+  metadata {
+    name      = "dashboard"
+    namespace = var.namespace
+    labels = {
+      app = "dashboard"
+    }
+  }
+
+  spec {
+    replicas = 1
+
+    selector {
+      match_labels = {
+        app = "dashboard"
+      }
+    }
+
+    template {
+      metadata {
+        labels = {
+          app = "dashboard"
+        }
+      }
+
+      spec {
+        container {
+          name              = "dashboard"
+          image             = "ghcr.io/vimis22/dashboard:1.0.7"
+          image_pull_policy = "IfNotPresent"
+
+          env {
+            name  = "PORT"
+            value = "3000"
+          }
+
+          env {
+            name  = "TIMEMANAGER_URL"
+            value = "http://timemanager.${var.namespace}.svc.cluster.local:8000"
+          }
+
+          env {
+            name  = "HIVE_HTTP_PROXY_URL"
+            value = "http://hive-http-proxy.${var.namespace}.svc.cluster.local:10001"
+          }
+
+          env {
+            name  = "KAFKA_UI_URL"
+            value = "http://kafka-ui.${var.namespace}.svc.cluster.local:8083"
+          }
+
+          env {
+            name  = "KAFKA_CLUSTER_ID"
+            value = "kafka-broker"
+          }
+        }
+      }
+    }
+  }
+}
+
+# Dashboard Service
+resource "kubernetes_service" "dashboard" {
+  metadata {
+    name      = "dashboard"
+    namespace = var.namespace
+    labels = {
+      app = "dashboard"
+    }
+  }
+  spec {
+    type = "ClusterIP"
+
+    selector = {
+      app = "dashboard"
+    }
+
+    port {
+      name        = "http"
+      port        = 3000
+      target_port = 3000
+      protocol    = "TCP"
+    }
+  }
+}
