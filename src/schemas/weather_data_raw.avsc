@@ -19,6 +19,6 @@
     { "name": "dry_bulb_temperature_celsius", "type": "double" },
     { "name": "dew_point_temperature_celsius", "type": "double" },
     { "name": "sea_level_pressure", "type": "string" },
-    { "name": "precip_daily_mm", "type": "int" }
+    { "name": "precip_daily_mm", "type": "double" }
   ]
 }

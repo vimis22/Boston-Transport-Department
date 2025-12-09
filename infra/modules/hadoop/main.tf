@@ -25,110 +25,6 @@ locals {
 
 
 // OPERATORS
-resource "helm_release" "commons-operator" {
-  name       = "commons-operator"
-  repository = "oci://oci.stackable.tech/sdp-charts"
-  version    = "25.7.0"
-  chart      = "commons-operator"
-  wait       = true
-}
-
-resource "helm_release" "secret-operator" {
-  name       = "secret-operator"
-  repository = "oci://oci.stackable.tech/sdp-charts"
-  version    = "25.7.0"
-  chart      = "secret-operator"
-  wait       = true
-}
-
-resource "helm_release" "listener-operator" {
-  name       = "listener-operator"
-  repository = "oci://oci.stackable.tech/sdp-charts"
-  version    = "25.7.0"
-  chart      = "listener-operator"
-  wait       = true
-}
-
-resource "helm_release" "zookeeper-operator" {
-  depends_on = [
-    helm_release.commons-operator,
-    helm_release.secret-operator,
-    helm_release.listener-operator
-  ]
-  name       = "zookeeper-operator"
-  repository = "oci://oci.stackable.tech/sdp-charts"
-  version    = "25.7.0"
-  chart      = "zookeeper-operator"
-  wait       = true
-}
-
-resource "helm_release" "hdfs-operator" {
-  depends_on = [
-    helm_release.commons-operator,
-    helm_release.secret-operator,
-    helm_release.listener-operator,
-    helm_release.zookeeper-operator
-  ]
-  name       = "hdfs-operator"
-  repository = "oci://oci.stackable.tech/sdp-charts"
-  version    = "25.7.0"
-  chart      = "hdfs-operator"
-  wait       = true
-}
-
-resource "helm_release" "spark-operator" {
-  depends_on = [
-    helm_release.commons-operator,
-    helm_release.secret-operator,
-    helm_release.listener-operator,
-    helm_release.zookeeper-operator,
-    helm_release.hdfs-operator
-  ]
-  name       = "spark-operator"
-  repository = "oci://oci.stackable.tech/sdp-charts"
-  version    = "25.7.0"
-  chart      = "spark-k8s-operator"
-  wait       = true
-}
-
-resource "helm_release" "confluent-operator" {
-  depends_on = [
-    helm_release.commons-operator,
-    helm_release.secret-operator,
-    helm_release.listener-operator,
-    helm_release.zookeeper-operator,
-  ]
-  name       = "confluent-operator"
-  repository = "https://packages.confluent.io/helm"
-  version    = "0.1351.24"
-  chart      = "confluent-for-kubernetes"
-  namespace  = var.namespace
-  wait       = true
-}
-
-resource "helm_release" "hive-operator" {
-  depends_on = [
-    helm_release.commons-operator,
-    helm_release.secret-operator,
-    helm_release.listener-operator,
-    helm_release.zookeeper-operator
-  ]
-  name       = "hive-operator"
-  repository = "oci://oci.stackable.tech/sdp-charts"
-  version    = "25.7.0"
-  chart      = "hive-operator"
-  wait       = true
-}
-
-resource "helm_release" "trino-operator" {
-
-  name       = "trino-operator"
-  repository = "oci://oci.stackable.tech/sdp-charts"
-  version    = "25.7.0"
-  chart      = "trino-operator"
-  wait       = true
-}
-
 resource "helm_release" "hive-postgresql" {
   name       = "hive-postgresql"
   repository = "https://charts.bitnami.com/bitnami"
@@ -225,6 +121,9 @@ spec:
     configOverrides:
       hdfs-site.xml:
         dfs.permissions.enabled: "false"
+        # NOTE: This disables the namenode from disabling itself in safemode, 
+        # which is needed until high-availability configuration(hive-site.xml) is propagated to all clients.
+        dfs.ha.nn.not-become-active-in-safemode: "false"
     config:
       listenerClass: "external-unstable"
       resources:
@@ -259,7 +158,8 @@ spec:
 YAML
 }
 
-
+// HDFS PROXY
+// NOTE: This is used to proxy hdfs due to this issue: https://github.com/stackabletech/hdfs-operator/issues/438
 resource "kubernetes_config_map" "hdfs_proxy_config" {
   metadata {
     name      = "hdfs-proxy-config"
@@ -423,7 +323,7 @@ spec:
         confluentHub:
           - name: kafka-connect-hdfs
             owner: confluentinc
-            version: 10.2.17 # Latest compatible version with hive 3.1.3
+            version: 10.2.17 # NOTE: Deprecated, but latest version compatible with Hive 3.1.3
 
   dependencies:
     kafka:
@@ -462,6 +362,7 @@ spec:
     name: connect
   configs:
     topics: "weather-data, bike-data, taxi-data"
+    # NOTE: Not high-availability due to connecting to namenode-0 directly
     hdfs.url: "hdfs://hdfs-cluster-namenode-default-0.hdfs-cluster-namenode-default.${var.namespace}.svc.cluster.local:8020"
     flush.size: "500"
     hadoop.conf.dir: "/etc/hadoop/"
@@ -665,7 +566,7 @@ resource "kubectl_manifest" "spark_connect_server" {
             "hive.metastore.uris"                = "thrift://${local.hive_cluster_name}-metastore.${var.namespace}.svc.cluster.local:9083"
             "spark.hadoop.hive.metastore.uris"   = "thrift://${local.hive_cluster_name}-metastore.${var.namespace}.svc.cluster.local:9083"
             "spark.hadoop.hive.metastore.warehouse.dir" = "/user/hive/warehouse"
-            "spark.jars.packages"                = "org.apache.spark:spark-hive_2.13:4.0.1"
+            "spark.jars.packages"                = "org.apache.spark:spark-hive_2.13:4.0.1,org.apache.spark:spark-avro_2.13:4.0.1"
           }
         }
         podOverrides = {
@@ -721,7 +622,7 @@ resource "kubectl_manifest" "spark_connect_server" {
       executor = {
         configOverrides = {
           "spark-defaults.conf" = {
-            "spark.executor.instances"        = "1"
+            "spark.executor.instances"        = "3"
             "spark.executor.memory"           = "3g"
             "spark.executor.memoryOverhead"   = "0m"
             "spark.sql.warehouse.dir"         = "/user/hive/warehouse"
@@ -730,7 +631,7 @@ resource "kubectl_manifest" "spark_connect_server" {
             "hive.metastore.uris"             = "thrift://${local.hive_cluster_name}-metastore.${var.namespace}.svc.cluster.local:9083"
             "spark.hadoop.hive.metastore.uris" = "thrift://${local.hive_cluster_name}-metastore.${var.namespace}.svc.cluster.local:9083"
             "spark.hadoop.hive.metastore.warehouse.dir" = "/user/hive/warehouse"
-            "spark.jars.packages"             = "org.apache.spark:spark-hive_2.13:4.0.1,org.apache.spark:spark-sql-kafka-0-10_2.13:4.0.1,org.apache.spark:spark-streaming-kafka-0-10_2.13:4.0.1"
+            "spark.jars.packages"             = "org.apache.spark:spark-hive_2.13:4.0.1,org.apache.spark:spark-avro_2.13:4.0.1,org.apache.spark:spark-sql-kafka-0-10_2.13:4.0.1,org.apache.spark:spark-streaming-kafka-0-10_2.13:4.0.1"
           }
         }
         config = {
@@ -872,7 +773,6 @@ YAML
 
 resource "kubectl_manifest" "hive-cluster" {
   depends_on = [
-    helm_release.hive-operator,
     helm_release.hive-postgresql,
     kubectl_manifest.hive-credentials
   ]

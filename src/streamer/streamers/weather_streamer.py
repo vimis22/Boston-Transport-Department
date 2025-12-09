@@ -87,7 +87,7 @@ def get_rows_from_weather_data(dataset_path: str, start_time: datetime, end_time
                 "dry_bulb_temperature_celsius": parse_temperature(row_dict.get("TMP")) or 0.0,
                 "dew_point_temperature_celsius": parse_temperature(row_dict.get("DEW")) or 0.0,
                 "sea_level_pressure": str(row_dict["SLP"]) if row_dict.get("SLP") is not None else "",
-                "precip_daily_mm": int(row_dict["PRECIP_DAILY_MM"]) if row_dict.get("PRECIP_DAILY_MM") is not None else 0,
+                "precip_daily_mm": float(row_dict["PRECIP_DAILY_MM"] / 10.0) if row_dict.get("PRECIP_DAILY_MM") is not None else 0.0,
             }
             result.append(parsed_row)
         
