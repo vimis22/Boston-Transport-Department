@@ -55,8 +55,8 @@ resource "kubernetes_job" "bike-weather-data-aggregation" {
           command = [
             "cp",
             "-r",
-            "/app/jobs",
-            "/mnt/scripts"
+            "/app/jobs/.",
+            "/mnt/scripts/"
           ]
           volume_mount {
             name       = "scripts-volume"
@@ -97,6 +97,7 @@ resource "kubernetes_job" "bike-weather-data-aggregation" {
             mount_path = "/app/jobs"
           }
         }
+
         volume {
           name = "scripts-volume"
           empty_dir {
@@ -125,8 +126,8 @@ resource "kubernetes_job" "bike-weather-distance" {
           command = [
             "cp",
             "-r",
-            "/app/jobs",
-            "/mnt/scripts"
+            "/app/jobs/.",
+            "/mnt/scripts/"
           ]
           volume_mount {
             name       = "scripts-volume"
