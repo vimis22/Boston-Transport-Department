@@ -61,11 +61,7 @@ Note, that the streamer must run before the kafka topics are created, and before
 Now you can run the notebook and it will connect to the jupyter kernel.
 
 ## TODO:
-- Basic ETL(temperature, precipitation, trip distance and average trip speed)
-    - One etl for doing dense rank join between bike data and weather data
-    - Another ETL for doing distance calculation between the start and end station
-- Quick queries in ui for hive (e.g. show tables, select * from table limit n, )
-- Deploy dashboard to kubernetes
+- Make graphs from live kafka data and from hive queries
 - Make video tutorial for bringup
 
 Release strategy:

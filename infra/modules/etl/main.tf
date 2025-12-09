@@ -51,7 +51,7 @@ resource "kubernetes_job" "bike-weather-data-aggregation" {
         active_deadline_seconds = 600
         init_container {
           name  = "init-container"
-          image = "ghcr.io/vimis22/etl:1.0.10"
+          image = "ghcr.io/vimis22/etl:1.0.11"
           command = [
             "cp",
             "-r",
@@ -122,7 +122,7 @@ resource "kubernetes_job" "bike-weather-distance" {
         active_deadline_seconds = 600
         init_container {
           name  = "init-container"
-          image = "ghcr.io/vimis22/etl:1.0.10"
+          image = "ghcr.io/vimis22/etl:1.0.11"
           command = [
             "cp",
             "-r",

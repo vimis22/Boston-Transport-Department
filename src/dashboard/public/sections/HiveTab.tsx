@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import { useHiveQuery } from "../api/hooks";
 import { Card } from "../components/Card";
 
-const DEFAULT_QUERY = "SELECT * FROM bike_data_raw LIMIT 10";
+const DEFAULT_QUERY = "SELECT * FROM bike_data LIMIT 10";
 const QUICK_QUERIES: { label: string; statement: string }[] = [
   { label: "Show databases", statement: "SHOW DATABASES;" },
   { label: "Show tables", statement: "SHOW TABLES;" },
