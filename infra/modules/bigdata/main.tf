@@ -286,7 +286,7 @@ resource "kubernetes_deployment" "dashboard" {
       spec {
         container {
           name              = "dashboard"
-          image             = "ghcr.io/vimis22/dashboard:1.0.7"
+          image             = "ghcr.io/vimis22/dashboard:1.0.8"
           image_pull_policy = "IfNotPresent"
 
           env {
@@ -306,7 +306,7 @@ resource "kubernetes_deployment" "dashboard" {
 
           env {
             name  = "KAFKA_UI_URL"
-            value = "http://kafka-ui.${var.namespace}.svc.cluster.local:8083"
+            value = "http://kafka-ui.${var.namespace}.svc.cluster.local:8080"
           }
 
           env {

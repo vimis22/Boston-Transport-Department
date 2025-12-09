@@ -3,8 +3,6 @@ kind: Job
 metadata:
   name: etl-job
   namespace: bigdata
-  labels:
-    stackable.tech/vendor: Stackable
 spec:
   template:
     spec:
@@ -12,10 +10,10 @@ spec:
       activeDeadlineSeconds: 600
       containers:
         - name: etl-job
-          image: docker.io/matg/spark:latest
+          image: ghcr.io/vimis22/etl:1.0.8
           imagePullPolicy: IfNotPresent
           command:
             [
               "python",
-              "/app/main.py",
+              "/app/jobs/bike-weather-data-aggregation.py",
             ]

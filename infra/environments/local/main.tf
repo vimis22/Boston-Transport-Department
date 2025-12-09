@@ -66,3 +66,10 @@ module "bigdata" {
   source = "../../modules/bigdata"
   namespace = local.namespace
 }
+
+# Deploy ETL
+module "etl" {
+  depends_on = [module.bigdata]
+  source = "../../modules/etl"
+  namespace = local.namespace
+}
