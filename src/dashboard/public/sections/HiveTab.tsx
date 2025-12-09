@@ -2,7 +2,15 @@ import React, { useMemo, useState } from "react";
 import { useHiveQuery } from "../api/hooks";
 import { Card } from "../components/Card";
 
-const DEFAULT_QUERY = "SELECT * FROM bike_data_raw LIMIT 10";
+const DEFAULT_QUERY = "SELECT * FROM bike_data LIMIT 10";
+const QUICK_QUERIES: { label: string; statement: string }[] = [
+  { label: "Show databases", statement: "SHOW DATABASES;" },
+  { label: "Show tables", statement: "SHOW TABLES;" },
+  { label: "Describe bike_data", statement: "DESCRIBE FORMATTED bike_data;" },
+  { label: "Describe weather_data", statement: "DESCRIBE FORMATTED weather_data;" },
+  { label: "Preview bike data", statement: "SELECT * FROM bike_data LIMIT 20;" },
+  { label: "Preview weather data", statement: "SELECT * FROM weather_data LIMIT 20;" },
+];
 
 export function HiveTab() {
   const [statement, setStatement] = useState(DEFAULT_QUERY);
@@ -32,6 +40,22 @@ export function HiveTab() {
     <div className="space-y-4">
       <Card title="Hive SQL">
         <div className="space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Quick queries
+            </span>
+            {QUICK_QUERIES.map((quick) => (
+              <button
+                key={quick.label}
+                type="button"
+                onClick={() => setStatement(quick.statement)}
+                className="rounded-md border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-800 transition hover:border-slate-300 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                title="Insert query into editor"
+              >
+                {quick.label}
+              </button>
+            ))}
+          </div>
           <textarea
             value={statement}
             onChange={(e) => setStatement(e.target.value)}

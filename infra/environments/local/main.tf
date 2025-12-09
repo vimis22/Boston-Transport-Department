@@ -38,9 +38,16 @@ resource "kubernetes_namespace" "default" {
   }
 }
 
+# Deploy Operators
+module "operators" {
+  depends_on = [kubernetes_namespace.default]
+  source = "../../modules/operators"
+  namespace = local.namespace
+}
+
 # Deploy Hadoop cluster
 module "hadoop" {
-  depends_on = [kubernetes_namespace.default]
+  depends_on = [module.operators]
   source = "../../modules/hadoop"
   namespace = local.namespace
 }
@@ -64,7 +71,14 @@ resource "null_resource" "publish_schemas" {
 
 # Deploy BigData services
 module "bigdata" {
+  depends_on = [module.hadoop, null_resource.publish_schemas]
   source = "../../modules/bigdata"
   namespace = local.namespace
-  depends_on = [null_resource.publish_schemas]
+}
+
+# Deploy ETL
+module "etl" {
+  depends_on = [module.bigdata]
+  source = "../../modules/etl"
+  namespace = local.namespace
 }

@@ -17,7 +17,9 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME_TIMEMANAGER: timemanager
   IMAGE_NAME_STREAMER: streamer
+  IMAGE_NAME_DASHBOARD: dashboard
   IMAGE_NAME_HIVE_HTTP_PROXY: hive-http-proxy
+  IMAGE_NAME_ETL: etl
 
 jobs:
   build-and-push:
@@ -68,11 +70,39 @@ jobs:
             type=sha,prefix=sha-
             type=raw,value=latest,enable={{is_default_branch}}
 
+      - name: Extract metadata (dashboard)
+        id: meta-dashboard
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME_DASHBOARD }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable={{is_default_branch}}
+
       - name: Extract metadata (hive-http-proxy)
         id: meta-hive-http-proxy
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME_HIVE_HTTP_PROXY }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Extract metadata (etl)
+        id: meta-etl
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME_ETL }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -106,6 +136,18 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Build and push dashboard image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./src/dashboard
+          file: ./src/dashboard/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta-dashboard.outputs.tags }}
+          labels: ${{ steps.meta-dashboard.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
       - name: Build and push hive-http-proxy image
         uses: docker/build-push-action@v5
         with:
@@ -115,5 +157,17 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta-hive-http-proxy.outputs.tags }}
           labels: ${{ steps.meta-hive-http-proxy.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push etl image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./src/etl
+          file: ./src/etl/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta-etl.outputs.tags }}
+          labels: ${{ steps.meta-etl.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

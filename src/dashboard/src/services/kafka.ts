@@ -30,8 +30,7 @@ type KafkaRecord = {
 
 export class KafkaService {
   private discoveredClusterId: string | undefined;
-  private readonly v3Base = `${env.kafkaRestUrl.replace(/\/$/, "")}/v3`;
-  private readonly v2Base = env.kafkaRestUrl.replace(/\/$/, "");
+  private readonly kafkaUiBase = env.kafkaUiUrl.replace(/\/$/, "");
   private readonly sampleConsumers = new Map<
     string,
     {
@@ -45,10 +44,10 @@ export class KafkaService {
     if (env.kafkaClusterId) return env.kafkaClusterId;
     if (this.discoveredClusterId) return this.discoveredClusterId;
 
-    const data = await fetchJson<{ data: { cluster_id: string }[] }>(
-      `${this.v3Base}/clusters`
+    const data = await fetchJson<Array<{ name: string }>>(
+      `${this.kafkaUiBase}/api/clusters`
     );
-    const id = data.data?.[0]?.cluster_id;
+    const id = data?.[0]?.name;
     if (!id) throw new Error("Kafka cluster_id not found");
     this.discoveredClusterId = id;
     return id;
@@ -56,172 +55,102 @@ export class KafkaService {
 
   async listTopics(): Promise<KafkaTopicItem[]> {
     const clusterId = await this.getClusterId();
-    const result = await fetchJson<KafkaTopicResponse>(
-      `${this.v3Base}/clusters/${clusterId}/topics`
+    const result = await fetchJson<{ topics: Array<{ name: string; internal: boolean; partitionCount: number; replicationFactor: number }> }>(
+      `${this.kafkaUiBase}/api/clusters/${clusterId}/topics`
     );
-    return result.data ?? [];
+    return (result.topics ?? []).map(topic => ({
+      topic_name: topic.name,
+      is_internal: topic.internal,
+      partitions_count: topic.partitionCount,
+      replication_factor: topic.replicationFactor,
+    }));
   }
 
   async getTopicDetail(topic: string): Promise<KafkaTopicDetail> {
     const clusterId = await this.getClusterId();
     const detail = await fetchJson<{
-      topic_name: string;
-      partitions_count: number;
-      replication_factor: number;
-      is_internal: boolean;
-    }>(`${this.v3Base}/clusters/${clusterId}/topics/${topic}`);
+      name: string;
+      partitionCount: number;
+      replicationFactor: number;
+      internal: boolean;
+    }>(`${this.kafkaUiBase}/api/clusters/${clusterId}/topics/${topic}`);
 
     return {
-      topic_name: detail.topic_name,
-      partitions_count: detail.partitions_count,
-      replication_factor: detail.replication_factor,
-      is_internal: detail.is_internal,
+      topic_name: detail.name,
+      partitions_count: detail.partitionCount,
+      replication_factor: detail.replicationFactor,
+      is_internal: detail.internal,
     };
   }
 
   async getTopicSample(topic: string, limit = env.kafkaSampleLimit) {
-    const headers = {
-      "Content-Type": "application/vnd.kafka.v2+json",
-      Accept: "application/vnd.kafka.v2+json",
-    };
-    const maxBuffer = Math.max(limit * 2, 100);
+    const url = new URL(
+      `${this.kafkaUiBase}/api/clusters/${encodeURIComponent(
+        env.kafkaUiClusterId
+      )}/topics/${encodeURIComponent(topic)}/messages`
+    );
+    url.searchParams.set("limit", String(limit));
+    url.searchParams.set("page", "0");
+    url.searchParams.set("seekDirection", "BACKWARD");
+    url.searchParams.set("seekType", "LATEST");
+    url.searchParams.set("keySerde", "String");
+    url.searchParams.set("valueSerde", "SchemaRegistry");
 
-    let state = this.sampleConsumers.get(topic);
-
-    console.log("[KafkaSample] request", {
-      topic,
-      limit,
-      hasState: Boolean(state),
-      initialized: state?.initialized ?? false,
-      bufferSize: state?.buffer.length ?? 0,
+    const res = await fetch(url.toString(), {
+      headers: {
+        Accept: "text/event-stream",
+      },
     });
 
-    // Lazily create a long-lived consumer per topic and subscribe once.
-    if (!state) {
-      // Use a fresh consumer group so we always start from the latest offset
-      // and only ever keep a rolling tail of recent messages.
-      const group = `dashboard-sample-${topic}-${crypto.randomUUID()}`;
-      const creationRes = await this.safeFetch(
-        `${this.v2Base}/consumers/${group}`,
-        {
-          method: "POST",
-          headers,
-          body: JSON.stringify({
-            format: "avro",
-            // Start from the current end of the log; we only care about a live tail.
-            "auto.offset.reset": "latest",
-          }),
-        }
+    const body = await res.text();
+    if (!res.ok) {
+      throw new HttpError(
+        `Kafka UI sample failed: ${res.status}`,
+        res.status,
+        body
       );
-
-      const creationBody = (await creationRes.json()) as {
-        base_uri?: string;
-        instance_id?: string;
-      };
-
-      if (!creationBody.instance_id) {
-        throw new HttpError(
-          "Kafka consumer creation failed (missing instance_id)",
-          500,
-          creationBody
-        );
-      }
-
-      // IMPORTANT: don't use base_uri host (it points to internal DNS that the
-      // dashboard can't reach). Always build the instance URL from our own v2Base.
-      const consumerBase = `${this.v2Base}/consumers/${group}/instances/${creationBody.instance_id}`;
-
-      console.log("[KafkaSample] created consumer", {
-        topic,
-        group,
-        instanceId: creationBody.instance_id,
-        consumerBase,
-      });
-
-      await this.safeFetch(`${consumerBase}/subscription`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ topics: [topic] }),
-      });
-
-      state = {
-        consumerBase,
-        buffer: [],
-        initialized: false,
-      };
-      this.sampleConsumers.set(topic, state);
     }
 
-    const pollOnce = async () => {
-      const recordsRes = await fetch(
-        `${state!.consumerBase}/records?timeout=1000&max_bytes=51200`,
-        {
-          headers: {
-            Accept: "application/vnd.kafka.avro.v2+json",
-          },
-        }
-      );
+    const records: KafkaRecord[] = [];
 
-      const recordsBody = await recordsRes.text();
-      if (!recordsRes.ok) {
-        throw new HttpError(
-          `Kafka poll failed: ${recordsRes.status}`,
-          recordsRes.status,
-          recordsBody
-        );
+    for (const line of body.split(/\r?\n/)) {
+      const trimmed = line.trim();
+      if (!trimmed.startsWith("data:")) continue;
+      const jsonPart = trimmed.slice(5).trim();
+      if (!jsonPart) continue;
+
+      let payload: any;
+      try {
+        payload = JSON.parse(jsonPart);
+      } catch {
+        continue;
       }
 
-      const batch = (JSON.parse(recordsBody) as KafkaRecord[]) ?? [];
-      if (batch.length) {
-        const first = batch[0];
-        const last = batch[batch.length - 1];
-        console.log("[KafkaSample] poll batch", {
-          topic,
-          batchSize: batch.length,
-          firstOffset: first.offset,
-          lastOffset: last.offset,
-        });
-      } else {
-        console.log("[KafkaSample] poll empty batch", { topic });
-      }
-      if (batch.length) {
-        state!.buffer.push(...batch);
-        if (state!.buffer.length > maxBuffer) {
-          state!.buffer = state!.buffer.slice(-maxBuffer);
+      if (payload.type !== "MESSAGE" || !payload.message) continue;
+      const msg = payload.message;
+
+      let value: unknown = msg.content;
+      if (typeof msg.content === "string") {
+        try {
+          value = JSON.parse(msg.content);
+        } catch {
+          // keep raw string if not JSON
         }
       }
-      return batch;
-    };
 
-    if (!state.initialized) {
-      console.log("[KafkaSample] first poll for consumer", {
+      records.push({
         topic,
-        maxBuffer,
+        partition: msg.partition ?? 0,
+        offset: msg.offset ?? 0,
+        key: msg.key ?? undefined,
+        value,
+        timestamp: msg.timestamp ?? undefined,
       });
-      await pollOnce();
-      state.initialized = true;
-    } else {
-      // Subsequent calls just top up with any new records.
-      await pollOnce();
     }
 
-    const sorted = [...state.buffer].sort((a, b) => {
-      if (a.offset === b.offset) return a.partition - b.partition;
-      return a.offset - b.offset;
-    });
-
-    const slice = sorted.slice(-limit);
-
-    console.log("[KafkaSample] response slice", {
-      topic,
-      limit,
-      bufferSize: state.buffer.length,
-      returned: slice.length,
-      firstOffset: slice[0]?.offset,
-      lastOffset: slice[slice.length - 1]?.offset,
-    });
-
-    return slice;
+    // Kafka UI returns newest first (BACKWARD from LATEST); normalize to ascending.
+    const sorted = records.sort((a, b) => a.offset - b.offset);
+    return sorted.slice(-limit);
   }
 
   getKnownTopics() {

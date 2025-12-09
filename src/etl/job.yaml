@@ -1,0 +1,19 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: etl-job
+  namespace: bigdata
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      activeDeadlineSeconds: 600
+      containers:
+        - name: etl-job
+          image: ghcr.io/vimis22/etl:1.0.8
+          imagePullPolicy: IfNotPresent
+          command:
+            [
+              "python",
+              "/app/jobs/bike-weather-data-aggregation.py",
+            ]

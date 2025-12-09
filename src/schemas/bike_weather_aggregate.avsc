@@ -1,0 +1,18 @@
+{
+  "type": "record",
+  "name": "BikeWeatherAggregate",
+  "namespace": "aggregate",
+  "fields": [
+    { "name": "starttime", "type": "string" },
+    { "name": "stoptime", "type": "string" },
+    { "name": "weather_ts", "type": "string" },
+    { "name": "temp_c", "type": "double" },
+    { "name": "precip_daily_mm", "type": "double" },
+    { "name": "tripduration", "type": "double" },
+    { "name": "start_station_latitude", "type": "double" },
+    { "name": "start_station_longitude", "type": "double" },
+    { "name": "end_station_latitude", "type": "double" },
+    { "name": "end_station_longitude", "type": "double" }
+  ]
+}
+

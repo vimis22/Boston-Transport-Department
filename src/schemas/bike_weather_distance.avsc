@@ -1,0 +1,16 @@
+{
+  "type": "record",
+  "name": "BikeWeatherDistance",
+  "namespace": "aggregate",
+  "fields": [
+    { "name": "starttime", "type": "string" },
+    { "name": "stoptime", "type": "string" },
+    { "name": "weather_ts", "type": "string" },
+    { "name": "temp_c", "type": "double" },
+    { "name": "precip_daily_mm", "type": "double" },
+    { "name": "tripduration", "type": "double" },
+    { "name": "distance_meters", "type": "double" },
+    { "name": "average_speed_kmh", "type": "double" }
+  ]
+}
+
