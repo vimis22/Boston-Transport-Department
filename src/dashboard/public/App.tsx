@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { HomeTab } from "./sections/HomeTab";
 import { HiveTab } from "./sections/HiveTab";
 import { KafkaTab } from "./sections/KafkaTab";
 import { HistoricalTab } from "./sections/HistoricalTab";
 
 type TabKey = "home" | "hive" | "kafka" | "historical";
+const TAB_STORAGE_KEY = "btd-active-tab";
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: "home", label: "Home" },
@@ -14,7 +15,16 @@ const TABS: { key: TabKey; label: string }[] = [
 ];
 
 export default function App() {
-  const [tab, setTab] = useState<TabKey>("home");
+  const [tab, setTab] = useState<TabKey>(() => {
+    if (typeof window === "undefined") return "home";
+    const saved = window.localStorage.getItem(TAB_STORAGE_KEY);
+    return (saved as TabKey) ?? "home";
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(TAB_STORAGE_KEY, tab);
+  }, [tab]);
 
   return (
     <div className="min-h-screen bg-slate-50">

@@ -43,6 +43,13 @@ To upload the schemas to the Schema Registry, you can use the `tools/create-sche
 - Then execute `uv run tools/create-schemas.py`
 
 ## Check the streamer pod in kubernetes
+To check the streamer pod in kubernetes, you can use the following command:
+- `kubectl get pods -n bigdata`
+
+To check the logs of the streamer pod, you can use the following command:
+- `kubectl logs -n bigdata streamer-<pod-name>`
+
+Note, that the streamer must run before the kafka topics are created, and before the kafka connect HDFS sink is able to write to the HDFS cluster.
 
 ## Connect VSCode to jupyter kernel
 1. Open a notebook and click on the kernel icon in the top right corner.
@@ -55,7 +62,11 @@ Now you can run the notebook and it will connect to the jupyter kernel.
 
 ## TODO:
 - Basic ETL(temperature, precipitation, trip distance and average trip speed)
+    - One etl for doing dense rank join between bike data and weather data
+    - Another ETL for doing distance calculation between the start and end station
 - Quick queries in ui for hive (e.g. show tables, select * from table limit n, )
+- Deploy dashboard to kubernetes
+- Make video tutorial for bringup
 
 Release strategy:
 - git tag -f v1.0.4 HEAD

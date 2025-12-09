@@ -1,0 +1,21 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: etl-job
+  namespace: bigdata
+  labels:
+    stackable.tech/vendor: Stackable
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      activeDeadlineSeconds: 600
+      containers:
+        - name: etl-job
+          image: docker.io/matg/spark:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            [
+              "python",
+              "/app/main.py",
+            ]

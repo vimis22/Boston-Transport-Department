@@ -36,7 +36,7 @@ resource "kubernetes_deployment" "timemanager" {
       spec {
         container {
           name              = "timemanager"
-          image             = "ghcr.io/vimis22/timemanager:1.0.3"
+          image             = "ghcr.io/vimis22/timemanager:1.0.5"
           image_pull_policy = "IfNotPresent"
 
           port {
@@ -120,7 +120,7 @@ resource "kubernetes_deployment" "streamer" {
       spec {
         container {
           name              = "streamer"
-          image             = "ghcr.io/vimis22/streamer:1.0.3"
+          image             = "ghcr.io/vimis22/streamer:1.0.6"
           image_pull_policy = "IfNotPresent"
 
           env {
@@ -208,7 +208,7 @@ resource "kubernetes_deployment" "hive_http_proxy" {
       spec {
         container {
           name              = "hive-http-proxy"
-          image             = "ghcr.io/vimis22/hive-http-proxy:1.0.3"
+          image             = "ghcr.io/vimis22/hive-http-proxy:1.0.5"
           image_pull_policy = "IfNotPresent"
 
           env {

@@ -12,6 +12,28 @@ import { StatusPill } from "../components/StatusPill";
 
 const SPEED_PRESETS = [0.5, 1, 2, 5, 10, 50, 100, 300];
 const STREAM_TOPIC_NAMES = ["bike-data", "taxi-data", "weather-data"];
+const QUICK_LINKS = [
+  {
+    label: "HDFS",
+    href: "http://localhost:9870/explorer.html#/",
+    description: "NameNode UI & file explorer",
+  },
+  {
+    label: "Kafka UI",
+    href: "http://localhost:8083/ui/clusters/kafka-broker/all-topics",
+    description: "Topic browser & consumer offsets",
+  },
+  {
+    label: "Spark",
+    href: "http://localhost:4040/jobs/",
+    description: "Spark application jobs view",
+  },
+  {
+    label: "Jupyter",
+    href: "http://localhost:8080/?token=adminadmin",
+    description: "Notebook workspace",
+  },
+];
 
 export function HomeTab() {
   const { data: clock, isLoading: clockLoading } = useClockState();
@@ -126,28 +148,24 @@ export function HomeTab() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          label="Simulation Time"
-          value={clockLoading ? "Loading..." : formattedTime}
-          hint="Normalized ISO 8601"
-        />
-        <StatCard
-          label="Speed"
-          value={clock ? `${clock.speed.toFixed(2)}x` : "—"}
-          hint="Active playback rate"
-        />
-        <StatCard
-          label="Kafka Topics"
-          value={topicsLoading ? "Loading..." : topicStats.total}
-          hint={`${topicStats.external} external · ${topicStats.internal} internal`}
-        />
-        <StatCard
-          label="Active Feeds"
-          value={topicStats.streams}
-          hint="bike, taxi, weather"
-        />
-      </div>
+      <Card title="Quick Links">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {QUICK_LINKS.map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              target="_blank"
+              rel="noreferrer"
+              className="flex flex-col gap-1 rounded-md border border-slate-200 px-3 py-3 transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+            >
+              <span className="text-sm font-semibold text-slate-800">
+                {link.label}
+              </span>
+              <span className="text-xs text-slate-500">{link.description}</span>
+            </a>
+          ))}
+        </div>
+      </Card>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card title="Simulation Clock" className="h-full">
