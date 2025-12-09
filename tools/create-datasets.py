@@ -53,6 +53,10 @@ def convert_to_parquet():
         print("Converting weather data to parquet...")
         db.execute(f"""
             COPY (
+                WITH raw_data AS (
+                    SELECT * 
+                    FROM read_csv_auto('{DATASETS_DIR}/weather/*.csv', header=true, union_by_name=true, nullstr='\\N')
+                )
                 SELECT 
                     STATION,
                     DATE,
@@ -79,8 +83,18 @@ def convert_to_parquet():
                     KA1, KA2, KB1, KB2, KB3, KC1, KC2, KD1, KD2, KE1, KG1, KG2,
                     MA1, MD1, MF1, MG1, MH1, MK1, MV1, MW1, MW2, MW3,
                     OC1, OD1, OE1, OE2, OE3,
-                    RH1, RH2, RH3, REM, EQD
-                FROM read_csv_auto('{DATASETS_DIR}/weather/*.csv', header=true, union_by_name=true, nullstr='\\N')
+                    RH1, RH2, RH3, REM, EQD,
+                    LAST_VALUE(
+                        CASE 
+                            WHEN AA1 LIKE '24,%' THEN CAST(str_split(AA1, ',')[2] AS INTEGER)
+                            ELSE NULL
+                        END IGNORE NULLS
+                    ) OVER (
+                        PARTITION BY STATION 
+                        ORDER BY DATE
+                    ) AS PRECIP_DAILY_MM
+
+                FROM raw_data
                 ORDER BY DATE
             )
             TO '{DATASETS_DIR}/weather_data.parquet'

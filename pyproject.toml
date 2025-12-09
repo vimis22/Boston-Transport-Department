@@ -39,4 +39,5 @@ members = [
     "src/streamer",
     "src/time-manager",
     "src/hive-http-proxy",
+    "src/etl",
 ]
