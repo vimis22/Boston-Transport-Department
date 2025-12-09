@@ -183,6 +183,7 @@ services:
       - 8000:8000
     networks:
       hadoop:
+        ipv4_address: 172.28.0.20
 
   streamer:
     build: src/streamer
@@ -215,6 +216,7 @@ services:
       - timemanager
     networks:
       hadoop:
+        ipv4_address: 172.28.0.21
 
 networks:
   hadoop:
