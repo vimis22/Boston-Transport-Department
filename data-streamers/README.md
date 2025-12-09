@@ -1,3 +1,4 @@
+# OUTDATED
 # Dataset Streamers
 
 This folder contains **Python-based dataset streamers** that read CSV datasets and stream their contents to a Kafka-compatible broker line by line. Each streamer is containerized with Docker, allowing you to run multiple independent streams in parallel.
