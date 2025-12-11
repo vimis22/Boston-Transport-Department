@@ -34,6 +34,16 @@ ENABLE_WEATHER_SAFETY_ANALYSIS = os.getenv("ENABLE_WEATHER_SAFETY_ANALYSIS", "tr
 ENABLE_SURGE_WEATHER_CORRELATION = os.getenv("ENABLE_SURGE_WEATHER_CORRELATION", "true").lower() == "true"
 ENABLE_TRANSPORT_USAGE_SUMMARY = os.getenv("ENABLE_TRANSPORT_USAGE_SUMMARY", "true").lower() == "true"
 
+# NEW: Enable/Disable Enhanced Academic Analytics
+ENABLE_PEARSON_CORRELATIONS = os.getenv("ENABLE_PEARSON_CORRELATIONS", "true").lower() == "true"
+ENABLE_BINNED_AGGREGATIONS = os.getenv("ENABLE_BINNED_AGGREGATIONS", "true").lower() == "true"
+ENABLE_PRECIPITATION_ANALYSIS = os.getenv("ENABLE_PRECIPITATION_ANALYSIS", "true").lower() == "true"
+ENABLE_TEMPORAL_CORRELATIONS = os.getenv("ENABLE_TEMPORAL_CORRELATIONS", "true").lower() == "true"
+ENABLE_MULTI_VARIABLE_SUMMARY = os.getenv("ENABLE_MULTI_VARIABLE_SUMMARY", "true").lower() == "true"
+
+# NEW: Enable/Disable Accident-Weather Correlation Analytics
+ENABLE_ACCIDENT_WEATHER_CORRELATION = os.getenv("ENABLE_ACCIDENT_WEATHER_CORRELATION", "true").lower() == "true"
+
 # Spark Configuration in order to forward it to the SparkSession
 spark_config = (
     SparkConf()

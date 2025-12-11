@@ -43,11 +43,25 @@ def parse_bike_stream(df: DataFrame) -> DataFrame:
     """
     Parse bike streaming data from Kafka
 
-    Kafka message format:
+    Kafka message format (Avro serialized via REST Proxy):
     {
-        "data": {<transformed_record>},
-        "timestamp": "ISO timestamp",
-        "source": "bike-streamer"
+        "value": {
+            "tripduration": 388,
+            "starttime": "2018-01-01 00:16:33",
+            "stoptime": "2018-01-01 00:23:01",
+            "start station id": 178,
+            "start station name": "MIT Pacific St...",
+            "start station latitude": 42.359,
+            "start station longitude": -71.101,
+            "end station id": 107,
+            "end station name": "Ames St...",
+            "end station latitude": 42.362,
+            "end station longitude": -71.088,
+            "bikeid": 643,
+            "usertype": "Subscriber",
+            "birth year": 1992,
+            "gender": "2"
+        }
     }
 
     Args:
@@ -59,26 +73,23 @@ def parse_bike_stream(df: DataFrame) -> DataFrame:
     # Cast Kafka value to string
     string_df = df.selectExpr("CAST(value AS STRING) as json_str", "timestamp as kafka_timestamp")
 
-    # Extract nested fields from JSON
+    # Extract fields from Avro format (note: field names have spaces!)
     result_df = string_df.select(
-        get_json_object(col("json_str"), "$.data.trip_id").alias("trip_id"),
-        get_json_object(col("json_str"), "$.data.duration_seconds").cast("integer").alias("duration_seconds"),
-        get_json_object(col("json_str"), "$.data.start_time").alias("start_time"),
-        get_json_object(col("json_str"), "$.data.stop_time").alias("stop_time"),
-        get_json_object(col("json_str"), "$.data.start_station.id").alias("start_station_id"),
-        get_json_object(col("json_str"), "$.data.start_station.name").alias("start_station_name"),
-        get_json_object(col("json_str"), "$.data.start_station.latitude").cast("double").alias("start_station_latitude"),
-        get_json_object(col("json_str"), "$.data.start_station.longitude").cast("double").alias("start_station_longitude"),
-        get_json_object(col("json_str"), "$.data.end_station.id").alias("end_station_id"),
-        get_json_object(col("json_str"), "$.data.end_station.name").alias("end_station_name"),
-        get_json_object(col("json_str"), "$.data.end_station.latitude").cast("double").alias("end_station_latitude"),
-        get_json_object(col("json_str"), "$.data.end_station.longitude").cast("double").alias("end_station_longitude"),
-        get_json_object(col("json_str"), "$.data.bike_id").alias("bike_id"),
-        get_json_object(col("json_str"), "$.data.user_type").alias("user_type"),
-        get_json_object(col("json_str"), "$.data.birth_year").cast("integer").alias("birth_year"),
-        get_json_object(col("json_str"), "$.data.gender").cast("integer").alias("gender"),
-        get_json_object(col("json_str"), "$.timestamp").alias("event_timestamp"),
-        get_json_object(col("json_str"), "$.source").alias("source"),
+        get_json_object(col("json_str"), "$.value.tripduration").cast("integer").alias("duration_seconds"),
+        get_json_object(col("json_str"), "$.value.starttime").alias("start_time"),
+        get_json_object(col("json_str"), "$.value.stoptime").alias("stop_time"),
+        get_json_object(col("json_str"), "$['value']['start station id']").alias("start_station_id"),
+        get_json_object(col("json_str"), "$['value']['start station name']").alias("start_station_name"),
+        get_json_object(col("json_str"), "$['value']['start station latitude']").cast("double").alias("start_station_latitude"),
+        get_json_object(col("json_str"), "$['value']['start station longitude']").cast("double").alias("start_station_longitude"),
+        get_json_object(col("json_str"), "$['value']['end station id']").alias("end_station_id"),
+        get_json_object(col("json_str"), "$['value']['end station name']").alias("end_station_name"),
+        get_json_object(col("json_str"), "$['value']['end station latitude']").cast("double").alias("end_station_latitude"),
+        get_json_object(col("json_str"), "$['value']['end station longitude']").cast("double").alias("end_station_longitude"),
+        get_json_object(col("json_str"), "$.value.bikeid").alias("bike_id"),
+        get_json_object(col("json_str"), "$.value.usertype").alias("user_type"),
+        get_json_object(col("json_str"), "$['value']['birth year']").cast("integer").alias("birth_year"),
+        get_json_object(col("json_str"), "$.value.gender").alias("gender"),
         col("kafka_timestamp")
     )
 
@@ -104,11 +115,34 @@ def parse_taxi_stream(df: DataFrame) -> DataFrame:
     """
     Parse taxi streaming data from Kafka
 
-    Kafka message format:
+    Kafka message format (Avro serialized via REST Proxy):
     {
-        "data": {<transformed_record>},
-        "timestamp": "ISO timestamp",
-        "source": "taxi-streamer"
+        "value": {
+            "id": "424553bb-7174-41ea-aeb4-fe06d4f4b9d7",
+            "timestamp": "1544952607.89",
+            "hour": 9,
+            "day": 16,
+            "month": 12,
+            "datetime": "2018-12-16 09:30:07",
+            "timezone": "America/New_York",
+            "source": "Haymarket Square",
+            "destination": "North Station",
+            "cab_type": "Lyft",
+            "product_id": "lyft_line",
+            "name": "Shared",
+            "price": 5.0,
+            "distance": 0.44,
+            "surge_multiplier": 1.0,
+            "latitude": 42.2148,
+            "longitude": -71.033,
+            "temperature": 42.34,
+            "apparentTemperature": 37.12,
+            "short_summary": " Mostly Cloudy ",
+            "precipIntensity": 0.0,
+            "humidity": 0.68,
+            "windSpeed": 8.66,
+            ...
+        }
     }
 
     Args:
@@ -120,28 +154,26 @@ def parse_taxi_stream(df: DataFrame) -> DataFrame:
     # Cast Kafka value to string
     string_df = df.selectExpr("CAST(value AS STRING) as json_str", "timestamp as kafka_timestamp")
 
-    # Extract nested fields from JSON
+    # Extract fields from Avro format (flat structure with camelCase weather fields)
     result_df = string_df.select(
-        get_json_object(col("json_str"), "$.data.trip_id").alias("trip_id"),
-        get_json_object(col("json_str"), "$.data.datetime").alias("datetime"),
-        get_json_object(col("json_str"), "$.data.pickup_location").alias("pickup_location"),
-        get_json_object(col("json_str"), "$.data.dropoff_location").alias("dropoff_location"),
-        get_json_object(col("json_str"), "$.data.cab_type").alias("cab_type"),
-        get_json_object(col("json_str"), "$.data.product.id").alias("product_id"),
-        get_json_object(col("json_str"), "$.data.product.name").alias("product_name"),
-        get_json_object(col("json_str"), "$.data.price").cast("double").alias("price"),
-        get_json_object(col("json_str"), "$.data.distance").cast("double").alias("distance"),
-        get_json_object(col("json_str"), "$.data.surge_multiplier").cast("double").alias("surge_multiplier"),
-        get_json_object(col("json_str"), "$.data.location.latitude").cast("double").alias("latitude"),
-        get_json_object(col("json_str"), "$.data.location.longitude").cast("double").alias("longitude"),
-        get_json_object(col("json_str"), "$.data.weather_snapshot.temperature").cast("double").alias("temperature"),
-        get_json_object(col("json_str"), "$.data.weather_snapshot.apparent_temperature").cast("double").alias("apparent_temperature"),
-        get_json_object(col("json_str"), "$.data.weather_snapshot.summary").alias("weather_summary"),
-        get_json_object(col("json_str"), "$.data.weather_snapshot.precip_intensity").cast("double").alias("precip_intensity"),
-        get_json_object(col("json_str"), "$.data.weather_snapshot.humidity").cast("double").alias("humidity"),
-        get_json_object(col("json_str"), "$.data.weather_snapshot.wind_speed").cast("double").alias("wind_speed"),
-        get_json_object(col("json_str"), "$.timestamp").alias("event_timestamp"),
-        get_json_object(col("json_str"), "$.source").alias("source"),
+        get_json_object(col("json_str"), "$.value.id").alias("trip_id"),
+        get_json_object(col("json_str"), "$.value.datetime").alias("datetime"),
+        get_json_object(col("json_str"), "$.value.source").alias("pickup_location"),
+        get_json_object(col("json_str"), "$.value.destination").alias("dropoff_location"),
+        get_json_object(col("json_str"), "$.value.cab_type").alias("cab_type"),
+        get_json_object(col("json_str"), "$.value.product_id").alias("product_id"),
+        get_json_object(col("json_str"), "$.value.name").alias("product_name"),
+        get_json_object(col("json_str"), "$.value.price").cast("double").alias("price"),
+        get_json_object(col("json_str"), "$.value.distance").cast("double").alias("distance"),
+        get_json_object(col("json_str"), "$.value.surge_multiplier").cast("double").alias("surge_multiplier"),
+        get_json_object(col("json_str"), "$.value.latitude").cast("double").alias("latitude"),
+        get_json_object(col("json_str"), "$.value.longitude").cast("double").alias("longitude"),
+        get_json_object(col("json_str"), "$.value.temperature").cast("double").alias("temperature"),
+        get_json_object(col("json_str"), "$.value.apparentTemperature").cast("double").alias("apparent_temperature"),
+        get_json_object(col("json_str"), "$.value.short_summary").alias("weather_summary"),
+        get_json_object(col("json_str"), "$.value.precipIntensity").cast("double").alias("precip_intensity"),
+        get_json_object(col("json_str"), "$.value.humidity").cast("double").alias("humidity"),
+        get_json_object(col("json_str"), "$.value.windSpeed").cast("double").alias("wind_speed"),
         col("kafka_timestamp")
     )
 
@@ -165,17 +197,27 @@ def parse_weather_stream(df: DataFrame) -> DataFrame:
     """
     Parse weather streaming data from Kafka (NCEI format)
 
-    Kafka message format:
+    Kafka message format (Avro serialized via REST Proxy):
     {
-        "data": {
-            "station": "...",
-            "datetime": "...",
-            "location": {...},
-            "station_info": {...},
-            "observations": {...}
-        },
-        "timestamp": "ISO timestamp",
-        "source": "weather-streamer"
+        "value": {
+            "STATION": "72509014739",
+            "DATE": "2019-01-01T00:00:00",
+            "SOURCE": "4",
+            "LATITUDE": "42.3606",
+            "LONGITUDE": "-71.0097",
+            "ELEVATION": "3.7",
+            "NAME": "BOSTON, MA US",
+            "REPORT_TYPE": "FM-12",
+            "CALL_SIGN": "KBOS",
+            "QUALITY_CONTROL": "V020",
+            "WND": "160,1,N,0046,1",
+            "CIG": "99999,9,9,N",
+            "VIS": "016000,1,9,9",
+            "TMP": "+0056,1",
+            "DEW": "-0017,1",
+            "SLP": "10248,1",
+            ...
+        }
     }
 
     Args:
@@ -187,26 +229,24 @@ def parse_weather_stream(df: DataFrame) -> DataFrame:
     # Cast Kafka value to string
     string_df = df.selectExpr("CAST(value AS STRING) as json_str", "timestamp as kafka_timestamp")
 
-    # Extract nested fields from JSON (NCEI format)
+    # Extract fields from Avro format (UPPERCASE field names from NCEI)
     result_df = string_df.select(
-        get_json_object(col("json_str"), "$.data.station").alias("station"),
-        get_json_object(col("json_str"), "$.data.datetime").alias("datetime"),
-        get_json_object(col("json_str"), "$.data.source").alias("data_source"),
-        get_json_object(col("json_str"), "$.data.location.latitude").cast("double").alias("latitude"),
-        get_json_object(col("json_str"), "$.data.location.longitude").cast("double").alias("longitude"),
-        get_json_object(col("json_str"), "$.data.location.elevation").cast("double").alias("elevation"),
-        get_json_object(col("json_str"), "$.data.station_info.name").alias("station_name"),
-        get_json_object(col("json_str"), "$.data.station_info.report_type").alias("report_type"),
-        get_json_object(col("json_str"), "$.data.station_info.call_sign").alias("call_sign"),
-        get_json_object(col("json_str"), "$.data.station_info.quality_control").alias("quality_control"),
-        get_json_object(col("json_str"), "$.data.observations.wind").alias("wind"),
-        get_json_object(col("json_str"), "$.data.observations.ceiling").alias("ceiling"),
-        get_json_object(col("json_str"), "$.data.observations.visibility").alias("visibility"),
-        get_json_object(col("json_str"), "$.data.observations.temperature").alias("temperature"),
-        get_json_object(col("json_str"), "$.data.observations.dew_point").alias("dew_point"),
-        get_json_object(col("json_str"), "$.data.observations.sea_level_pressure").alias("sea_level_pressure"),
-        get_json_object(col("json_str"), "$.timestamp").alias("event_timestamp"),
-        get_json_object(col("json_str"), "$.source").alias("source"),
+        get_json_object(col("json_str"), "$.value.STATION").alias("station"),
+        get_json_object(col("json_str"), "$.value.DATE").alias("datetime"),
+        get_json_object(col("json_str"), "$.value.SOURCE").alias("data_source"),
+        get_json_object(col("json_str"), "$.value.LATITUDE").cast("double").alias("latitude"),
+        get_json_object(col("json_str"), "$.value.LONGITUDE").cast("double").alias("longitude"),
+        get_json_object(col("json_str"), "$.value.ELEVATION").cast("double").alias("elevation"),
+        get_json_object(col("json_str"), "$.value.NAME").alias("station_name"),
+        get_json_object(col("json_str"), "$.value.REPORT_TYPE").alias("report_type"),
+        get_json_object(col("json_str"), "$.value.CALL_SIGN").alias("call_sign"),
+        get_json_object(col("json_str"), "$.value.QUALITY_CONTROL").alias("quality_control"),
+        get_json_object(col("json_str"), "$.value.WND").alias("wind"),
+        get_json_object(col("json_str"), "$.value.CIG").alias("ceiling"),
+        get_json_object(col("json_str"), "$.value.VIS").alias("visibility"),
+        get_json_object(col("json_str"), "$.value.TMP").alias("temperature"),
+        get_json_object(col("json_str"), "$.value.DEW").alias("dew_point"),
+        get_json_object(col("json_str"), "$.value.SLP").alias("sea_level_pressure"),
         col("kafka_timestamp")
     )
 
@@ -234,11 +274,20 @@ def parse_accident_stream(df: DataFrame) -> DataFrame:
     """
     Parse accident streaming data from Kafka
 
-    Kafka message format:
+    Kafka message format (Avro serialized via REST Proxy):
     {
-        "data": {<transformed_record>},
-        "timestamp": "ISO timestamp",
-        "source": "accident-streamer"
+        "value": {
+            "dispatch_ts": "2017-03-23 08:37:30+00",
+            "mode_type": "mv",
+            "location_type": "Street",
+            "street": "NEPONSET VALLEY PKWY",
+            "xstreet1": "HYDE PARK AVE",
+            "xstreet2": "HAMILTON ST",
+            "x_cord": 756027.08,
+            "y_cord": 2911536.74,
+            "lat": 42.237004,
+            "long": -71.131144
+        }
     }
 
     Args:
@@ -250,20 +299,18 @@ def parse_accident_stream(df: DataFrame) -> DataFrame:
     # Cast Kafka value to string
     string_df = df.selectExpr("CAST(value AS STRING) as json_str", "timestamp as kafka_timestamp")
 
-    # Extract nested fields from JSON
+    # Extract fields from Avro format (flat structure)
     result_df = string_df.select(
-        get_json_object(col("json_str"), "$.data.dispatch_ts").alias("dispatch_ts"),
-        get_json_object(col("json_str"), "$.data.mode_type").alias("mode_type"),
-        get_json_object(col("json_str"), "$.data.location_type").alias("location_type"),
-        get_json_object(col("json_str"), "$.data.street").alias("street"),
-        get_json_object(col("json_str"), "$.data.xstreet1").alias("xstreet1"),
-        get_json_object(col("json_str"), "$.data.xstreet2").alias("xstreet2"),
-        get_json_object(col("json_str"), "$.data.x_cord").cast("double").alias("x_cord"),
-        get_json_object(col("json_str"), "$.data.y_cord").cast("double").alias("y_cord"),
-        get_json_object(col("json_str"), "$.data.lat").cast("double").alias("lat"),
-        get_json_object(col("json_str"), "$.data.long").cast("double").alias("long"),
-        get_json_object(col("json_str"), "$.timestamp").alias("event_timestamp"),
-        get_json_object(col("json_str"), "$.source").alias("source"),
+        get_json_object(col("json_str"), "$.value.dispatch_ts").alias("dispatch_ts"),
+        get_json_object(col("json_str"), "$.value.mode_type").alias("mode_type"),
+        get_json_object(col("json_str"), "$.value.location_type").alias("location_type"),
+        get_json_object(col("json_str"), "$.value.street").alias("street"),
+        get_json_object(col("json_str"), "$.value.xstreet1").alias("xstreet1"),
+        get_json_object(col("json_str"), "$.value.xstreet2").alias("xstreet2"),
+        get_json_object(col("json_str"), "$.value.x_cord").cast("double").alias("x_cord"),
+        get_json_object(col("json_str"), "$.value.y_cord").cast("double").alias("y_cord"),
+        get_json_object(col("json_str"), "$.value.lat").cast("double").alias("lat"),
+        get_json_object(col("json_str"), "$.value.long").cast("double").alias("long"),
         col("kafka_timestamp")
     )
 

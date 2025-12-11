@@ -11,13 +11,22 @@ from .transformations import (
 )
 from .windowed_aggregations import (
     create_combined_transport_weather_window,
-    aggregate_accident_data_by_window
+    aggregate_accident_data_by_window,
+    create_weather_binned_aggregations
 )
 from .analytics import (
     calculate_weather_transport_correlation,
     calculate_weather_safety_risk,
     calculate_surge_weather_correlation,
-    generate_transport_usage_summary
+    generate_transport_usage_summary,
+    # NEW: Enhanced analytics for academic correlation analysis
+    calculate_pearson_correlations,
+    calculate_binned_weather_aggregations,
+    calculate_precipitation_impact_analysis,
+    calculate_temporal_segmented_correlations,
+    calculate_multi_variable_correlation_summary,
+    # NEW: Accident-weather correlation for safety analysis
+    calculate_accident_weather_correlation
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -181,9 +190,116 @@ def main():
             queries.append(summary_query)
             logger.info("  ✓ Transport usage summary stream started")
 
+        # ========================================
+        # STEP 3: ENHANCED ACADEMIC ANALYTICS
+        # ========================================
+        logger.info("Step 3: Setting up enhanced academic analytics streams...")
+
+        # Analytics 5: Pearson Correlation Metrics
+        if config.ENABLE_PEARSON_CORRELATIONS:
+            logger.info("  - Creating Pearson correlation metrics stream...")
+            combined_df = create_combined_transport_weather_window(
+                bike_df, taxi_df, weather_df,
+                window_duration=config.WINDOW_DURATION_MEDIUM
+            )
+            pearson_df = calculate_pearson_correlations(combined_df)
+            pearson_query = write_analytics_stream(
+                pearson_df,
+                "pearson_correlations",
+                output_mode="append"
+            )
+            queries.append(pearson_query)
+            logger.info("  ✓ Pearson correlation stream started")
+
+        # Analytics 6: Binned Weather Aggregations (for scatter plots)
+        if config.ENABLE_BINNED_AGGREGATIONS:
+            logger.info("  - Creating binned weather aggregations stream...")
+            combined_df = create_combined_transport_weather_window(
+                bike_df, taxi_df, weather_df,
+                window_duration=config.WINDOW_DURATION_MEDIUM
+            )
+            binned_df = calculate_binned_weather_aggregations(combined_df)
+            binned_query = write_analytics_stream(
+                binned_df,
+                "weather_binned_metrics",
+                output_mode="append"
+            )
+            queries.append(binned_query)
+            logger.info("  ✓ Binned aggregations stream started")
+
+        # Analytics 7: Precipitation Impact Analysis
+        if config.ENABLE_PRECIPITATION_ANALYSIS:
+            logger.info("  - Creating precipitation impact analysis stream...")
+            combined_df = create_combined_transport_weather_window(
+                bike_df, taxi_df, weather_df,
+                window_duration=config.WINDOW_DURATION_MEDIUM
+            )
+            precip_df = calculate_precipitation_impact_analysis(combined_df)
+            precip_query = write_analytics_stream(
+                precip_df,
+                "precipitation_impact",
+                output_mode="append"
+            )
+            queries.append(precip_query)
+            logger.info("  ✓ Precipitation impact stream started")
+
+        # Analytics 8: Temporal Segmented Correlations
+        if config.ENABLE_TEMPORAL_CORRELATIONS:
+            logger.info("  - Creating temporal segmented correlations stream...")
+            combined_df = create_combined_transport_weather_window(
+                bike_df, taxi_df, weather_df,
+                window_duration=config.WINDOW_DURATION_MEDIUM
+            )
+            temporal_df = calculate_temporal_segmented_correlations(combined_df)
+            temporal_query = write_analytics_stream(
+                temporal_df,
+                "temporal_correlations",
+                output_mode="append"
+            )
+            queries.append(temporal_query)
+            logger.info("  ✓ Temporal correlation stream started")
+
+        # Analytics 9: Multi-Variable Correlation Summary
+        if config.ENABLE_MULTI_VARIABLE_SUMMARY:
+            logger.info("  - Creating multi-variable correlation summary stream...")
+            combined_df = create_combined_transport_weather_window(
+                bike_df, taxi_df, weather_df,
+                window_duration=config.WINDOW_DURATION_MEDIUM
+            )
+            multi_var_df = calculate_multi_variable_correlation_summary(combined_df)
+            multi_var_query = write_analytics_stream(
+                multi_var_df,
+                "multi_variable_summary",
+                output_mode="append"
+            )
+            queries.append(multi_var_query)
+            logger.info("  ✓ Multi-variable summary stream started")
+
+        # Analytics 10: Accident-Weather Correlation (NEW - Safety Analysis)
+        if config.ENABLE_ACCIDENT_WEATHER_CORRELATION:
+            logger.info("  - Creating accident-weather correlation stream...")
+            combined_df = create_combined_transport_weather_window(
+                bike_df, taxi_df, weather_df,
+                window_duration=config.WINDOW_DURATION_MEDIUM
+            )
+            accident_weather_df = calculate_accident_weather_correlation(combined_df, accident_df)
+            accident_weather_query = write_analytics_stream(
+                accident_weather_df,
+                "accident_weather_correlation",
+                output_mode="append"
+            )
+            queries.append(accident_weather_query)
+            logger.info("  ✓ Accident-weather correlation stream started")
+
         logger.info(f"\n=== ALL STREAMS STARTED ({len(queries)} total) ===")
         logger.info("Raw data → /data/processed_simple/")
         logger.info("Analytics → /data/analytics/")
+        logger.info("\n📊 ENHANCED ACADEMIC ANALYTICS ENABLED 📊")
+        logger.info("  ✓ Pearson correlations")
+        logger.info("  ✓ Binned aggregations (graph-ready)")
+        logger.info("  ✓ Precipitation impact analysis")
+        logger.info("  ✓ Temporal segmentation (rush hour vs leisure)")
+        logger.info("  ✓ Multi-variable correlation summary")
         logger.info("\nStreaming queries are running. Press Ctrl+C to stop.\n")
 
         # Wait for termination
