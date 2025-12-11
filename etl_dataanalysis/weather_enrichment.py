@@ -13,7 +13,7 @@ from pyspark.sql.functions import (
 )
 from pyspark.sql.types import DoubleType, StringType, IntegerType
 
-
+# Beskriv kort, hvad metoden gør i to sætninger.
 def parse_temperature(tmp_string: str) -> float:
     """
     Parse NOAA temperature string to Celsius.
@@ -33,7 +33,7 @@ def parse_temperature(tmp_string: str) -> float:
     except (ValueError, IndexError, AttributeError):
         return None
 
-
+# Beskriv kort, hvad metoden gør i to sætninger.
 def parse_wind_speed(wnd_string: str) -> float:
     """
     Parse NOAA wind observation string to get wind speed in m/s.
@@ -54,7 +54,7 @@ def parse_wind_speed(wnd_string: str) -> float:
     except (ValueError, IndexError, AttributeError):
         return None
 
-
+# Beskriv kort, hvad metoden gør i to sætninger.
 def parse_visibility(vis_string: str) -> float:
     """
     Parse NOAA visibility string to get visibility in meters.
@@ -79,7 +79,7 @@ parse_temperature_udf = udf(parse_temperature, DoubleType())
 parse_wind_speed_udf = udf(parse_wind_speed, DoubleType())
 parse_visibility_udf = udf(parse_visibility, DoubleType())
 
-
+# Beskriv kort, hvad metoden gør i to sætninger.
 def enrich_weather_data(df: DataFrame) -> DataFrame:
     """
     Enrich weather DataFrame with parsed values and categories.
@@ -189,7 +189,7 @@ def enrich_weather_data(df: DataFrame) -> DataFrame:
 
     return enriched_df
 
-
+# Beskriv kort, hvad metoden gør i to sætninger.
 def add_precipitation_indicator(df: DataFrame) -> DataFrame:
     """
     Add precipitation indicators based on weather remarks or precipitation data.

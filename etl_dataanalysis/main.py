@@ -32,11 +32,13 @@ from .analytics import (
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Beskriv kort, hvad metoden gør i to sætninger.
 def create_spark_session() -> SparkSession:
     return (
         SparkSession.builder.config(conf=config.spark_config).getOrCreate()
     )
 
+# Beskriv kort, hvad metoden gør i to sætninger.
 def read_kafka_stream(spark: SparkSession, topic: str):
     return (
         spark.readStream
@@ -47,6 +49,7 @@ def read_kafka_stream(spark: SparkSession, topic: str):
         .load()
     )
 
+# Beskriv kort, hvad metoden gør i to sætninger.
 def write_parquest_stream(df, subfolder: str):
     output_path = f"{config.OUTPUT_BASE_PATH}/{subfolder}"
     checkpoint_path = f"{config.CHECKPOINT_BASE_PATH}/{subfolder}"
@@ -63,6 +66,7 @@ def write_parquest_stream(df, subfolder: str):
         .start()
     )
 
+# Beskriv kort, hvad metoden gør i to sætninger.
 def write_analytics_stream(df, subfolder: str, output_mode: str = "append"):
     """
     Write analytics results to a separate analytics folder.
@@ -86,6 +90,7 @@ def write_analytics_stream(df, subfolder: str, output_mode: str = "append"):
         .start()
     )
 
+# Beskriv kort, hvad metoden gør i to sætninger.
 def main():
     logger.info("=== Starting Boston Transport ETL with Data Analysis ===")
     spark = create_spark_session()

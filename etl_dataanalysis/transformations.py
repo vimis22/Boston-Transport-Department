@@ -39,37 +39,10 @@ from .weather_enrichment import enrich_weather_data, add_precipitation_indicator
 # | 123     | 600              | 2018-01-... |
 # +---------+------------------+-------------+
 
+
+# Parser bike streaming data fra Kafka (Avro format via REST Proxy).
+# Ekstraherer fields med mellemrum via bracket notation og konverterer timestamps til partitions.
 def parse_bike_stream(df: DataFrame) -> DataFrame:
-    """
-    Parse bike streaming data from Kafka
-
-    Kafka message format (Avro serialized via REST Proxy):
-    {
-        "value": {
-            "tripduration": 388,
-            "starttime": "2018-01-01 00:16:33",
-            "stoptime": "2018-01-01 00:23:01",
-            "start station id": 178,
-            "start station name": "MIT Pacific St...",
-            "start station latitude": 42.359,
-            "start station longitude": -71.101,
-            "end station id": 107,
-            "end station name": "Ames St...",
-            "end station latitude": 42.362,
-            "end station longitude": -71.088,
-            "bikeid": 643,
-            "usertype": "Subscriber",
-            "birth year": 1992,
-            "gender": "2"
-        }
-    }
-
-    Args:
-        df: Raw Kafka stream DataFrame
-
-    Returns:
-        Parsed and transformed bike DataFrame
-    """
     # Cast Kafka value to string
     string_df = df.selectExpr("CAST(value AS STRING) as json_str", "timestamp as kafka_timestamp")
 
@@ -110,47 +83,9 @@ def parse_bike_stream(df: DataFrame) -> DataFrame:
 
     return final_df
 
-
+# Parser taxi streaming data fra Kafka med embedded weather snapshots (camelCase fields).
+# Ekstraherer flat Avro structure og konverterer datetime til timestamp med partitions.
 def parse_taxi_stream(df: DataFrame) -> DataFrame:
-    """
-    Parse taxi streaming data from Kafka
-
-    Kafka message format (Avro serialized via REST Proxy):
-    {
-        "value": {
-            "id": "424553bb-7174-41ea-aeb4-fe06d4f4b9d7",
-            "timestamp": "1544952607.89",
-            "hour": 9,
-            "day": 16,
-            "month": 12,
-            "datetime": "2018-12-16 09:30:07",
-            "timezone": "America/New_York",
-            "source": "Haymarket Square",
-            "destination": "North Station",
-            "cab_type": "Lyft",
-            "product_id": "lyft_line",
-            "name": "Shared",
-            "price": 5.0,
-            "distance": 0.44,
-            "surge_multiplier": 1.0,
-            "latitude": 42.2148,
-            "longitude": -71.033,
-            "temperature": 42.34,
-            "apparentTemperature": 37.12,
-            "short_summary": " Mostly Cloudy ",
-            "precipIntensity": 0.0,
-            "humidity": 0.68,
-            "windSpeed": 8.66,
-            ...
-        }
-    }
-
-    Args:
-        df: Raw Kafka stream DataFrame
-
-    Returns:
-        Parsed and transformed taxi DataFrame
-    """
     # Cast Kafka value to string
     string_df = df.selectExpr("CAST(value AS STRING) as json_str", "timestamp as kafka_timestamp")
 
@@ -192,40 +127,9 @@ def parse_taxi_stream(df: DataFrame) -> DataFrame:
 
     return final_df
 
-
+# Parser weather streaming data fra Kafka (NOAA NCEI format med UPPERCASE fields).
+# Ekstraherer temperature/vind/visibility som comma-separated coded strings og konverterer ISO timestamps.
 def parse_weather_stream(df: DataFrame) -> DataFrame:
-    """
-    Parse weather streaming data from Kafka (NCEI format)
-
-    Kafka message format (Avro serialized via REST Proxy):
-    {
-        "value": {
-            "STATION": "72509014739",
-            "DATE": "2019-01-01T00:00:00",
-            "SOURCE": "4",
-            "LATITUDE": "42.3606",
-            "LONGITUDE": "-71.0097",
-            "ELEVATION": "3.7",
-            "NAME": "BOSTON, MA US",
-            "REPORT_TYPE": "FM-12",
-            "CALL_SIGN": "KBOS",
-            "QUALITY_CONTROL": "V020",
-            "WND": "160,1,N,0046,1",
-            "CIG": "99999,9,9,N",
-            "VIS": "016000,1,9,9",
-            "TMP": "+0056,1",
-            "DEW": "-0017,1",
-            "SLP": "10248,1",
-            ...
-        }
-    }
-
-    Args:
-        df: Raw Kafka stream DataFrame
-
-    Returns:
-        Parsed and transformed weather DataFrame
-    """
     # Cast Kafka value to string
     string_df = df.selectExpr("CAST(value AS STRING) as json_str", "timestamp as kafka_timestamp")
 
@@ -269,33 +173,9 @@ def parse_weather_stream(df: DataFrame) -> DataFrame:
 
     return final_df
 
-
+# Parser accident streaming data fra Kafka med mode_type (bike/mv/ped) og location info.
+# Ekstraherer flat Avro structure og konverterer dispatch timestamps til partitions.
 def parse_accident_stream(df: DataFrame) -> DataFrame:
-    """
-    Parse accident streaming data from Kafka
-
-    Kafka message format (Avro serialized via REST Proxy):
-    {
-        "value": {
-            "dispatch_ts": "2017-03-23 08:37:30+00",
-            "mode_type": "mv",
-            "location_type": "Street",
-            "street": "NEPONSET VALLEY PKWY",
-            "xstreet1": "HYDE PARK AVE",
-            "xstreet2": "HAMILTON ST",
-            "x_cord": 756027.08,
-            "y_cord": 2911536.74,
-            "lat": 42.237004,
-            "long": -71.131144
-        }
-    }
-
-    Args:
-        df: Raw Kafka stream DataFrame
-
-    Returns:
-        Parsed and transformed accident DataFrame
-    """
     # Cast Kafka value to string
     string_df = df.selectExpr("CAST(value AS STRING) as json_str", "timestamp as kafka_timestamp")
 

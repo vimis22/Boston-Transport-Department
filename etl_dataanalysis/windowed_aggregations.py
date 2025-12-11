@@ -15,7 +15,7 @@ from pyspark.sql.functions import (
     stddev, collect_list, first, last, expr, lit
 )
 
-
+# Beskriv kort, hvad metoden gør i to sætninger.
 def aggregate_bike_data_by_window(df: DataFrame, window_duration: str = "15 minutes",
                                    slide_duration: str = None) -> DataFrame:
     """
@@ -75,7 +75,7 @@ def aggregate_bike_data_by_window(df: DataFrame, window_duration: str = "15 minu
 
     return result
 
-
+# Beskriv kort, hvad metoden gør i to sætninger.
 def aggregate_taxi_data_by_window(df: DataFrame, window_duration: str = "15 minutes",
                                    slide_duration: str = None) -> DataFrame:
     """
@@ -132,7 +132,7 @@ def aggregate_taxi_data_by_window(df: DataFrame, window_duration: str = "15 minu
 
     return result
 
-
+# Beskriv kort, hvad metoden gør i to sætninger.
 def aggregate_weather_data_by_window(df: DataFrame, window_duration: str = "15 minutes",
                                       slide_duration: str = None) -> DataFrame:
     """
@@ -200,7 +200,7 @@ def aggregate_weather_data_by_window(df: DataFrame, window_duration: str = "15 m
 
     return result
 
-
+# Beskriv kort, hvad metoden gør i to sætninger.
 def aggregate_accident_data_by_window(df: DataFrame, window_duration: str = "15 minutes",
                                        slide_duration: str = None) -> DataFrame:
     """
@@ -254,7 +254,7 @@ def aggregate_accident_data_by_window(df: DataFrame, window_duration: str = "15 
 
     return result
 
-
+# Beskriv kort, hvad metoden gør i to sætninger.
 def create_combined_transport_weather_window(bike_df: DataFrame, taxi_df: DataFrame,
                                                weather_df: DataFrame,
                                                window_duration: str = "15 minutes") -> DataFrame:
@@ -320,7 +320,7 @@ def create_combined_transport_weather_window(bike_df: DataFrame, taxi_df: DataFr
 
     return combined
 
-
+# Beskriv kort, hvad metoden gør i to sætninger.
 def create_weather_binned_aggregations(combined_df: DataFrame) -> DataFrame:
     """
     Create graph-ready binned aggregations for scatter plots.

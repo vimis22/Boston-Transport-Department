@@ -15,22 +15,9 @@ from pyspark.sql.functions import (
 from pyspark.sql.window import Window
 import pyspark.sql.functions as F
 
-
+# Beregner korrelation mellem vejrforhold og transport-brug (bikes og taxis).
+# Producerer elasticitet scores og forventede vs faktiske demand metrics.
 def calculate_weather_transport_correlation(combined_df: DataFrame) -> DataFrame:
-    """
-    Calculate correlation metrics between weather conditions and transport usage.
-
-    **ENHANCED FOR ACADEMIC ANALYSIS**:
-    This function now computes REAL statistical correlations (Pearson's r)
-    between weather variables and transport usage, enabling graph-ready outputs.
-
-    Input: Combined DataFrame from windowed aggregations with:
-        - total_bike_rentals, total_taxi_rides
-        - avg_temperature_c, avg_wind_speed_ms, avg_weather_score
-        - good_weather_ratio
-
-    Output: DataFrame with correlation metrics and insights
-    """
     # Add weather impact indicators
     result = combined_df.withColumn(
         "is_cold", when(col("avg_temperature_c") < 5, 1).otherwise(0)
@@ -98,20 +85,10 @@ def calculate_weather_transport_correlation(combined_df: DataFrame) -> DataFrame
 
     return result
 
-
+# Beregner safety risk baseret på vejrforhold og accident-frekvens per time-window.
+# Joiner accidents med weather data og producerer risk scores.
 def calculate_weather_safety_risk(accident_df: DataFrame, weather_df: DataFrame,
                                     window_duration: str = "1 hour") -> DataFrame:
-    """
-    Calculate safety risk metrics based on weather conditions and accident frequency.
-
-    Args:
-        accident_df: Accident DataFrame with dispatch_timestamp
-        weather_df: Weather DataFrame with datetime_ts and enriched weather columns
-        window_duration: Time window for aggregation
-
-    Returns:
-        DataFrame with safety risk scores and weather-accident correlations
-    """
     from pyspark.sql.functions import window
 
     # Aggregate accidents by time window
@@ -199,20 +176,9 @@ def calculate_weather_safety_risk(accident_df: DataFrame, weather_df: DataFrame,
 
     return safety_risk
 
-
+# Analyserer korrelation mellem taxi surge pricing og vejrforhold ved ride-tidspunkt.
+# Taxi data har embedded weather snapshots, så vi korrelerer surge_multiplier med weather direkte.
 def calculate_surge_weather_correlation(taxi_df: DataFrame) -> DataFrame:
-    """
-    Analyze correlation between taxi surge pricing and weather conditions.
-
-    The taxi DataFrame already has embedded weather snapshots, so we can
-    directly correlate surge multiplier with weather at ride time.
-
-    Args:
-        taxi_df: Taxi DataFrame with surge_multiplier and weather_snapshot fields
-
-    Returns:
-        DataFrame with surge-weather correlation metrics
-    """
     # Add weather categories based on embedded weather
     result = taxi_df.withColumn(
         "is_raining",
@@ -255,22 +221,10 @@ def calculate_surge_weather_correlation(taxi_df: DataFrame) -> DataFrame:
 
     return result
 
-
+# Genererer timelig summary statistik for transport brug (bikes og taxis).
+# Nyttigt til dashboard time-series visualizations.
 def generate_transport_usage_summary(bike_df: DataFrame, taxi_df: DataFrame,
                                        window_duration: str = "1 hour") -> DataFrame:
-    """
-    Generate hourly summary statistics for transport usage.
-
-    Useful for dashboard time-series visualizations.
-
-    Args:
-        bike_df: Bike rental DataFrame
-        taxi_df: Taxi ride DataFrame
-        window_duration: Aggregation window
-
-    Returns:
-        Combined transport usage summary by time window
-    """
     from pyspark.sql.functions import window, hour as hour_func, dayofweek
 
     # Bike hourly aggregation
@@ -363,30 +317,9 @@ def generate_transport_usage_summary(bike_df: DataFrame, taxi_df: DataFrame,
 # ================================================================================
 # NEW ANALYTICS FUNCTIONS FOR ACADEMIC CORRELATION ANALYSIS
 # ================================================================================
-
+# Beregner Pearson korrelations-koefficienter mellem vejr og transport variabler.
+# Producerer r-værdier (-1 til +1) der kvantificerer lineære forhold mellem temperature/vind og bike/taxi usage.
 def calculate_pearson_correlations(combined_df: DataFrame) -> DataFrame:
-    """
-    Calculate Pearson correlation coefficients between weather and transport variables.
-
-    **ACADEMIC PURPOSE**:
-    Computes actual statistical correlation (r-values) that quantify linear relationships.
-    These are the real correlation metrics Oskar requested.
-
-    **FOR EXAM**: Pearson's r ranges from -1 to +1:
-    - r = +1: Perfect positive correlation (as X increases, Y increases)
-    - r = 0: No linear correlation
-    - r = -1: Perfect negative correlation (as X increases, Y decreases)
-
-    Output Schema:
-    - window_start, window_end
-    - bike_temp_correlation: correlation between bike rentals & temperature
-    - bike_wind_correlation: correlation between bike rentals & wind speed
-    - bike_weather_score_correlation: correlation with overall weather score
-    - taxi_temp_correlation, taxi_wind_correlation, etc.
-
-    **GRAPH USAGE**: Dashboard can plot these correlation values over time
-    to show how weather-transport relationships evolve.
-    """
     # NOTE: In Spark Structured Streaming, we can't use global correlation directly
     # on the entire stream. Instead, we compute correlation metrics per batch
     # by collecting statistics that enable correlation calculation.
@@ -431,30 +364,9 @@ def calculate_pearson_correlations(combined_df: DataFrame) -> DataFrame:
 
     return result
 
-
+# Laver binned aggregations af transport usage per vejr-intervaller (temperature, vind, weather score).
+# Producerer graf-klar data med (x,y) koordinater til scatter plots.
 def calculate_binned_weather_aggregations(combined_df: DataFrame) -> DataFrame:
-    """
-    Create binned aggregations of transport usage by weather conditions.
-
-    **ACADEMIC PURPOSE**:
-    Enables scatter plot visualization: x-axis = weather variable, y-axis = transport usage.
-    By binning weather into ranges and averaging transport usage per bin,
-    we create graph-ready (x, y) coordinate pairs.
-
-    **FOR EXAM**: This addresses Oskar's request:
-    "I want a graph that shows correlation between bike rentals and weather.
-    When it rains fewer people rent bikes."
-
-    Output enables graphs like:
-    - X: Temperature bins (0-5°C, 5-10°C, ...), Y: Avg bike rentals
-    - X: Wind speed bins (0-2 m/s, 2-5 m/s, ...), Y: Avg bike rentals
-    - X: Weather score bins (0-20, 20-40, ...), Y: Avg transport usage
-
-    **DOMAIN INSIGHT**:
-    - Bike rentals peak at 15-20°C (comfortable cycling weather)
-    - Bike rentals drop sharply when wind > 10 m/s (unsafe/uncomfortable)
-    - Taxi usage increases when weather score < 40 (people avoid walking/biking)
-    """
     # Create more granular temperature bins
     result = combined_df.withColumn(
         "temp_bin_numeric",
@@ -516,31 +428,9 @@ def calculate_binned_weather_aggregations(combined_df: DataFrame) -> DataFrame:
 
     return result
 
-
+# Analyserer specifik impact af precipitation (regn) på transport mode choice (bike vs taxi).
+# Isolerer regn som key weather variable og beregner modal substitution og elasticity.
 def calculate_precipitation_impact_analysis(combined_df: DataFrame) -> DataFrame:
-    """
-    Analyze the specific impact of precipitation on transport mode choice.
-
-    **ACADEMIC PURPOSE**:
-    Isolates precipitation as a key weather variable affecting transport decisions.
-    Research shows precipitation has the strongest negative correlation with
-    active transport modes (biking, walking).
-
-    **FOR EXAM - DOMAIN KNOWLEDGE**:
-    1. Precipitation elasticity: -0.6 to -0.8 for bike rentals
-       (i.e., rain reduces bike usage by 60-80%)
-    2. Substitution effect: People switch from bikes to taxis when raining
-    3. Modal shift: Each 1mm/hr precipitation intensity shifts ~5% from bike to taxi
-
-    Output Schema:
-    - precipitation_indicator: binary (raining vs not raining)
-    - bike_usage_ratio: bike usage relative to baseline
-    - taxi_usage_ratio: taxi usage relative to baseline
-    - mode_shift_ratio: change in bike/taxi balance
-
-    **GRAPH USAGE**:
-    Bar chart: Precipitation (Yes/No) vs Avg Transport Usage by Mode
-    """
     # Infer precipitation from weather score (simplified in absence of direct precip data)
     # In real scenario, you'd use dedicated precipitation sensors
     result = combined_df.withColumn(
@@ -589,32 +479,9 @@ def calculate_precipitation_impact_analysis(combined_df: DataFrame) -> DataFrame
 
     return result
 
-
+# Beregner vejr-transport korrelationer segmenteret efter tid (rush hour, weekend, off-peak).
+# Commuter trips er mindre vejr-sensitive end leisure trips - producerer segment-specific weather sensitivity scores.
 def calculate_temporal_segmented_correlations(combined_df: DataFrame) -> DataFrame:
-    """
-    Calculate weather-transport correlations segmented by time patterns.
-
-    **ACADEMIC PURPOSE**:
-    Weather impact varies by context:
-    - Rush hour: Commuters less weather-sensitive (must travel regardless)
-    - Off-peak: Leisure trips highly weather-sensitive
-    - Weekday: Work/school trips (inelastic demand)
-    - Weekend: Recreational trips (elastic demand)
-
-    **FOR EXAM - RESEARCH FINDINGS**:
-    1. Commuter trips (weekday rush hour): weather elasticity -0.2 to -0.3
-    2. Leisure trips (weekend): weather elasticity -0.7 to -0.9
-    3. Temperature preference: Commuters tolerate 0-30°C, leisure riders prefer 15-25°C
-
-    Output Schema:
-    - temporal_segment: rush_hour_weekday, off_peak_weekday, weekend_day, weekend_night
-    - segment_weather_sensitivity: high/medium/low
-    - expected_correlation_strength: predicted r-value based on research
-
-    **GRAPH USAGE**:
-    Faceted scatter plots: Bike vs Temperature, split by temporal segment
-    Shows how correlation strength differs by trip purpose
-    """
     from pyspark.sql.functions import hour as hour_func, dayofweek
 
     # Add temporal dimensions
@@ -669,25 +536,9 @@ def calculate_temporal_segmented_correlations(combined_df: DataFrame) -> DataFra
 
     return result
 
-
+# Genererer comprehensive correlation summary på tværs af alle vejr-transport variabler.
+# Producerer normalized metrics, polynomial terms, interaction terms og predictive model for bike demand.
 def calculate_multi_variable_correlation_summary(combined_df: DataFrame) -> DataFrame:
-    """
-    Generate a comprehensive correlation summary across all weather-transport variables.
-
-    **ACADEMIC PURPOSE**:
-    Produces a correlation matrix-like output suitable for academic reporting.
-    Helps identify which weather variables have strongest predictive power.
-
-    **FOR EXAM - INTERPRETATION**:
-    Key correlation pairs to discuss:
-    1. Temperature ↔ Bike Rentals: Expected r = +0.60 to +0.75 (strong positive)
-    2. Wind Speed ↔ Bike Rentals: Expected r = -0.40 to -0.60 (moderate negative)
-    3. Weather Score ↔ Total Transport: Expected r = +0.55 to +0.70 (strong positive)
-    4. Temperature ↔ Taxi Rides: Expected r = -0.20 to +0.10 (weak/none)
-    5. Weather Score ↔ Accidents: Expected r = -0.50 to -0.70 (strong negative)
-
-    Output: Aggregate statistics that summarize variable relationships
-    """
     # Compute normalized metrics for better correlation analysis
     result = combined_df.withColumn(
         "bike_usage_normalized",
@@ -763,47 +614,9 @@ def calculate_multi_variable_correlation_summary(combined_df: DataFrame) -> Data
 
     return result
 
-
+# Analyserer korrelation mellem vejrforhold og accident occurrence (ulykker) per transport mode.
+# Beregner weather risk scores, accident rates per 1000 trips, og safety alert triggers for Boston Transport Department.
 def calculate_accident_weather_correlation(combined_df: DataFrame, accident_df: DataFrame) -> DataFrame:
-    """
-    Analyze correlation between weather conditions and accident occurrence.
-
-    **ACADEMIC PURPOSE**:
-    Research shows strong correlation between adverse weather and traffic accidents:
-    - Rain increases accident risk by 34-70%
-    - Snow/ice increases risk by 84-400%
-    - High winds increase pedestrian/bike accidents by 45%
-    - Poor visibility (fog) increases risk by 32%
-
-    **FOR BOSTON TRANSPORT DEPARTMENT**:
-    This metric enables proactive safety interventions:
-    1. Send real-time weather alerts to citizens
-    2. Increase emergency response capacity during bad weather
-    3. Adjust bike-share system availability
-    4. Deploy traffic safety measures preemptively
-
-    **EXAM TALKING POINTS**:
-    - Weather is #3 contributing factor to accidents (after speeding, distraction)
-    - Temperature < 0°C: 3x more motor vehicle accidents (ice)
-    - Precipitation: 2x more bike/pedestrian accidents (reduced visibility)
-    - Wind > 40 km/h: 85% increase in pedestrian accidents
-
-    Output Schema:
-    - window_start, window_end: Time window
-    - total_accidents: Count of accidents in window
-    - mode_type: bike/mv/ped
-    - avg_temperature_c: Weather condition
-    - has_precipitation: Boolean indicator
-    - wind_speed_kmh: Wind speed
-    - accident_rate_per_1000_trips: Normalized accident rate
-    - weather_risk_score: 0-100 (higher = more dangerous)
-    - risk_category: low/medium/high/critical
-
-    **GRAPH USAGE**:
-    - Line chart: Time vs Accidents (colored by weather severity)
-    - Heatmap: Temperature/Precipitation × Accident count
-    - Bar chart: Weather condition vs Accident rate by mode
-    """
     from pyspark.sql.functions import when, hour as hour_func, dayofweek
 
     # Aggregate accidents by 15-minute windows
