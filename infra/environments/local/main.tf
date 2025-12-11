@@ -52,9 +52,18 @@ module "hadoop" {
   namespace = local.namespace
 }
 
+module "kafka" {
+  source    = "../../modules/kafka"
+  namespace = local.namespace
+
+  depends_on = [
+    module.hadoop
+  ]
+}
+
 # Publish schemas to Schema Registry
 resource "null_resource" "publish_schemas" {
-  depends_on = [module.hadoop]
+  depends_on = [module.kafka]
   provisioner "local-exec" {
     command = "uv run ../../../tools/create-schemas.py"
   }

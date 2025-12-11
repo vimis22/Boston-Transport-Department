@@ -1,0 +1,91 @@
+{
+  "type": "record",
+  "name": "BikeTrip",
+  "namespace": "com.boston.transport.bike",
+  "doc": "Schema for Blue Bikes (Hubway) trip data from 2018",
+  "fields": [
+    {
+      "name": "tripduration",
+      "type": "int",
+      "doc": "Trip duration in seconds (e.g. 388)"
+    },
+    {
+      "name": "starttime",
+      "type": "string",
+      "doc": "Trip start timestamp in format 'YYYY-MM-DD HH:MM:SS' (e.g. '2018-01-01 00:16:33')"
+    },
+    {
+      "name": "stoptime",
+      "type": "string",
+      "doc": "Trip end timestamp in format 'YYYY-MM-DD HH:MM:SS' (e.g. '2018-01-01 00:23:01')"
+    },
+    {
+      "name": "start station id",
+      "type": "int",
+      "doc": "Starting station ID (e.g. 178)"
+    },
+    {
+      "name": "start station name",
+      "type": "string",
+      "doc": "Starting station name (e.g. 'MIT Pacific St at Purrington St')"
+    },
+    {
+      "name": "start station latitude",
+      "type": "double",
+      "doc": "Starting station latitude (e.g. 42.35957320109044)"
+    },
+    {
+      "name": "start station longitude",
+      "type": "double",
+      "doc": "Starting station longitude (e.g. -71.10129475593567)"
+    },
+    {
+      "name": "end station id",
+      "type": "int",
+      "doc": "Ending station ID (e.g. 107)"
+    },
+    {
+      "name": "end station name",
+      "type": "string",
+      "doc": "Ending station name (e.g. 'Ames St at Main St')"
+    },
+    {
+      "name": "end station latitude",
+      "type": "double",
+      "doc": "Ending station latitude (e.g. 42.3625)"
+    },
+    {
+      "name": "end station longitude",
+      "type": "double",
+      "doc": "Ending station longitude (e.g. -71.08822)"
+    },
+    {
+      "name": "bikeid",
+      "type": "int",
+      "doc": "Bike identifier (e.g. 643)"
+    },
+    {
+      "name": "usertype",
+      "type": {
+        "type": "enum",
+        "name": "UserType",
+        "symbols": ["Subscriber", "Customer"]
+      },
+      "doc": "Type of user - Subscriber (registered) or Customer (casual)"
+    },
+    {
+      "name": "birth year",
+      "type": "int",
+      "doc": "Birth year of user (e.g. 1992)"
+    },
+    {
+      "name": "gender",
+      "type": {
+        "type": "enum",
+        "name": "Gender",
+        "symbols": ["0", "1", "2"]
+      },
+      "doc": "Gender of user: 0=Unknown, 1=Male, 2=Female"
+    }
+  ]
+}

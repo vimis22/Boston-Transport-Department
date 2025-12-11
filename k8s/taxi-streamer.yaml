@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: taxi-streamer
+  namespace: boston-transport
+  labels:
+    app: taxi-streamer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: taxi-streamer
+  template:
+    metadata:
+      labels:
+        app: taxi-streamer
+    spec:
+      containers:
+      - name: taxi-streamer
+        image: boston-transport/taxi-streamer:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: TIME_MANAGER_URL
+          value: "http://time-manager:5000"
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          value: "kafka:9092"
+        - name: DATA_FILE
+          value: "/data/taxi_trips.csv"
+        - name: POLL_INTERVAL
+          value: "1.0"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        volumeMounts:
+        - name: mock-data
+          mountPath: /data
+          readOnly: true
+      volumes:
+      - name: mock-data
+        configMap:
+          name: mock-data

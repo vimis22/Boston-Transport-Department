@@ -1,0 +1,11 @@
+datetime,source,destination,cab_type,product_id,name,price,distance,surge_multiplier,latitude,longitude,temperature,apparentTemperature,short_summary,precipIntensity,humidity,windSpeed
+2018-01-01 08:00:00,Back Bay,Financial District,Uber,lyft_line,Shared,12.5,2.3,1.0,42.3505,-71.0763,32.5,28.3,Partly Cloudy,0.0,0.68,8.2
+2018-01-01 08:10:00,North End,South Boston,Lyft,lyft,Lyft,15.75,3.1,1.0,42.3647,-71.0542,32.7,28.5,Clear,0.0,0.67,8.0
+2018-01-01 08:20:00,South Station,Cambridge,Uber,uber_x,UberX,18.25,4.2,1.25,42.3521,-71.0552,32.8,28.6,Partly Cloudy,0.0,0.66,7.9
+2018-01-01 08:30:00,Fenway,Downtown,Lyft,lyft_plus,Lyft XL,22.50,3.8,1.0,42.3467,-71.0972,33.0,29.0,Clear,0.0,0.65,7.8
+2018-01-01 08:45:00,Seaport,Logan Airport,Uber,uber_xl,UberXL,35.00,6.5,1.0,42.3488,-71.0420,33.2,29.2,Partly Cloudy,0.0,0.64,7.7
+2018-01-01 09:00:00,Cambridge,Back Bay,Lyft,lyft_line,Shared,10.25,3.5,1.0,42.3736,-71.1097,33.5,29.5,Clear,0.0,0.63,7.6
+2018-01-01 09:15:00,Financial District,Beacon Hill,Uber,uber_x,UberX,11.50,1.8,1.0,42.3559,-71.0550,33.8,29.8,Partly Cloudy,0.0,0.62,7.5
+2018-01-01 09:30:00,Allston,Fenway,Lyft,lyft,Lyft,14.75,2.9,1.0,42.3534,-71.1324,34.0,30.0,Clear,0.0,0.61,7.4
+2018-01-01 09:45:00,South Boston,North End,Uber,uber_x,UberX,13.25,2.5,1.0,42.3328,-71.0520,34.2,30.2,Partly Cloudy,0.0,0.60,7.3
+2018-01-01 10:00:00,Downtown,Seaport,Lyft,lyft_plus,Lyft XL,19.00,2.7,1.0,42.3551,-71.0603,34.5,30.5,Clear,0.0,0.59,7.2
