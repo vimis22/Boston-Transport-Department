@@ -1,5 +1,10 @@
 import logging
+import requests
+import struct
+from typing import Tuple
 from pyspark.sql import SparkSession
+from pyspark.sql import functions as F
+from pyspark.sql.avro.functions import to_avro
 
 #Here we begin all 3 streams.
 from . import config
@@ -32,11 +37,47 @@ from .analytics import (
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
+# Helper function to fetch Avro schema from Schema Registry
+def get_latest_schema(subject: str) -> Tuple[str, int]:
+    """
+    Fetch the latest Avro schema from Schema Registry.
+
+    Args:
+        subject: Schema subject name (e.g., "bike-trips-value")
+
+    Returns:
+        Tuple of (schema_json_string, schema_id)
+    """
+    url = f"{config.SCHEMA_REGISTRY_URL}/subjects/{subject}/versions/latest"
+    logger.info(f"Fetching schema from: {url}")
+    response = requests.get(url, timeout=10)
+    response.raise_for_status()
+    data = response.json()
+    return data["schema"], data["id"]
+
+
 # Beskriv kort, hvad metoden gør i to sætninger.
 def create_spark_session() -> SparkSession:
-    return (
-        SparkSession.builder.config(conf=config.spark_config).getOrCreate()
-    )
+    """
+    Create Spark session - supports both local and Spark Connect modes.
+
+    If USE_SPARK_CONNECT=true, connects to remote Spark cluster (Kubernetes).
+    Otherwise, creates local SparkSession.
+    """
+    if config.USE_SPARK_CONNECT:
+        logger.info(f"Using Spark Connect: {config.SPARK_CONNECT_URL}")
+        return (
+            SparkSession.builder
+            .remote(config.SPARK_CONNECT_URL)
+            .appName(config.SPARK_APP_NAME)
+            .getOrCreate()
+        )
+    else:
+        logger.info("Using local SparkSession")
+        return (
+            SparkSession.builder.config(conf=config.spark_config).getOrCreate()
+        )
 
 # Beskriv kort, hvad metoden gør i to sætninger.
 def read_kafka_stream(spark: SparkSession, topic: str):
@@ -91,6 +132,48 @@ def write_analytics_stream(df, subfolder: str, output_mode: str = "append"):
     )
 
 # Beskriv kort, hvad metoden gør i to sætninger.
+def write_to_kafka_with_avro(df, topic: str, schema: str, schema_id: int, query_name: str):
+    """
+    Write DataFrame to Kafka with proper Avro encoding (Confluent Wire Format).
+
+    Args:
+        df: DataFrame to write
+        topic: Kafka topic name
+        schema: Avro schema JSON string
+        schema_id: Schema ID from Schema Registry
+        query_name: Name for the streaming query
+
+    Returns:
+        StreamingQuery object
+    """
+    # Create Confluent Wire Format header (Magic Byte + Schema ID)
+    # Magic Byte (0) + Schema ID (4 bytes, big-endian)
+    header = bytearray([0]) + struct.pack(">I", schema_id)
+
+    # Encode DataFrame as Avro with Confluent header
+    payload = df.select(
+        F.concat(
+            F.lit(header),
+            to_avro(F.struct("*"), schema)
+        ).alias("value")
+    )
+
+    checkpoint_path = f"{config.CHECKPOINT_BASE_PATH}/kafka_output/{query_name}"
+
+    logger.info(f"Writing to Kafka topic '{topic}' with Avro encoding (schema ID: {schema_id})")
+    return (
+        payload.writeStream
+        .format("kafka")
+        .option("kafka.bootstrap.servers", config.KAFKA_BOOTSTRAP_SERVERS)
+        .option("topic", topic)
+        .option("checkpointLocation", checkpoint_path)
+        .outputMode("append")
+        .trigger(processingTime=config.BATCH_INTERVAL)
+        .queryName(query_name)
+        .start()
+    )
+
+# Beskriv kort, hvad metoden gør i to sætninger.
 def main():
     logger.info("=== Starting Boston Transport ETL with Data Analysis ===")
     spark = create_spark_session()
@@ -98,6 +181,7 @@ def main():
 
     logger.info(f"Spark Version: {spark.version}")
     logger.info(f"Kafka: {config.KAFKA_BOOTSTRAP_SERVERS}")
+    logger.info(f"Schema Registry: {config.SCHEMA_REGISTRY_URL}")
     logger.info(f"Output base: {config.OUTPUT_BASE_PATH}")
     logger.info(f"Analytics output: {config.ANALYTICS_OUTPUT_PATH}")
 
@@ -106,31 +190,50 @@ def main():
 
     try:
         # ========================================
+        # STEP 0: FETCH AVRO SCHEMAS FROM SCHEMA REGISTRY
+        # ========================================
+        logger.info("Step 0: Fetching Avro schemas from Schema Registry...")
+
+        bike_schema, _ = get_latest_schema(config.SCHEMA_SUBJECTS["bike"])
+        logger.info("✓ Bike schema fetched")
+
+        taxi_schema, _ = get_latest_schema(config.SCHEMA_SUBJECTS["taxi"])
+        logger.info("✓ Taxi schema fetched")
+
+        weather_schema, _ = get_latest_schema(config.SCHEMA_SUBJECTS["weather"])
+        logger.info("✓ Weather schema fetched")
+
+        accident_schema, _ = get_latest_schema(config.SCHEMA_SUBJECTS["accidents"])
+        logger.info("✓ Accident schema fetched")
+
+        logger.info("All schemas fetched successfully!\n")
+
+        # ========================================
         # STEP 1: EXTRACTION & BASIC TRANSFORMATION
         # ========================================
-        logger.info("Step 1: Reading and parsing Kafka streams...")
+        logger.info("Step 1: Reading and parsing Kafka streams with Avro decoding...")
 
         bike_raw = read_kafka_stream(spark, config.KAFKA_TOPICS["bike"])
-        bike_df = parse_bike_stream(bike_raw)
+        bike_df = parse_bike_stream(bike_raw, bike_schema)
         bike_query = write_parquest_stream(bike_df, "bike_trips")
         queries.append(bike_query)
 
         taxi_raw = read_kafka_stream(spark, config.KAFKA_TOPICS["taxi"])
-        taxi_df = parse_taxi_stream(taxi_raw)
+        taxi_df = parse_taxi_stream(taxi_raw, taxi_schema)
         taxi_query = write_parquest_stream(taxi_df, "taxi_trips")
         queries.append(taxi_query)
 
         weather_raw = read_kafka_stream(spark, config.KAFKA_TOPICS["weather"])
-        weather_df = parse_weather_stream(weather_raw)  # Now includes enrichment!
+        weather_df = parse_weather_stream(weather_raw, weather_schema)  # Now includes enrichment!
         weather_query = write_parquest_stream(weather_df, "weather_data")
         queries.append(weather_query)
 
         accident_raw = read_kafka_stream(spark, "accidents")
-        accident_df = parse_accident_stream(accident_raw)
+        accident_df = parse_accident_stream(accident_raw, accident_schema)
         accident_query = write_parquest_stream(accident_df, "accidents")
         queries.append(accident_query)
 
-        logger.info("✓ Basic ETL streams started")
+        logger.info("✓ Basic ETL streams started with Avro decoding")
 
         # ========================================
         # STEP 2: ANALYTICS & CORRELATIONS

@@ -4,10 +4,25 @@ from pyspark import SparkConf
 #This is here where the ETL-Component is connected to Kafka.
 #The ETL-Analysis listens on 3 topics and in this context the 3 datasets are defined in the KAFKA_TOPIC.
 KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
+SCHEMA_REGISTRY_URL = os.getenv("SCHEMA_REGISTRY_URL", "http://schema-registry.bigdata.svc.cluster.local:8081")
+
+# Spark Connect Configuration (for Kubernetes deployment)
+# Set USE_SPARK_CONNECT=true to connect to remote Spark cluster instead of local SparkSession
+USE_SPARK_CONNECT = os.getenv("USE_SPARK_CONNECT", "false").lower() == "true"
+SPARK_CONNECT_URL = os.getenv("SPARK_CONNECT_URL", "sc://spark-connect-server:15002")
+
 KAFKA_TOPICS = {
     "bike": "bike-trips",
     "taxi": "taxi-trips",
     "weather": "weather-data",
+}
+
+# Schema subjects for each topic (Confluent Schema Registry naming convention)
+SCHEMA_SUBJECTS = {
+    "bike": "bike-trips-value",
+    "taxi": "taxi-trips-value",
+    "weather": "weather-data-value",
+    "accidents": "accidents-value",
 }
 
 #This is where Spark Structured Streaming runs and saves the state here.
@@ -52,7 +67,7 @@ spark_config = (
     .set("spark.sql.streaming.schemaInference", "true")
     .set("spark.streaming.stopGracefullyOnShutdown", "true")
     # Kafka specific configs, so that we recieve data from Kafka Streaming.
-    .set("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0")
+    .set("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,org.apache.spark:spark-avro_2.12:3.5.0")
     .set("spark.sql.adaptive.enabled", "true")
     .set("spark.sql.adaptive.coalescePartitions.enabled", "true")
 )
