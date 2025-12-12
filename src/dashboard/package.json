@@ -6,8 +6,8 @@
     "dev": "bun run --watch src/index.ts",
     "dev:frontend": "vite",
     "build": "bun build --compile --target bun --outfile server src/index.ts",
-    "tailwind:build": "tailwindcss -i ./public/styles/global.css -o ./public/styles/global.dist.css",
-    "tailwind:watch": "tailwindcss -i ./public/styles/global.css -o ./public/styles/global.dist.css --watch"
+    "tailwind:build": "tailwindcss -i ./public/components/styling/global.css -o ./public/components/styling/global.dist.css",
+    "tailwind:watch": "tailwindcss -i ./public/components/styling/global.css -o ./public/components/styling/global.dist.css --watch"
   },
   "dependencies": {
     "@elysiajs/cors": "^1.4.0",
