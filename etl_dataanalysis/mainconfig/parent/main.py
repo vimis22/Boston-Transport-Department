@@ -14,7 +14,7 @@ from .transformations import (
     parse_weather_stream,
     parse_accident_stream,
 )
-from .windowed_aggregations import (
+from etl_dataanalysis.aggregations.parent.windowed_aggregations import (
     create_combined_transport_weather_window,
     aggregate_accident_data_by_window,
     create_weather_binned_aggregations
