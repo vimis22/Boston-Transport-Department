@@ -43,6 +43,9 @@ WINDOW_DURATION_MEDIUM = "15 minutes" # For correlations
 WINDOW_DURATION_LONG = "1 hour"       # For safety analysis
 SLIDE_DURATION = "5 minutes"          # Sliding window interval
 
+# Watermark Configuration (following src/etl pattern)
+WATERMARK_DURATION = os.getenv("WATERMARK_DURATION", "10 minutes")  # Late data tolerance
+
 # Enable/Disable Analytics Streams
 ENABLE_WEATHER_TRANSPORT_CORRELATION = os.getenv("ENABLE_WEATHER_TRANSPORT_CORRELATION", "true").lower() == "true"
 ENABLE_WEATHER_SAFETY_ANALYSIS = os.getenv("ENABLE_WEATHER_SAFETY_ANALYSIS", "true").lower() == "true"

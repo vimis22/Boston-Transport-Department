@@ -54,4 +54,7 @@ def parse_accident_stream(df: DataFrame, schema: str) -> DataFrame:
         "hour", hour(col("dispatch_timestamp"))
     )
 
+    # Add watermark for late data handling (following src/etl pattern)
+    final_df = final_df.withWatermark("dispatch_timestamp", "10 minutes")
+
     return final_df

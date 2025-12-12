@@ -70,4 +70,7 @@ def parse_weather_stream(df: DataFrame, schema: str) -> DataFrame:
     final_df = enrich_weather_data(final_df)
     final_df = add_precipitation_indicator(final_df)
 
+    # Add watermark for late data handling (following src/etl pattern)
+    final_df = final_df.withWatermark("datetime_ts", "10 minutes")
+
     return final_df

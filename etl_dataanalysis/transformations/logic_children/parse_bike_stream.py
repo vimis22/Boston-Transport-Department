@@ -79,4 +79,7 @@ def parse_bike_stream(df: DataFrame, schema: str) -> DataFrame:
         "hour", hour(col("start_time_ts"))
     )
 
+    # Add watermark for late data handling (following src/etl pattern)
+    final_df = final_df.withWatermark("start_time_ts", "10 minutes")
+
     return final_df

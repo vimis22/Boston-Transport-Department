@@ -1,13 +1,13 @@
 import logging
-import requests
-import struct
-from typing import Tuple
-from pyspark.sql import SparkSession
-from pyspark.sql import functions as F
-from pyspark.sql.avro.functions import to_avro
 
 #Here we begin all 3 streams.
 from . import config
+from ..logic_children.create_spark_session import create_spark_session
+from ..logic_children.get_latest_schema import get_latest_schema
+from ..logic_children.read_kafka_stream import read_kafka_stream
+from ..logic_children.write_parquet_stream import write_parquest_stream
+from ..logic_children.write_analytics_stream import write_analytics_stream
+from ..logic_children.write_to_kafka_with_avro import write_to_kafka_with_avro
 from .transformations import (
     parse_bike_stream,
     parse_taxi_stream,
@@ -37,141 +37,6 @@ from .analytics import (
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
-# Helper function to fetch Avro schema from Schema Registry
-def get_latest_schema(subject: str) -> Tuple[str, int]:
-    """
-    Fetch the latest Avro schema from Schema Registry.
-
-    Args:
-        subject: Schema subject name (e.g., "bike-trips-value")
-
-    Returns:
-        Tuple of (schema_json_string, schema_id)
-    """
-    url = f"{config.SCHEMA_REGISTRY_URL}/subjects/{subject}/versions/latest"
-    logger.info(f"Fetching schema from: {url}")
-    response = requests.get(url, timeout=10)
-    response.raise_for_status()
-    data = response.json()
-    return data["schema"], data["id"]
-
-
-# Beskriv kort, hvad metoden gør i to sætninger.
-def create_spark_session() -> SparkSession:
-    """
-    Create Spark session - supports both local and Spark Connect modes.
-
-    If USE_SPARK_CONNECT=true, connects to remote Spark cluster (Kubernetes).
-    Otherwise, creates local SparkSession.
-    """
-    if config.USE_SPARK_CONNECT:
-        logger.info(f"Using Spark Connect: {config.SPARK_CONNECT_URL}")
-        return (
-            SparkSession.builder
-            .remote(config.SPARK_CONNECT_URL)
-            .appName(config.SPARK_APP_NAME)
-            .getOrCreate()
-        )
-    else:
-        logger.info("Using local SparkSession")
-        return (
-            SparkSession.builder.config(conf=config.spark_config).getOrCreate()
-        )
-
-# Beskriv kort, hvad metoden gør i to sætninger.
-def read_kafka_stream(spark: SparkSession, topic: str):
-    return (
-        spark.readStream
-        .format("kafka")
-        .option("kafka.bootstrap.servers", config.KAFKA_BOOTSTRAP_SERVERS)
-        .option("subscribe", topic)
-        .option("startingOffsets", "earliest")
-        .load()
-    )
-
-# Beskriv kort, hvad metoden gør i to sætninger.
-def write_parquest_stream(df, subfolder: str):
-    output_path = f"{config.OUTPUT_BASE_PATH}/{subfolder}"
-    checkpoint_path = f"{config.CHECKPOINT_BASE_PATH}/{subfolder}"
-
-    logger.info(f"Writing to {output_path}")
-    return (
-        df.writeStream
-        .format("parquet")
-        .option("path", output_path)
-        .option("checkpointLocation", checkpoint_path)
-        .partitionBy("year", "month", "date", "hour")
-        .outputMode("append")
-        .trigger(processingTime=config.BATCH_INTERVAL)
-        .start()
-    )
-
-# Beskriv kort, hvad metoden gør i to sætninger.
-def write_analytics_stream(df, subfolder: str, output_mode: str = "append"):
-    """
-    Write analytics results to a separate analytics folder.
-
-    Args:
-        df: DataFrame to write
-        subfolder: Subfolder name under analytics path
-        output_mode: Spark output mode ("append", "update", or "complete")
-    """
-    output_path = f"{config.ANALYTICS_OUTPUT_PATH}/{subfolder}"
-    checkpoint_path = f"{config.ANALYTICS_CHECKPOINT_PATH}/{subfolder}"
-
-    logger.info(f"Writing analytics to {output_path} (mode: {output_mode})")
-    return (
-        df.writeStream
-        .format("parquet")
-        .option("path", output_path)
-        .option("checkpointLocation", checkpoint_path)
-        .outputMode(output_mode)
-        .trigger(processingTime=config.BATCH_INTERVAL)
-        .start()
-    )
-
-# Beskriv kort, hvad metoden gør i to sætninger.
-def write_to_kafka_with_avro(df, topic: str, schema: str, schema_id: int, query_name: str):
-    """
-    Write DataFrame to Kafka with proper Avro encoding (Confluent Wire Format).
-
-    Args:
-        df: DataFrame to write
-        topic: Kafka topic name
-        schema: Avro schema JSON string
-        schema_id: Schema ID from Schema Registry
-        query_name: Name for the streaming query
-
-    Returns:
-        StreamingQuery object
-    """
-    # Create Confluent Wire Format header (Magic Byte + Schema ID)
-    # Magic Byte (0) + Schema ID (4 bytes, big-endian)
-    header = bytearray([0]) + struct.pack(">I", schema_id)
-
-    # Encode DataFrame as Avro with Confluent header
-    payload = df.select(
-        F.concat(
-            F.lit(header),
-            to_avro(F.struct("*"), schema)
-        ).alias("value")
-    )
-
-    checkpoint_path = f"{config.CHECKPOINT_BASE_PATH}/kafka_output/{query_name}"
-
-    logger.info(f"Writing to Kafka topic '{topic}' with Avro encoding (schema ID: {schema_id})")
-    return (
-        payload.writeStream
-        .format("kafka")
-        .option("kafka.bootstrap.servers", config.KAFKA_BOOTSTRAP_SERVERS)
-        .option("topic", topic)
-        .option("checkpointLocation", checkpoint_path)
-        .outputMode("append")
-        .trigger(processingTime=config.BATCH_INTERVAL)
-        .queryName(query_name)
-        .start()
-    )
 
 # Beskriv kort, hvad metoden gør i to sætninger.
 def main():
