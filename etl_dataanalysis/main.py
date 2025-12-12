@@ -177,7 +177,10 @@ def write_to_kafka_with_avro(df, topic: str, schema: str, schema_id: int, query_
 def main():
     logger.info("=== Starting Boston Transport ETL with Data Analysis ===")
     spark = create_spark_session()
-    spark.sparkContext.setLogLevel("WARN")
+
+    # Set log level (only available for local SparkSession, not Spark Connect)
+    if not config.USE_SPARK_CONNECT:
+        spark.sparkContext.setLogLevel("WARN")
 
     logger.info(f"Spark Version: {spark.version}")
     logger.info(f"Kafka: {config.KAFKA_BOOTSTRAP_SERVERS}")
