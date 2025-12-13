@@ -1,14 +1,16 @@
 import { Elysia } from "elysia";
 import { staticPlugin } from "@elysiajs/static";
 import { cors } from "@elysiajs/cors";
-import { join } from "path";
+import { join, resolve } from "path";
+import { fileURLToPath } from "url";
 import { env, topics } from "./env";
 import { timemanagerRoutes } from "./routes/timemanager";
 import { hiveRoutes } from "./routes/hive";
 import { kafkaRoutes } from "./routes/kafka";
 
-const publicDir = new URL("../public", import.meta.url).pathname;
-const indexFile = join(publicDir, "index.html");
+const __dirname = fileURLToPath(new URL(".", import.meta.url));
+const publicDir = resolve(__dirname, "../public");
+const indexFile = resolve(__dirname, "../public/index.html");
 
 const app = new Elysia()
   .use(cors())
