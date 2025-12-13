@@ -1,0 +1,513 @@
+{
+  "type": "record",
+  "name": "WeatherData",
+  "namespace": "com.boston.transport.weather",
+  "doc": "Schema for Boston weather data",
+  "fields": [
+    {
+      "name": "STATION",
+      "type": "string",
+      "doc": "The station ID for the weather station (e.g. '72509014739')"
+    },
+    {
+      "name": "DATE",
+      "type": "string",
+      "doc": "The date in ISO format (e.g. '2019-01-01T00:00:00')"
+    },
+    {
+      "name": "SOURCE",
+      "type": "string",
+      "doc": "Data source code (e.g. '4', '6', '7')"
+    },
+    {
+      "name": "LATITUDE",
+      "type": "string",
+      "doc": "The latitude of the weather station as string (e.g. '42.3606')"
+    },
+    {
+      "name": "LONGITUDE",
+      "type": "string",
+      "doc": "The longitude of the weather station as string (e.g. '-71.0097')"
+    },
+    {
+      "name": "ELEVATION",
+      "type": "string",
+      "doc": "The elevation of the weather station in meters as string (e.g. '3.7')"
+    },
+    {
+      "name": "NAME",
+      "type": "string",
+      "doc": "The name of the weather station (e.g. 'BOSTON, MA US')"
+    },
+    {
+      "name": "REPORT_TYPE",
+      "type": "string",
+      "doc": "The report type (e.g. 'FM-12', 'FM-15', 'FM-16', 'SOD', 'SOM')"
+    },
+    {
+      "name": "CALL_SIGN",
+      "type": "string",
+      "doc": "The call sign of the weather station (e.g. 'KBOS', '99999')"
+    },
+    {
+      "name": "QUALITY_CONTROL",
+      "type": "string",
+      "doc": "The quality control level (e.g. 'V020', 'V030')"
+    },
+    {
+      "name": "WND",
+      "type": "string",
+      "doc": "Wind observation data (comma-separated values)"
+    },
+    {
+      "name": "CIG",
+      "type": "string",
+      "doc": "Ceiling height observation"
+    },
+    {
+      "name": "VIS",
+      "type": "string",
+      "doc": "Visibility observation"
+    },
+    {
+      "name": "TMP",
+      "type": "string",
+      "doc": "Temperature observation (e.g. '+0056,1')"
+    },
+    {
+      "name": "DEW",
+      "type": "string",
+      "doc": "Dew point observation"
+    },
+    {
+      "name": "SLP",
+      "type": "string",
+      "doc": "Sea level pressure observation"
+    },
+    {
+      "name": "AA1",
+      "type": "string",
+      "doc": "Weather parameter AA1"
+    },
+    {
+      "name": "AA2",
+      "type": "string",
+      "doc": "Weather parameter AA2"
+    },
+    {
+      "name": "AA3",
+      "type": "string",
+      "doc": "Weather parameter AA3"
+    },
+    {
+      "name": "AB1",
+      "type": "string",
+      "doc": "Weather parameter AB1"
+    },
+    {
+      "name": "AD1",
+      "type": "string",
+      "doc": "Weather parameter AD1"
+    },
+    {
+      "name": "AE1",
+      "type": "string",
+      "doc": "Weather parameter AE1"
+    },
+    {
+      "name": "AH1",
+      "type": "string",
+      "doc": "The air quality index of the weather station"
+    },
+    {
+      "name": "AH2",
+      "type": "string",
+      "doc": "The air quality index of the weather station"
+    },
+    {
+      "name": "AH3",
+      "type": "string",
+      "doc": "The air quality index of the weather station"
+    },
+    {
+      "name": "AH4",
+      "type": "string",
+      "doc": "The air quality index of the weather station"
+    },
+    {
+      "name": "AH5",
+      "type": "string",
+      "doc": "The air quality index of the weather station"
+    },
+    {
+      "name": "AH6",
+      "type": "string",
+      "doc": "The air quality index of the weather station"
+    },
+    {
+      "name": "AI1",
+      "type": "string",
+      "doc": "Weather parameter AI1"
+    },
+    {
+      "name": "AI2",
+      "type": "string",
+      "doc": "Weather parameter AI2"
+    },
+    {
+      "name": "AI3",
+      "type": "string",
+      "doc": "Weather parameter AI3"
+    },
+    {
+      "name": "AI4",
+      "type": "string",
+      "doc": "Weather parameter AI4"
+    },
+    {
+      "name": "AI5",
+      "type": "string",
+      "doc": "Weather parameter AI5"
+    },
+    {
+      "name": "AI6",
+      "type": "string",
+      "doc": "Weather parameter AI6"
+    },
+    {
+      "name": "AM1",
+      "type": "string",
+      "doc": "Weather parameter AM1"
+    },
+    {
+      "name": "AN1",
+      "type": "string",
+      "doc": "Weather parameter AN1"
+    },
+    {
+      "name": "AT1",
+      "type": "string",
+      "doc": "Weather parameter AT1"
+    },
+    {
+      "name": "AT2",
+      "type": "string",
+      "doc": "Weather parameter AT2"
+    },
+    {
+      "name": "AT3",
+      "type": "string",
+      "doc": "Weather parameter AT3"
+    },
+    {
+      "name": "AT4",
+      "type": "string",
+      "doc": "Weather parameter AT4"
+    },
+    {
+      "name": "AT5",
+      "type": "string",
+      "doc": "Weather parameter AT5"
+    },
+    {
+      "name": "AT6",
+      "type": "string",
+      "doc": "Weather parameter AT6"
+    },
+    {
+      "name": "AT7",
+      "type": "string",
+      "doc": "Weather parameter AT7"
+    },
+    {
+      "name": "AU1",
+      "type": "string",
+      "doc": "Weather parameter AU1"
+    },
+    {
+      "name": "AU2",
+      "type": "string",
+      "doc": "Weather parameter AU2"
+    },
+    {
+      "name": "AU3",
+      "type": "string",
+      "doc": "Weather parameter AU3"
+    },
+    {
+      "name": "AU4",
+      "type": "string",
+      "doc": "Weather parameter AU4"
+    },
+    {
+      "name": "AW1",
+      "type": "string",
+      "doc": "Weather parameter AW1"
+    },
+    {
+      "name": "AW2",
+      "type": "string",
+      "doc": "Weather parameter AW2"
+    },
+    {
+      "name": "AW3",
+      "type": "string",
+      "doc": "Weather parameter AW3"
+    },
+    {
+      "name": "AW4",
+      "type": "string",
+      "doc": "Weather parameter AW4"
+    },
+    {
+      "name": "AW5",
+      "type": "string",
+      "doc": "Weather parameter AW5"
+    },
+    {
+      "name": "AW6",
+      "type": "string",
+      "doc": "Weather parameter AW6"
+    },
+    {
+      "name": "AX1",
+      "type": "string",
+      "doc": "Weather parameter AX1"
+    },
+    {
+      "name": "AX2",
+      "type": "string",
+      "doc": "Weather parameter AX2"
+    },
+    {
+      "name": "AX3",
+      "type": "string",
+      "doc": "Weather parameter AX3"
+    },
+    {
+      "name": "AX4",
+      "type": "string",
+      "doc": "Weather parameter AX4"
+    },
+    {
+      "name": "ED1",
+      "type": "string",
+      "doc": "Weather parameter ED1"
+    },
+    {
+      "name": "GA1",
+      "type": "string",
+      "doc": "Weather parameter GA1"
+    },
+    {
+      "name": "GA2",
+      "type": "string",
+      "doc": "Weather parameter GA2"
+    },
+    {
+      "name": "GA3",
+      "type": "string",
+      "doc": "Weather parameter GA3"
+    },
+    {
+      "name": "GA4",
+      "type": "string",
+      "doc": "Weather parameter GA4"
+    },
+    {
+      "name": "GD1",
+      "type": "string",
+      "doc": "Weather parameter GD1"
+    },
+    {
+      "name": "GD2",
+      "type": "string",
+      "doc": "Weather parameter GD2"
+    },
+    {
+      "name": "GD3",
+      "type": "string",
+      "doc": "Weather parameter GD3"
+    },
+    {
+      "name": "GD4",
+      "type": "string",
+      "doc": "Weather parameter GD4"
+    },
+    {
+      "name": "GE1",
+      "type": "string",
+      "doc": "Weather parameter GE1"
+    },
+    {
+      "name": "GF1",
+      "type": "string",
+      "doc": "Weather parameter GF1"
+    },
+    {
+      "name": "KA1",
+      "type": "string",
+      "doc": "Weather parameter KA1"
+    },
+    {
+      "name": "KA2",
+      "type": "string",
+      "doc": "Weather parameter KA2"
+    },
+    {
+      "name": "KB1",
+      "type": "string",
+      "doc": "Weather parameter KB1"
+    },
+    {
+      "name": "KB2",
+      "type": "string",
+      "doc": "Weather parameter KB2"
+    },
+    {
+      "name": "KB3",
+      "type": "string",
+      "doc": "Weather parameter KB3"
+    },
+    {
+      "name": "KC1",
+      "type": "string",
+      "doc": "Weather parameter KC1"
+    },
+    {
+      "name": "KC2",
+      "type": "string",
+      "doc": "Weather parameter KC2"
+    },
+    {
+      "name": "KD1",
+      "type": "string",
+      "doc": "Weather parameter KD1"
+    },
+    {
+      "name": "KD2",
+      "type": "string",
+      "doc": "Weather parameter KD2"
+    },
+    {
+      "name": "KE1",
+      "type": "string",
+      "doc": "Weather parameter KE1"
+    },
+    {
+      "name": "KG1",
+      "type": "string",
+      "doc": "Weather parameter KG1"
+    },
+    {
+      "name": "KG2",
+      "type": "string",
+      "doc": "Weather parameter KG2"
+    },
+    {
+      "name": "MA1",
+      "type": "string",
+      "doc": "Weather parameter MA1"
+    },
+    {
+      "name": "MD1",
+      "type": "string",
+      "doc": "Weather parameter MD1"
+    },
+    {
+      "name": "MF1",
+      "type": "string",
+      "doc": "Weather parameter MF1"
+    },
+    {
+      "name": "MG1",
+      "type": "string",
+      "doc": "Weather parameter MG1"
+    },
+    {
+      "name": "MH1",
+      "type": "string",
+      "doc": "Weather parameter MH1"
+    },
+    {
+      "name": "MK1",
+      "type": "string",
+      "doc": "Weather parameter MK1"
+    },
+    {
+      "name": "MV1",
+      "type": "string",
+      "doc": "Weather parameter MV1"
+    },
+    {
+      "name": "MW1",
+      "type": "string",
+      "doc": "Weather parameter MW1"
+    },
+    {
+      "name": "MW2",
+      "type": "string",
+      "doc": "Weather parameter MW2"
+    },
+    {
+      "name": "MW3",
+      "type": "string",
+      "doc": "Weather parameter MW3"
+    },
+    {
+      "name": "MW4",
+      "type": "string",
+      "doc": "Weather parameter MW4"
+    },
+    {
+      "name": "OC1",
+      "type": "string",
+      "doc": "Weather parameter OC1"
+    },
+    {
+      "name": "OD1",
+      "type": "string",
+      "doc": "Weather parameter OD1"
+    },
+    {
+      "name": "OE1",
+      "type": "string",
+      "doc": "Weather parameter OE1"
+    },
+    {
+      "name": "OE2",
+      "type": "string",
+      "doc": "Weather parameter OE2"
+    },
+    {
+      "name": "OE3",
+      "type": "string",
+      "doc": "Weather parameter OE3"
+    },
+    {
+      "name": "RH1",
+      "type": "string",
+      "doc": "Weather parameter RH1"
+    },
+    {
+      "name": "RH2",
+      "type": "string",
+      "doc": "Weather parameter RH2"
+    },
+    {
+      "name": "RH3",
+      "type": "string",
+      "doc": "Weather parameter RH3"
+    },
+    {
+      "name": "REM",
+      "type": "string",
+      "doc": "Remarks field containing METAR and synoptic data"
+    },
+    {
+      "name": "EQD",
+      "type": "string",
+      "doc": "Equipment details"
+    }
+  ]
+}

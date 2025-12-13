@@ -1,0 +1,203 @@
+# Example: Docker Compose file to set up Kafka, Zookeeper, and multiple dataset streamers
+services:
+  # Kafka Broker using Redpanda
+  redpanda:
+    image: redpandadata/console:latest 
+    container_name: redpanda
+    restart: unless-stopped
+    networks:
+      - boston-transport
+    ports:
+      - "8094:8080"
+    environment:
+      KAFKA_BROKERS: "kafka:9092"        
+      KAFKA_TLS_ENABLED: "false"
+      KAFKA_SASL_ENABLED: "false"
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+  kafka:
+    image: apache/kafka:3.8.0
+    container_name: kafka
+    restart: unless-stopped
+    networks:
+      - boston-transport
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: controller,broker
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+    healthcheck:
+      test: ["CMD", "bash", "-c", "echo > /dev/tcp/localhost/9092"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "9092:9092"
+    volumes:
+      - ./kafka-data:/var/lib/kafka/data
+
+  # Confluent Schema Registry
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.4.1
+    container_name: schema-registry
+    restart: unless-stopped
+    networks:
+      - boston-transport
+    environment:
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka:9092
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+    ports:
+      - "8081:8081"
+    depends_on:
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/subjects" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # Redis for time-manager state
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - boston-transport
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+# Time Manager service
+  time-manager:
+    build:
+      context: ../time-manager
+      dockerfile: Dockerfile
+    container_name: time-manager
+    depends_on:
+      redis:
+        condition: service_healthy
+    ports:
+      - "5000:5000"
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      PORT: 5000
+    networks:
+      - boston-transport
+
+# Dataset Streamers
+  streamer1:
+    container_name: streamer-accidents
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    environment:
+      TIME_MANAGER_URL: http://time-manager:5000
+      SYNC_INTERVAL: 1
+      OUTPUT_INTERVAL: 1
+      DATA_FOLDER: ./data/accident
+      TIME_COLUMN: dispatch_ts
+      TIME_FORMAT: "%Y-%m-%d %H:%M:%S%z"
+      KAFKA_BROKER: kafka:9092
+      KAFKA_TOPIC: accidents
+      SCHEMA_REGISTRY_URL: http://schema-registry:8081
+    depends_on:
+      kafka:
+        condition: service_healthy
+    volumes:
+      - ./data:/app/data
+    networks:
+      - boston-transport
+
+  streamer2:
+    container_name: streamer-bike
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    environment:
+      TIME_MANAGER_URL: http://time-manager:5000
+      SYNC_INTERVAL: 1
+      OUTPUT_INTERVAL: 1
+      DATA_FOLDER: ./data/bikedata
+      TIME_COLUMN: started_at
+      TIME_FORMAT: "%Y-%m-%d %H:%M:%S.%f"
+      KAFKA_BROKER: kafka:9092
+      KAFKA_TOPIC: bikedata
+      SCHEMA_REGISTRY_URL: http://schema-registry:8081
+    depends_on:
+      kafka:
+        condition: service_healthy
+    volumes:
+      - ./data:/app/data
+    networks:
+      - boston-transport
+
+  streamer3:
+    container_name: streamer-taxi
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    environment:
+      TIME_MANAGER_URL: http://time-manager:5000
+      SYNC_INTERVAL: 1
+      OUTPUT_INTERVAL: 1
+      DATA_FOLDER: ./data/taxi
+      TIME_COLUMN: datetime
+      TIME_FORMAT: "%Y-%m-%d %H:%M:%S"
+      KAFKA_BROKER: kafka:9092
+      KAFKA_TOPIC: taxi
+      SCHEMA_REGISTRY_URL: http://schema-registry:8081
+    depends_on:
+      kafka:
+        condition: service_healthy
+    volumes:
+      - ./data:/app/data
+    networks:
+      - boston-transport
+
+  streamer4:
+    container_name: streamer-weather
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    environment:
+      TIME_MANAGER_URL: http://time-manager:5000
+      SYNC_INTERVAL: 1
+      OUTPUT_INTERVAL: 1
+      DATA_FOLDER: ./data/weather
+      TIME_COLUMN: DATE
+      TIME_FORMAT: "%Y-%m-%d %H:%M:%S"
+      KAFKA_BROKER: kafka:9092
+      KAFKA_TOPIC: weather
+      SCHEMA_REGISTRY_URL: http://schema-registry:8081
+    depends_on:
+      kafka:
+        condition: service_healthy
+    volumes:
+      - ./data:/app/data
+    networks:
+      - boston-transport
+
+# Networks and Volumes
+networks:
+  boston-transport:
+    driver: bridge
+
+volumes:
+  kafka-data:
