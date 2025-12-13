@@ -1,12 +1,11 @@
-FROM oven/bun:1.3-alpine
+FROM oven/bun:1.3
 
 WORKDIR /app
 
 # Cache packages installation
 COPY package.json package.json
-COPY bun.lock bun.lock
 
-RUN bun install
+RUN bun install --no-optional
 
 # Copy source files
 COPY ./src ./src
