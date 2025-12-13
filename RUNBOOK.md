@@ -95,3 +95,47 @@ RUNBOOK.md           # this file
 - Define raw/enriched/model/error tables in Hive.
 - Grant fine-grained access through Ranger/Sentry or table-level privileges.
 - Integrate Spark, notebooks, and dashboards with the shared Metastore.
+## Local Stack Status & Troubleshooting (2025-12-12)
+- **Kafka**: Running; topics exist (e.g. `__consumer_offsets`, `_schemas`).
+- **Schema Registry**: Running; subjects list is empty until schemas are registered.
+- **HDFS**: NameNode and DataNode are running (check UI at `http://localhost:9870`).
+- **Hive Metastore**: Service is starting but metastore schema shows `Version information not found in metastore` — the schema is not initialized.
+
+Troubleshooting Checklist (if you see `Version information not found in metastore`):
+
+1. Ensure the metastore DB is reachable and healthy:
+```bash
+# Check Postgres is running and accepting connections
+docker compose exec metastore-db pg_isready -U hive
+# List hive DB tables to confirm whether schema exists
+docker compose exec metastore-db psql -U hive -d hive -c "\dt"
+```
+
+2. Re-run the metastore initialization and capture logs (host):
+```bash
+# Idempotent init, writes to stdout
+docker compose run --rm metastore-init
+# Or run schematool interactively in the metastore container
+docker compose exec hive-metastore /opt/hive/bin/schematool -dbType postgres -initSchema -userName hive -passWord hivepassword -url jdbc:postgresql://metastore-db:5432/hive --verbose
+```
+
+3. Inspect the schematool info output and Postgres `VERSION` table:
+```bash
+# schematool info
+docker compose exec hive-metastore /opt/hive/bin/schematool -dbType postgres -info -userName hive -passWord hivepassword -url jdbc:postgresql://metastore-db:5432/hive
+# Inspect version table (if present)
+docker compose exec metastore-db psql -U hive -d hive -c "select * from version;"
+```
+
+4. If init fails with permission or connectivity errors, verify credentials and JDBC URL in `docker-compose.yml` and `conf/hive-site.xml`.
+
+5. After successful init: start Hive services if not running and test JDBC connection using Beeline:
+```bash
+docker compose up -d hive-metastore hive-server2
+# then run a quick query
+docker compose exec hive-server2 /opt/hive/bin/beeline -u jdbc:hive2://hive-server2:10000/default -n hive -f /scripts/create-mvp-dbs.sql
+```
+
+Notes:
+- If `metastore-init` reports schema exists, you can re-run it safely; it will exit quietly.
+- If you still see restarts in `hive-metastore` logs after schema init, inspect logs for additional errors (e.g. incompatible DB/driver).
