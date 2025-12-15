@@ -13,5 +13,13 @@ export { TopicMetrics } from "./TopicMetrics";
 export { RecentMessages } from "./RecentMessages";
 
 // HistoricalTab children
-export { TaxiTripsByHour } from "./TaxiTripsByHour";
 export { BikeVsWeather } from "./BikeVsWeather";
+export { TripSpeedDistribution } from "./TripSpeedDistribution";
+export { PrecipitationImpact } from "./PrecipitationImpact";
+export { TripsByTimeOfDay } from "./TripsByTimeOfDay";
+export { TripDistanceDistribution } from "./TripDistanceHeatmap";
+
+// LiveChartsTab children
+export { LiveBikeTripRate } from "./LiveBikeTripRate";
+export { LiveTaxiTripRate } from "./LiveTaxiTripRate";
+export { LiveWeatherChart } from "./LiveWeatherChart";

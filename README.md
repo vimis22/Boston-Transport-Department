@@ -61,8 +61,8 @@ Note, that the streamer must run before the kafka topics are created, and before
 Now you can run the notebook and it will connect to the jupyter kernel.
 
 ## TODO:
-- Make graphs from live kafka data and from hive queries
 - Make video tutorial for bringup
+- Deploy to sdu cluster
 
 Release strategy:
 - git tag -f v1.0.4 HEAD

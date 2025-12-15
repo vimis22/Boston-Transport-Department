@@ -1,6 +1,6 @@
 import React from 'react';
 
-export type TabKey = "home" | "hive" | "kafka" | "historical";
+export type TabKey = "home" | "hive" | "kafka" | "historical" | "live";
 
 export interface Tab {
   key: TabKey;
