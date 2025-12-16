@@ -1,12 +1,12 @@
 import React, { useMemo } from "react";
-import { useHiveQuery } from "../../../api/hooks";
+import { useHiveQueryResults } from "../../../api/hooks";
 import { Card } from "../../props/Card";
 
 export function HiveResults() {
-  const hiveQuery = useHiveQuery();
+  const { data: hiveResult } = useHiveQueryResults();
 
-  const columns = hiveQuery.data?.columns ?? [];
-  const rows = hiveQuery.data?.data ?? [];
+  const columns = hiveResult?.columns ?? [];
+  const rows = hiveResult?.data ?? [];
 
   const renderedRows = useMemo(() => {
     if (!rows.length) return [];
@@ -25,9 +25,9 @@ export function HiveResults() {
     <Card
       title="Results"
       actions={
-        hiveQuery.data ? (
+        hiveResult ? (
           <span className="text-xs text-slate-500">
-            {hiveQuery.data.row_count ?? rows.length} rows
+            {hiveResult.row_count ?? rows.length} rows
           </span>
         ) : null
       }

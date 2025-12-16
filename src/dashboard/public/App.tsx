@@ -4,6 +4,7 @@ import { HomeTab } from "./components/screens/parentscreens/HomeTab";
 import { HiveTab } from "./components/screens/parentscreens/HiveTab";
 import { KafkaTab } from "./components/screens/parentscreens/KafkaTab";
 import { HistoricalTab } from "./components/screens/parentscreens/HistoricalTab";
+import { LiveChartsTab } from "./components/screens/parentscreens/LiveChartsTab";
 import { TABS, TAB_STORAGE_KEY } from "./references/TabConfig";
 
 export default function App() {
@@ -32,6 +33,7 @@ export default function App() {
         {tab === "home" && <HomeTab />}
         {tab === "hive" && <HiveTab />}
         {tab === "kafka" && <KafkaTab />}
+        {tab === "live" && <LiveChartsTab />}
         {tab === "historical" && <HistoricalTab />}
       </main>
     </div>

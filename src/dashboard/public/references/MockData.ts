@@ -5,8 +5,8 @@
 // HISTORICAL TAB DATA
 // ============================================================================
 
-export const HISTORICAL_DEFAULT_QUERY =
-  "SELECT hour, COUNT(*) as trips FROM taxi_data_raw GROUP BY hour ORDER BY hour LIMIT 24";
+// export const HISTORICAL_DEFAULT_QUERY =
+//   "SELECT hour, COUNT(*) as trips FROM taxi_data_raw GROUP BY hour ORDER BY hour LIMIT 24";
 
 export const HISTORICAL_FALLBACK_CHART_DATA = [
   { hour: 0, trips: 0 },
