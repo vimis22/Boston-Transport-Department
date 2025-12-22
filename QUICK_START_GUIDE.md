@@ -1,32 +1,76 @@
-# 🚀 BOSTON TRANSPORT - QUICK START GUIDE
+# 🚀 BOSTON TRANSPORT - HURTIG OPSTARTSGUIDE
 
-## Prerequisites
-- Docker Desktop with Kubernetes enabled ✅ (You have this)
-- Python 3.11+ ✅ (You have this)
-- Terraform (Need to install)
+## 📌 VIGTIGT AT FORSTÅ FØRST
+
+**Dit projekt starter IKKE fra `src/`-mappen!**
+
+- **`infra/`** → Her starter du projektet (Terraform deployer alt)
+- **`src/`** → Indeholder kildekode til applikationer (deployes automatisk af Terraform)
+- **`tools/`** → Hjælpescripts til port-forwarding og datahåndtering
+- **`mock-data/`** → CSV-filer som Streamer læser
+
+**Terraform læser modulerne i `infra/modules/` og deployer alt som Docker containers til Kubernetes.**
 
 ---
 
-## STEP 1: Install Terraform (2 minutes)
+## 📋 FORUDSÆTNINGER
 
-### Windows - PowerShell (Run as Administrator):
+- ✅ Docker Desktop installeret
+- ✅ Python 3.11+
+- ⚠️ Kubernetes aktiveret i Docker Desktop (vigtigt!)
+- ⚠️ Terraform (skal installeres)
+- ⚠️ kubectl (installeres automatisk med Docker Desktop)
+
+---
+
+## TRIN 0: Start Kubernetes i Docker Desktop ⚠️ VIGTIGT!
+
+**Før du kan køre projektet, skal Kubernetes være aktiveret i Docker Desktop:**
+
+1. **Åbn Docker Desktop**
+2. **Klik på tandhjul-ikonet** (⚙️ Settings) øverst til højre
+3. **Klik på "Kubernetes"** i venstre menu
+4. **Sæt flueben ved "Enable Kubernetes"**
+5. **Klik "Apply & restart"**
+6. **Vent 2-3 minutter** mens Kubernetes starter (du ser en grøn indikator nederst til venstre)
+
+### Verificer at Kubernetes kører:
+```bash
+kubectl cluster-info
+```
+
+Du skulle se noget som:
+```
+Kubernetes control plane is running at https://kubernetes.docker.internal:6443
+CoreDNS is running at https://kubernetes.docker.internal:6443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+```
+
+**Hvis du får fejl "connection refused", er Kubernetes ikke startet endnu - vent lidt længere.**
+
+---
+
+## TRIN 1: Installér Terraform (2 minutter)
+
+### Windows - PowerShell (Kør som Administrator):
 ```powershell
 Set-ExecutionPolicy Bypass -Scope Process -Force
 [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
 iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
 
-# After Chocolatey installs:
+# Efter Chocolatey er installeret:
 choco install terraform -y
 ```
 
-Verify:
+Verificer:
 ```bash
 terraform --version
 ```
 
 ---
 
-## STEP 2: Deploy Everything (5-10 minutes)
+## TRIN 2: Deploy Infrastrukturen (5-10 minutter)
+
+**Dette er dit startpunkt!**
 
 ```bash
 cd C:\Users\vivek\Downloads\Boston-Transport-Department\infra\environments\local
@@ -34,107 +78,138 @@ terraform init
 terraform apply -auto-approve
 ```
 
-This deploys:
-1. **Kafka** + Schema Registry + REST Proxy
-2. **HDFS** (Hadoop) - NameNode + DataNode
-3. **Spark** Connect Server + Workers
-4. **Hive** Metastore + Thrift Server
-5. **JupyterLab** (for notebooks)
-6. **Time Manager** (simulated time for streaming)
-7. **Streamer** (reads CSV → publishes to Kafka as Avro)
-8. **Data Analysis ETL** (your Spark job)
-9. **Dashboard** (visualizes results)
+### Hvad deployer Terraform?
+
+Terraform læser moduler fra `infra/modules/` og deployer følgende services som Kubernetes pods:
+
+1. **Kafka** + Schema Registry + REST Proxy (fra `infra/modules/kafka/`)
+2. **HDFS** (Hadoop) - NameNode + DataNode (fra `infra/modules/hadoop/`)
+3. **Spark** Connect Server + Workers (fra `infra/modules/bigdata/`)
+4. **Hive** Metastore + Thrift Server (fra `infra/modules/hadoop/`)
+5. **JupyterLab** (til notebooks)
+6. **Time Manager** (simuleret tid til streaming, kode fra `src/timemanager/`)
+7. **Streamer** (læser CSV → sender til Kafka som Avro, kode fra `src/streamer/`)
+8. **Data Analysis ETL** (dit Spark job, kode fra `src/etl/`)
+9. **Dashboard** (visualiserer resultater, kode fra `src/dashboard/`)
+
+**Alt kører i Kubernetes namespace `bigdata`.**
 
 ---
 
-## STEP 3: Wait for Pods to Start (2-3 minutes)
+## TRIN 3: Vent på at Pods Starter (2-3 minutter)
 
 ```bash
 kubectl get pods -n bigdata -w
 ```
 
-Wait until all pods show `Running` status. Press `Ctrl+C` when done.
+Vent til alle pods viser `Running` status. Tryk `Ctrl+C` når færdig.
 
 ---
 
-## STEP 4: Port Forward to Access Services
+## TRIN 4: Port-Forward til Services
 
-Open a NEW terminal and run:
+**Åbn en NY terminal** og kør:
 
 ```bash
 cd C:\Users\vivek\Downloads\Boston-Transport-Department
 python tools/forward-all.py
 ```
 
-This forwards:
-- **Dashboard**: http://localhost:3000 (commented out in script - uncomment line 56)
+Dette port-forwarder:
+- **Dashboard**: http://localhost:3000
 - **HDFS UI**: http://localhost:9870
 - **Spark UI**: http://localhost:4040
 - **JupyterLab**: http://localhost:8080 (token: `adminadmin`)
-- **Kafka UI**: http://localhost:8083
+- **Kafka REST Proxy**: http://localhost:8083
 - **Schema Registry**: http://localhost:8081
-- **Time Manager**: http://localhost:8000
+- **Time Manager API**: http://localhost:8000
 - **Hive**: localhost:10000
 
 ---
 
-## STEP 5: Start the Data Pipeline
+## TRIN 5: Start Data Pipeline
 
-### 5.1 Check Time Manager Status
+### 5.1 Tjek Time Manager Status
 ```bash
 curl http://localhost:8000/api/v1/clock
 ```
 
-### 5.2 Start Simulation (Streams Data)
+### 5.2 Start Simulering (Streamer Data)
 ```bash
 curl -X POST http://localhost:8000/api/v1/clock/start
 ```
 
-### 5.3 Watch Logs
+### 5.3 Overvåg Logs
 
-**Streamer (produces to Kafka):**
+**Streamer (producerer til Kafka):**
 ```bash
 kubectl logs -n bigdata -l app=streamer -f
 ```
 
-**Data Analysis ETL (your calculations):**
+**Data Analysis ETL (dine beregninger):**
 ```bash
 kubectl logs -n bigdata -l app=data-analysis -f
 ```
 
 ---
 
-## STEP 6: Verify Data Flow
+## 🔄 FORSTÅ DATAFLOWET
 
-### 6.1 Check Kafka Topics
+```
+1. CSV-filer (mock-data/)
+   ↓
+2. Time Manager (src/timemanager/) → Simulerer tid
+   ↓
+3. Streamer Pod (src/streamer/) → Læser CSV → Konverterer til Avro → Kafka
+   ↓
+4. Kafka Topics (bike-data, taxi-data, weather-data, accident-data)
+   ↓
+5. Data Analysis ETL Pod (src/etl/)
+   ├── Forbinder til Spark Connect Server
+   ├── Spark læser fra Kafka
+   ├── Spark udfører beregninger (vejr-transport korrelationer)
+   └── Spark skriver Parquet-filer:
+       ├── /data/processed_simple/  (transformeret rådata)
+       └── /data/analytics/         (beregnede korrelationer)
+   ↓
+6. Hive Metastore → Indekserer Parquet-filerne
+   ↓
+7. Dashboard (src/dashboard/) → Henter data via Hive HTTP Proxy → Viser grafer
+```
+
+---
+
+## ✅ VERIFICER DATAFLOW
+
+### 6.1 Tjek Kafka Topics
 ```bash
 kubectl exec -n bigdata svc/kafka-broker -- kafka-topics --bootstrap-server localhost:9092 --list
 ```
 
-Should see: `bike-data`, `taxi-data`, `weather-data`, `accident-data`
+Skulle vise: `bike-data`, `taxi-data`, `weather-data`, `accident-data`
 
-### 6.2 Check Schemas in Registry
+### 6.2 Tjek Schemas i Registry
 ```bash
 curl http://localhost:8081/subjects
 ```
 
-Should see: `["bike-data-value", "taxi-data-value", "weather-data-value", "accident-data-value"]`
+Skulle vise: `["bike-data-value", "taxi-data-value", "weather-data-value", "accident-data-value"]`
 
-### 6.3 Check ETL Output in Spark Pod
+### 6.3 Tjek ETL Output i Spark Pod
 ```bash
-# List output folders
+# Vis output-mapper
 kubectl exec -n bigdata deployment/data-analysis -- ls -la /data/processed_simple/
 kubectl exec -n bigdata deployment/data-analysis -- ls -la /data/analytics/
 ```
 
-Should see folders like:
+Skulle vise mapper som:
 - `/data/processed_simple/bike_trips/`
 - `/data/processed_simple/taxi_trips/`
 - `/data/processed_simple/weather_data/`
 - `/data/analytics/weather_transport_correlation/`
 - `/data/analytics/pearson_correlations/`
 
-### 6.4 Check Parquet Files
+### 6.4 Tjek Parquet-filer
 ```bash
 kubectl exec -n bigdata deployment/data-analysis -- find /data/processed_simple -name "*.parquet" | head -10
 kubectl exec -n bigdata deployment/data-analysis -- find /data/analytics -name "*.parquet" | head -10
@@ -142,131 +217,123 @@ kubectl exec -n bigdata deployment/data-analysis -- find /data/analytics -name "
 
 ---
 
-## STEP 7: View Results in Dashboard
+## 📊 VIS RESULTATER I DASHBOARD
 
-1. **Uncomment Dashboard in port-forward script:**
-   - Edit `tools/forward-all.py` line 56, remove the `#` comment
-   - Restart the port-forward script
+1. **Åbn Dashboard:**
+   - Gå til: http://localhost:3000
 
-2. **Open Dashboard:**
-   - Go to: http://localhost:3000
-
-3. **You should see:**
-   - Live transport data (bike/taxi trips)
-   - Weather correlations
-   - Real-time analytics graphs
+2. **Du skulle se:**
+   - Live transportdata (cykel/taxi-ture)
+   - Vejrkorrelationer
+   - Realtidsanalyse-grafer
 
 ---
 
-## UNDERSTANDING THE DATA FLOW
+## 🧩 VIGTIGE SPØRGSMÅL & SVAR
 
-```
-CSV Files (mock-data/)
-    ↓
-Time Manager (simulates time progression)
-    ↓
-Streamer Pod (reads CSV → Avro → Kafka)
-    ↓
-Kafka Topics (bike-data, taxi-data, weather-data, accident-data)
-    ↓
-Data Analysis ETL Pod (your Spark job in src/etl/)
-    ├── Connects to Spark Connect Server
-    ├── Spark reads from Kafka
-    ├── Spark performs calculations (weather-transport correlations)
-    └── Spark writes Parquet files:
-        ├── /data/processed_simple/  (raw transformed data)
-        └── /data/analytics/         (calculated correlations)
-    ↓
-Hive Metastore (indexes the Parquet files)
-    ↓
-Dashboard (queries via Hive HTTP Proxy → displays graphs)
-```
+### Q1: "Hvor skrives mit ETL output?"
 
----
+**Dit ETL output skrives til:**
+- `/data/processed_simple/` - Transformeret rådata som Parquet
+- `/data/analytics/` - Beregnede korrelationer som Parquet
 
-## ANSWER TO YOUR QUESTIONS
+Disse er **Persistent Volumes** i Kubernetes som:
+1. Spark skriver direkte til
+2. Hive læser fra (via Hive Metastore)
+3. Dashboard forespørger via Hive
 
-### Q1: "Where is my output forwarded to?"
+**IKKE direkte til HDFS** - men Hive kan konfigureres til at bruge HDFS som backend (dit setup bruger PVC).
 
-**Your ETL output is written to:**
-- `/data/processed_simple/` - Raw transformed data as Parquet
-- `/data/analytics/` - Calculated correlations as Parquet
+### Q2: "Forwarded min ETL-kode til Spark eller Hadoop?"
 
-These are **Persistent Volumes** in Kubernetes that:
-1. Spark writes to directly
-2. Hive reads from (via Hive Metastore)
-3. Dashboard queries via Hive
+**Din ETL-kode ER en Spark-applikation.** Den:
+- Forbinder til Spark Connect Server (`sc://spark-connect-server:15002`)
+- Indsender Spark Structured Streaming jobs
+- Spark executors udfører beregningerne
+- Spark executors skriver resultaterne til `/data/...`
 
-**NOT directly to HDFS** - but Hive can be configured to use HDFS as backend (your setup uses PVC).
+**Den "forwarder" IKKE til Spark - den KØRER PÅ Spark!**
 
-### Q2: "Does my ETL code forward to Spark or Hadoop?"
+### Q3: "Hvad er forskellen på `infra/` og `src/`?"
 
-**Your ETL code IS a Spark application.** It:
-- Connects to Spark Connect Server (`sc://spark-connect-server:15002`)
-- Submits Spark Structured Streaming jobs
-- Spark executors perform the calculations
-- Spark executors write the results to `/data/...`
-
-**It does NOT "forward" to Spark - it RUNS ON Spark!**
+| Folder | Rolle |
+|--------|-------|
+| **`infra/`** | Terraform moduler - **DIT OPSTARTSPUNKT** |
+| **`src/`** | Kildekode til applikationer (deployes af Terraform) |
+| **`tools/`** | Hjælpescripts (port-forward, upload data osv.) |
+| **`mock-data/`** | CSV-filer som Streamer læser |
+| **`notebooks/`** | Jupyter notebooks til dataanalyse |
 
 ---
 
-## TROUBLESHOOTING
+## 🔧 FEJLFINDING
 
-### ETL Pod Crashes with "404 schema not found"
+### Kubernetes Connection Refused
+**Fejl:** `dial tcp 127.0.0.1:6443: connectex: No connection could be made because the target machine actively refused it.`
+
+**Årsag:** Kubernetes er ikke startet i Docker Desktop.
+
+**Fix:**
+1. Åbn Docker Desktop
+2. Gå til Settings → Kubernetes
+3. Aktivér "Enable Kubernetes"
+4. Klik "Apply & restart"
+5. Vent 2-3 minutter
+6. Verificer: `kubectl cluster-info`
+
+### ETL Pod Crasher med "404 schema not found"
 **Fix:**
 ```bash
-# Re-run schema registration
 cd C:\Users\vivek\Downloads\Boston-Transport-Department
 python tools/create-schemas.py
 ```
 
-### No Data Showing in Dashboard
-**Check:**
-1. Is time manager running? `curl http://localhost:8000/api/v1/clock`
-2. Is streamer producing? `kubectl logs -n bigdata -l app=streamer`
-3. Is ETL running? `kubectl logs -n bigdata -l app=data-analysis`
-4. Are Parquet files created? `kubectl exec -n bigdata deployment/data-analysis -- ls /data/analytics/`
+### Ingen Data Vises i Dashboard
+**Tjek:**
+1. Kører time manager? `curl http://localhost:8000/api/v1/clock`
+2. Producerer streamer? `kubectl logs -n bigdata -l app=streamer`
+3. Kører ETL? `kubectl logs -n bigdata -l app=data-analysis`
+4. Er Parquet-filer oprettet? `kubectl exec -n bigdata deployment/data-analysis -- ls /data/analytics/`
 
-### Pods Not Starting
+### Pods Starter Ikke
 ```bash
-# Check pod status
+# Tjek pod status
 kubectl get pods -n bigdata
 
-# Check specific pod logs
+# Tjek specifikke pod logs
 kubectl logs -n bigdata <pod-name>
 
-# Describe pod for events
+# Beskriv pod for events
 kubectl describe pod -n bigdata <pod-name>
 ```
 
 ---
 
-## CLEANUP
+## 🧹 RYDNING
 
-To delete everything:
+For at slette alt:
 ```bash
-cd C:\Users\vivek\Downloads\Boston-Transport-Department\infra\environments/local
+cd C:\Users\vivek\Downloads\Boston-Transport-Department\infra\environments\local
 terraform destroy -auto-approve
 ```
 
-Or manually:
+Eller manuelt:
 ```bash
 kubectl delete namespace bigdata
 ```
 
 ---
 
-## NEXT STEPS
+## 🚀 NÆSTE SKRIDT
 
-1. Explore JupyterLab: http://localhost:8080 (token: `adminadmin`)
-2. Query Hive directly:
+1. Udforsk JupyterLab: http://localhost:8080 (token: `adminadmin`)
+2. Forespørg Hive direkte:
    ```bash
    kubectl exec -n bigdata svc/spark-thrift-service -- beeline -u jdbc:hive2://localhost:10000
    ```
-3. View Spark UI: http://localhost:4040
-4. Modify ETL code in `src/etl/jobs/data_analysis.py` and redeploy
+3. Se Spark UI: http://localhost:4040
+4. Modificer ETL-kode i `src/etl/jobs/data_analysis.py` og redeploy
 
 ---
 
-**Good luck! 🚀**
+**Held og lykke! 🎯**
