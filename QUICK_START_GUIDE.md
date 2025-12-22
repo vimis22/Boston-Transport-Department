@@ -219,13 +219,54 @@ kubectl exec -n bigdata deployment/data-analysis -- find /data/analytics -name "
 
 ## 📊 VIS RESULTATER I DASHBOARD
 
-1. **Åbn Dashboard:**
+### Option A: Dashboard via Kubernetes (Automatisk)
+Dashboard er allerede deployed via Terraform og kører som en pod.
+
+1. **Port-forward dashboard:**
+   ```bash
+   kubectl port-forward -n bigdata svc/dashboard 3000:3000
+   ```
+
+2. **Åbn Dashboard:**
    - Gå til: http://localhost:3000
 
-2. **Du skulle se:**
-   - Live transportdata (cykel/taxi-ture)
-   - Vejrkorrelationer
-   - Realtidsanalyse-grafer
+### Option B: Dashboard Lokal Udvikling (Med Bun)
+
+Hvis du vil køre dashboard lokalt for udvikling:
+
+1. **Installer Bun (hvis ikke installeret):**
+   ```bash
+   curl -fsSL https://bun.sh/install | bash
+   ```
+
+2. **Installer dependencies:**
+   ```bash
+   cd src/dashboard
+   bun install
+   ```
+
+3. **Port-forward nødvendige services:**
+   ```bash
+   # I separate terminaler eller brug tmux/screen:
+   kubectl port-forward -n bigdata svc/timemanager 8000:8000
+   kubectl port-forward -n bigdata svc/hive-http-proxy 10001:10001
+   kubectl port-forward -n bigdata svc/kafka-ui 8083:8080
+   ```
+
+4. **Start dashboard lokalt:**
+   ```bash
+   cd src/dashboard
+   bun run src/index.ts
+   ```
+
+5. **Åbn Dashboard:**
+   - Gå til: http://localhost:3000
+
+### Hvad Du Skulle Se:
+- Live transportdata (cykel/taxi-ture)
+- Vejrkorrelationer
+- Realtidsanalyse-grafer
+- Kafka topics overview
 
 ---
 
@@ -286,6 +327,26 @@ Disse er **Persistent Volumes** i Kubernetes som:
 ```bash
 cd C:\Users\vivek\Downloads\Boston-Transport-Department
 python tools/create-schemas.py
+```
+
+### Streamer Crasher - Manglende Parquet Filer i HDFS
+**Fejl:** Streamer kan ikke finde `/bigdata/*.parquet` filer
+
+**Fix - Upload datasæt til HDFS:**
+```bash
+# 1. Download og konverter datasæt (kræver gdown og duckdb)
+pip install gdown duckdb
+python tools/create-datasets.py
+
+# 2. Upload til HDFS via kubectl (efter datasets er genereret)
+cat boston_datasets/bigdata/weather_data.parquet | kubectl exec -i -n bigdata hdfs-cluster-namenode-default-0 -c namenode -- sh -c "cat > /tmp/weather_data.parquet && hdfs dfs -put -f /tmp/weather_data.parquet /bigdata/weather_data.parquet && rm /tmp/weather_data.parquet"
+
+cat boston_datasets/bigdata/taxi_data.parquet | kubectl exec -i -n bigdata hdfs-cluster-namenode-default-0 -c namenode -- sh -c "cat > /tmp/taxi_data.parquet && hdfs dfs -put -f /tmp/taxi_data.parquet /bigdata/taxi_data.parquet && rm /tmp/taxi_data.parquet"
+
+cat boston_datasets/bigdata/bike_data.parquet | kubectl exec -i -n bigdata hdfs-cluster-namenode-default-0 -c namenode -- sh -c "cat > /tmp/bike_data.parquet && hdfs dfs -put -f /tmp/bike_data.parquet /bigdata/bike_data.parquet && rm /tmp/bike_data.parquet"
+
+# 3. Verificer upload
+kubectl exec -n bigdata hdfs-cluster-namenode-default-0 -c namenode -- sh -c "hdfs dfs -ls -h /bigdata"
 ```
 
 ### Ingen Data Vises i Dashboard
