@@ -5,12 +5,7 @@ This module provides the main enrichment function for weather data.
 """
 
 from pyspark.sql import DataFrame
-from pyspark.sql.functions import col, when
-
-# Import UDFs from other enrichment modules
-from data_analysis.enrichments.parse_temperature import parse_temperature_udf
-from data_analysis.enrichments.parse_wind_speed import parse_wind_speed_udf
-from data_analysis.enrichments.parse_visibility import parse_visibility_udf
+from pyspark.sql.functions import col, when, expr
 
 
 def enrich_weather_data(df: DataFrame) -> DataFrame:
@@ -28,11 +23,29 @@ def enrich_weather_data(df: DataFrame) -> DataFrame:
         - weather_condition_score (0-100, higher = better conditions)
     """
 
-    # Parse raw weather strings
-    enriched_df = (
-        df.withColumn("temperature_celsius", parse_temperature_udf(col("temperature")))
-        .withColumn("wind_speed_ms", parse_wind_speed_udf(col("wind")))
-        .withColumn("visibility_m", parse_visibility_udf(col("visibility")))
+    # Parse raw weather strings using native Spark SQL functions (no UDFs)
+    # Temperature: Format '+0056,1' -> extract '+0056' and divide by 10
+    enriched_df = df.withColumn(
+        "temperature_celsius",
+        when(col("temperature").isNotNull() & (col("temperature") != ""),
+             expr("CAST(split(temperature, ',')[0] AS DOUBLE) / 10.0")
+        ).otherwise(None)
+    )
+
+    # Wind speed: Format '160,1,N,0046,1' -> extract 4th element (0046) and divide by 10
+    enriched_df = enriched_df.withColumn(
+        "wind_speed_ms",
+        when(col("wind").isNotNull() & (col("wind") != ""),
+             expr("CAST(split(wind, ',')[3] AS DOUBLE) / 10.0")
+        ).otherwise(None)
+    )
+
+    # Visibility: Format '016000,1,9,9' -> extract first element
+    enriched_df = enriched_df.withColumn(
+        "visibility_m",
+        when(col("visibility").isNotNull() & (col("visibility") != ""),
+             expr("CAST(split(visibility, ',')[0] AS DOUBLE)")
+        ).otherwise(None)
     )
 
     # Temperature buckets (5-degree intervals)
@@ -77,8 +90,7 @@ def enrich_weather_data(df: DataFrame) -> DataFrame:
     # Based on: temperature comfort, low wind, good visibility
     enriched_df = enriched_df.withColumn(
         "weather_condition_score",
-        when(col("temperature_celsius").isNull(), 50.0).otherwise(  # Unknown = neutral
-            # Temperature component (0-40): ideal 15-25C
+        when(col("temperature_celsius").isNull(), 50.0).otherwise(
             when(col("temperature_celsius").between(15, 25), 40.0)
             .when(col("temperature_celsius").between(10, 15), 35.0)
             .when(col("temperature_celsius").between(25, 30), 35.0)
@@ -86,13 +98,11 @@ def enrich_weather_data(df: DataFrame) -> DataFrame:
             .when(col("temperature_celsius").between(0, 5), 20.0)
             .otherwise(10.0)
             +
-            # Wind component (0-30): prefer calm to light breeze
             when(col("wind_speed_ms") < 1.5, 30.0)
             .when(col("wind_speed_ms") < 5.5, 25.0)
             .when(col("wind_speed_ms") < 10.8, 15.0)
             .otherwise(5.0)
             +
-            # Visibility component (0-30): prefer excellent visibility
             when(col("visibility_m") > 20000, 30.0)
             .when(col("visibility_m") > 10000, 25.0)
             .when(col("visibility_m") > 4000, 15.0)

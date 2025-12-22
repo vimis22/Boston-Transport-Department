@@ -11,23 +11,23 @@ This parent module delegates to logic_children modules following Separation of C
 
 from pyspark.sql import DataFrame
 
-# Import functions and UDFs from logic_children modules
-from etl_dataanalysis.enrichments.logic_children.parse_temperature import (
+# Import functions and UDFs from enrichments modules
+from data_analysis.enrichments.parse_temperature import (
     parse_temperature,
     parse_temperature_udf
 )
-from etl_dataanalysis.enrichments.logic_children.parse_wind_speed import (
+from data_analysis.enrichments.parse_wind_speed import (
     parse_wind_speed,
     parse_wind_speed_udf
 )
-from etl_dataanalysis.enrichments.logic_children.parse_visibility import (
+from data_analysis.enrichments.parse_visibility import (
     parse_visibility,
     parse_visibility_udf
 )
-from etl_dataanalysis.enrichments.logic_children.enrich_weather_data import (
+from data_analysis.enrichments.enrich_weather_data import (
     enrich_weather_data
 )
-from etl_dataanalysis.enrichments.logic_children.add_precipitation_indicator import (
+from data_analysis.enrichments.add_precipitation_indicator import (
     add_precipitation_indicator
 )
 

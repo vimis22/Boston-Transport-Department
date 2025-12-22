@@ -19,26 +19,19 @@ def parse_taxi_stream(df: DataFrame, schema: str) -> DataFrame:
         col("timestamp").alias("kafka_timestamp"),
     )
 
-    # Extract fields from decoded Avro structure
+    # Extract fields from decoded Avro structure (only fields present in schema)
     result_df = decoded_df.select(
         col("taxi.id").alias("trip_id"),
+        col("taxi.timestamp").alias("timestamp"),
+        col("taxi.hour").alias("hour"),
+        col("taxi.day").alias("day"),
+        col("taxi.month").alias("month"),
         col("taxi.datetime").alias("datetime"),
+        col("taxi.timezone").alias("timezone"),
         col("taxi.source").alias("pickup_location"),
         col("taxi.destination").alias("dropoff_location"),
         col("taxi.cab_type").alias("cab_type"),
         col("taxi.product_id").alias("product_id"),
-        col("taxi.name").alias("product_name"),
-        col("taxi.price").cast("double").alias("price"),
-        col("taxi.distance").cast("double").alias("distance"),
-        col("taxi.surge_multiplier").cast("double").alias("surge_multiplier"),
-        col("taxi.latitude").cast("double").alias("latitude"),
-        col("taxi.longitude").cast("double").alias("longitude"),
-        col("taxi.temperature").cast("double").alias("temperature"),
-        col("taxi.apparentTemperature").cast("double").alias("apparent_temperature"),
-        col("taxi.short_summary").alias("weather_summary"),
-        col("taxi.precipIntensity").cast("double").alias("precip_intensity"),
-        col("taxi.humidity").cast("double").alias("humidity"),
-        col("taxi.windSpeed").cast("double").alias("wind_speed"),
         col("kafka_timestamp"),
     )
 
