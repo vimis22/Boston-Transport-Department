@@ -88,6 +88,9 @@ YAML
 }
 
 resource "kubectl_manifest" "zookeeper-znode" {
+  depends_on = [
+    kubectl_manifest.zookeeper-cluster
+  ]
   yaml_body = <<YAML
 apiVersion: zookeeper.stackable.tech/v1alpha1
 kind: ZookeeperZnode

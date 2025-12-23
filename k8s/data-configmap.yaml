@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mock-data
+  namespace: boston-transport
+data:
+  bike_trips.csv: |
+    tripduration,starttime,stoptime,start station id,start station name,start station latitude,start station longitude,end station id,end station name,end station latitude,end station longitude,bikeid,usertype,birth year,gender
+    600,2018-01-01 08:00:00,2018-01-01 08:10:00,22,Boylston St at Arlington St,42.35302,-71.07069,141,Washington St at Rutland St,42.342596,-71.081011,1234,Subscriber,1985,1
+    720,2018-01-01 08:05:00,2018-01-01 08:17:00,67,South Station - 700 Atlantic Ave,42.352271,-71.05524,141,Washington St at Rutland St,42.342596,-71.081011,2345,Subscriber,1990,2
+    900,2018-01-01 08:15:00,2018-01-01 08:30:00,141,Washington St at Rutland St,42.342596,-71.081011,22,Boylston St at Arlington St,42.35302,-71.07069,3456,Customer,,0
+    540,2018-01-01 08:30:00,2018-01-01 08:39:00,22,Boylston St at Arlington St,42.35302,-71.07069,67,South Station - 700 Atlantic Ave,42.352271,-71.05524,1234,Subscriber,1987,1
+    1200,2018-01-01 09:00:00,2018-01-01 09:20:00,67,South Station - 700 Atlantic Ave,42.352271,-71.05524,22,Boylston St at Arlington St,42.35302,-71.07069,4567,Subscriber,1992,2
+    800,2018-01-01 09:15:00,2018-01-01 09:28:20,141,Washington St at Rutland St,42.342596,-71.081011,67,South Station - 700 Atlantic Ave,42.352271,-71.05524,2345,Customer,,1
+    650,2018-01-01 09:30:00,2018-01-01 09:40:50,22,Boylston St at Arlington St,42.35302,-71.07069,141,Washington St at Rutland St,42.342596,-71.081011,3456,Subscriber,1988,2
+    1100,2018-01-01 10:00:00,2018-01-01 10:18:20,67,South Station - 700 Atlantic Ave,42.352271,-71.05524,141,Washington St at Rutland St,42.342596,-71.081011,1234,Subscriber,1985,1
+    750,2018-01-01 10:30:00,2018-01-01 10:42:30,141,Washington St at Rutland St,42.342596,-71.081011,22,Boylston St at Arlington St,42.35302,-71.07069,5678,Customer,,0
+    920,2018-01-01 11:00:00,2018-01-01 11:15:20,22,Boylston St at Arlington St,42.35302,-71.07069,67,South Station - 700 Atlantic Ave,42.352271,-71.05524,2345,Subscriber,1990,2
+  taxi_trips.csv: |
+    datetime,source,destination,cab_type,product_id,name,price,distance,surge_multiplier,latitude,longitude,temperature,apparentTemperature,short_summary,precipIntensity,humidity,windSpeed
+    2018-01-01 08:00:00,Back Bay,Financial District,Uber,lyft_line,Shared,12.5,2.3,1.0,42.3505,-71.0763,32.5,28.3,Partly Cloudy,0.0,0.68,8.2
+    2018-01-01 08:10:00,North End,South Boston,Lyft,lyft,Lyft,15.75,3.1,1.0,42.3647,-71.0542,32.7,28.5,Clear,0.0,0.67,8.0
+    2018-01-01 08:20:00,South Station,Cambridge,Uber,uber_x,UberX,18.25,4.2,1.25,42.3521,-71.0552,32.8,28.6,Partly Cloudy,0.0,0.66,7.9
+    2018-01-01 08:30:00,Fenway,Downtown,Lyft,lyft_plus,Lyft XL,22.50,3.8,1.0,42.3467,-71.0972,33.0,29.0,Clear,0.0,0.65,7.8
+    2018-01-01 08:45:00,Seaport,Logan Airport,Uber,uber_xl,UberXL,35.00,6.5,1.0,42.3488,-71.0420,33.2,29.2,Partly Cloudy,0.0,0.64,7.7
+    2018-01-01 09:00:00,Cambridge,Back Bay,Lyft,lyft_line,Shared,10.25,3.5,1.0,42.3736,-71.1097,33.5,29.5,Clear,0.0,0.63,7.6
+    2018-01-01 09:15:00,Financial District,Beacon Hill,Uber,uber_x,UberX,11.50,1.8,1.0,42.3559,-71.0550,33.8,29.8,Partly Cloudy,0.0,0.62,7.5
+    2018-01-01 09:30:00,Allston,Fenway,Lyft,lyft,Lyft,14.75,2.9,1.0,42.3534,-71.1324,34.0,30.0,Clear,0.0,0.61,7.4
+    2018-01-01 09:45:00,South Boston,North End,Uber,uber_x,UberX,13.25,2.5,1.0,42.3328,-71.0520,34.2,30.2,Partly Cloudy,0.0,0.60,7.3
+    2018-01-01 10:00:00,Downtown,Seaport,Lyft,lyft_plus,Lyft XL,19.00,2.7,1.0,42.3551,-71.0603,34.5,30.5,Clear,0.0,0.59,7.2
+  weather_observations.csv: |
+    datetime,tempmax,tempmin,temp,feelslikemax,feelslikemin,feelslike,dew,humidity,precip,precipprob,precipcover,preciptype,snow,snowdepth,windgust,windspeed,winddir,sealevelpressure,cloudcover,visibility,solarradiation,solarenergy,uvindex,conditions
+    2018-01-01 08:00:00,35.2,30.1,32.5,28.3,25.2,26.8,24.5,68.0,0.0,0.0,0.0,,0.0,0.0,15.2,8.2,315.0,1015.2,45.0,10.0,125.5,1.2,2.0,Partly Cloudy
+    2018-01-01 09:00:00,36.5,31.2,33.5,29.5,26.1,27.8,25.2,65.0,0.0,0.0,0.0,,0.0,0.0,14.8,7.8,310.0,1015.5,40.0,10.0,185.3,1.8,3.0,Clear
+    2018-01-01 10:00:00,38.0,32.5,34.5,30.5,27.3,28.9,26.1,62.0,0.0,0.0,0.0,,0.0,0.0,14.5,7.5,305.0,1015.8,35.0,10.0,245.8,2.5,4.0,Partly Cloudy
+    2018-01-01 11:00:00,39.5,33.8,35.8,31.8,28.6,30.2,27.3,59.0,0.0,0.0,0.0,,0.0,0.0,14.2,7.3,300.0,1016.0,30.0,10.0,298.6,3.0,5.0,Clear
+    2018-01-01 12:00:00,41.2,35.0,37.2,33.2,29.9,31.6,28.5,56.0,0.0,0.0,0.0,,0.0,0.0,14.0,7.2,295.0,1016.2,25.0,10.0,342.5,3.4,5.0,Mostly Clear
+    2018-01-01 13:00:00,42.5,36.2,38.5,34.5,31.1,32.8,29.6,54.0,0.0,0.0,0.0,,0.0,0.0,13.8,7.1,290.0,1016.3,22.0,10.0,365.2,3.7,5.0,Clear
+    2018-01-01 14:00:00,43.8,37.5,39.8,35.8,32.4,34.1,30.8,52.0,0.0,0.0,0.0,,0.0,0.0,13.6,7.0,285.0,1016.5,20.0,10.0,358.9,3.6,5.0,Clear
+    2018-01-01 15:00:00,44.2,38.1,40.2,36.2,33.0,34.6,31.3,51.0,0.0,0.0,0.0,,0.0,0.0,13.5,6.9,280.0,1016.6,18.0,10.0,325.6,3.3,4.0,Clear
+    2018-01-01 16:00:00,43.5,37.8,39.5,35.5,32.6,34.1,30.9,52.0,0.0,0.0,0.0,,0.0,0.0,13.4,6.8,275.0,1016.8,20.0,10.0,265.8,2.7,3.0,Partly Cloudy
+    2018-01-01 17:00:00,42.0,36.5,38.0,34.0,31.3,32.7,29.8,55.0,0.0,0.0,0.0,,0.0,0.0,13.3,6.7,270.0,1017.0,25.0,10.0,185.2,1.9,2.0,Partly Cloudy

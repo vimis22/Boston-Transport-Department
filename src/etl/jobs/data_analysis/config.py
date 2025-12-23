@@ -24,7 +24,7 @@ SCHEMA_SUBJECTS = {
     "bike": "bike-data-value",
     "taxi": "taxi-data-value",
     "weather": "weather-data-value",
-    "accidents": "accidents-value",
+    "accidents": "accident-data-value",
 }
 
 # This is where Spark Structured Streaming runs and saves the state here.
