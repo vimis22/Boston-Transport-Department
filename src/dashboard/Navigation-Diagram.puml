@@ -1,0 +1,147 @@
+@startuml Navigation_Diagram
+
+skinparam backgroundColor #FFFFFF
+skinparam roundcorner 10
+
+skinparam component {
+  BackgroundColor #E3F2FD
+  BorderColor #1976D2
+  FontSize 11
+  ArrowColor #424242
+}
+
+skinparam rectangle {
+  BackgroundColor<<Home>> #C8E6C9
+  BackgroundColor<<Hive>> #FFF9C4
+  BackgroundColor<<Kafka>> #FFCCBC
+  BackgroundColor<<Live>> #F8BBD0
+  BackgroundColor<<Historical>> #D1C4E9
+  BackgroundColor<<API>> #CFD8DC
+  BorderColor Black
+}
+
+actor User as "User"
+component "App.tsx" as App #BBDEFB
+component "Navbar" as Navbar
+
+User --> App : åbner dashboard
+App --> Navbar : renders
+
+rectangle "Home Tab" <<Home>> {
+  component "HomeTab" as HomeTab
+  component "QuickLinks" as QuickLinks
+  component "SimulationClock" as SimClock
+  component "KafkaTopicsOverview" as KafkaOverview
+
+  HomeTab --> QuickLinks
+  HomeTab --> SimClock
+  HomeTab --> KafkaOverview
+}
+
+rectangle "Hive Tab" <<Hive>> {
+  component "HiveTab" as HiveTab
+  component "HiveSQLEditor" as SQLEditor
+  component "HiveResults" as HiveResults
+
+  HiveTab --> SQLEditor
+  HiveTab --> HiveResults
+}
+
+rectangle "Kafka Tab" <<Kafka>> {
+  component "KafkaTab" as KafkaTab
+  component "TopicsList" as TopicsList
+  component "TopicMetrics" as TopicMetrics
+  component "RecentMessages" as RecentMessages
+
+  KafkaTab --> TopicsList
+  KafkaTab --> TopicMetrics
+  KafkaTab --> RecentMessages
+
+  TopicsList .down.> TopicMetrics : selects
+  TopicsList .down.> RecentMessages : selects
+}
+
+rectangle "Live Charts Tab" <<Live>> {
+  component "LiveChartsTab" as LiveTab
+  component "LiveBikeTripRate" as LiveBike
+  component "LiveTaxiTripRate" as LiveTaxi
+  component "LiveWeatherChart" as LiveWeather
+
+  LiveTab --> LiveBike
+  LiveTab --> LiveTaxi
+  LiveTab --> LiveWeather
+}
+
+rectangle "Historical Tab" <<Historical>> {
+  component "HistoricalTab" as HistTab
+  component "BikeVsWeather" as BikeWeather
+  component "TripSpeedDistribution" as TripSpeed
+  component "PrecipitationImpact" as Precipitation
+  component "TripsByTimeOfDay" as TripsByTime
+  component "TripDistanceHeatmap" as TripDistance
+
+  HistTab --> BikeWeather
+  HistTab --> TripSpeed
+  HistTab --> Precipitation
+  HistTab --> TripsByTime
+  HistTab --> TripDistance
+}
+
+App -down-> HomeTab : route: home
+App -down-> HiveTab : route: hive
+App -down-> KafkaTab : route: kafka
+App -down-> LiveTab : route: live
+App -down-> HistTab : route: historical
+
+rectangle "Backend API" <<API>> {
+  component "Backend Server" as Backend
+  component "/api/timemanager" as API_TM
+  component "/api/hive/query" as API_Hive
+  component "/api/kafka/topics" as API_Kafka_Topics
+  component "/api/kafka/topics/:topic/metrics" as API_Kafka_Metrics
+  component "/api/kafka/topics/:topic/sample" as API_Kafka_Sample
+}
+
+SimClock --> API_TM
+KafkaOverview --> API_Kafka_Topics
+
+SQLEditor --> API_Hive
+HiveResults --> API_Hive
+
+TopicsList --> API_Kafka_Topics
+TopicMetrics --> API_Kafka_Metrics
+RecentMessages --> API_Kafka_Sample
+
+LiveBike --> API_Hive
+LiveTaxi --> API_Hive
+LiveWeather --> API_Hive
+
+BikeWeather --> API_Hive
+TripSpeed --> API_Hive
+Precipitation --> API_Hive
+TripsByTime --> API_Hive
+TripDistance --> API_Hive
+
+API_TM --> Backend
+API_Hive --> Backend
+API_Kafka_Topics --> Backend
+API_Kafka_Metrics --> Backend
+API_Kafka_Sample --> Backend
+
+database "Timemanager\nService" as TM_Service
+database "Hive\nService" as Hive_Service
+database "Kafka\nService" as Kafka_Service
+
+Backend --> TM_Service
+Backend --> Hive_Service
+Backend --> Kafka_Service
+
+note right of QuickLinks
+  Links til:
+  - Hive UI
+  - Kafka UI
+  - Grafana
+  - Superset
+end note
+
+@enduml

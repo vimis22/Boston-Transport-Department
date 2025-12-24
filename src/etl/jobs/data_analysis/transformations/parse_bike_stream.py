@@ -37,29 +37,25 @@ def parse_bike_stream(df: DataFrame, schema: str) -> DataFrame:
         col("timestamp").alias("kafka_timestamp"),
     )
 
-    # Extract fields from decoded Avro structure
+    # Extract fields from decoded Avro structure (only fields present in schema)
     result_df = decoded_df.select(
         col("bike.tripduration").cast("integer").alias("duration_seconds"),
         col("bike.starttime").alias("start_time"),
         col("bike.stoptime").alias("stop_time"),
-        col("bike.`start station id`").alias("start_station_id"),
-        col("bike.`start station name`").alias("start_station_name"),
-        col("bike.`start station latitude`")
+        col("bike.start_station_id").alias("start_station_id"),
+        col("bike.start_station_name").alias("start_station_name"),
+        col("bike.start_station_latitude")
         .cast("double")
         .alias("start_station_latitude"),
-        col("bike.`start station longitude`")
+        col("bike.start_station_longitude")
         .cast("double")
         .alias("start_station_longitude"),
-        col("bike.`end station id`").alias("end_station_id"),
-        col("bike.`end station name`").alias("end_station_name"),
-        col("bike.`end station latitude`").cast("double").alias("end_station_latitude"),
-        col("bike.`end station longitude`")
+        col("bike.end_station_id").alias("end_station_id"),
+        col("bike.end_station_name").alias("end_station_name"),
+        col("bike.end_station_latitude").cast("double").alias("end_station_latitude"),
+        col("bike.end_station_longitude")
         .cast("double")
         .alias("end_station_longitude"),
-        col("bike.bikeid").alias("bike_id"),
-        col("bike.usertype").alias("user_type"),
-        col("bike.`birth year`").cast("integer").alias("birth_year"),
-        col("bike.gender").alias("gender"),
         col("kafka_timestamp"),
     )
 
