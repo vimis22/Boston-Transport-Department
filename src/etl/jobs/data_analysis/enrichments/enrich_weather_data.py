@@ -12,9 +12,9 @@ def enrich_weather_data(df: DataFrame) -> DataFrame:
     """
     Enrich weather DataFrame with parsed values and categories.
 
-    Input: Raw weather DataFrame with TMP, WND, VIS strings
+    Input: Raw weather DataFrame with temperature/wind/visibility (can be strings or doubles)
     Output: Enriched DataFrame with:
-        - temperature_celsius
+        - temp_c (alias for temperature_celsius)
         - wind_speed_ms
         - visibility_m
         - temp_bucket (e.g., '0-5C', '5-10C')
@@ -23,44 +23,55 @@ def enrich_weather_data(df: DataFrame) -> DataFrame:
         - weather_condition_score (0-100, higher = better conditions)
     """
 
-    # Parse raw weather strings using native Spark SQL functions (no UDFs)
-    # Temperature: Format '+0056,1' -> extract '+0056' and divide by 10
+    # Temperature: Check if already parsed (double) or needs parsing (string)
     enriched_df = df.withColumn(
-        "temperature_celsius",
-        when(col("temperature").isNotNull() & (col("temperature") != ""),
+        "temp_c",
+        when(col("temperature").cast("string").contains(","),
+             # Parse coded string: Format '+0056,1' -> extract '+0056' and divide by 10
              expr("CAST(split(temperature, ',')[0] AS DOUBLE) / 10.0")
-        ).otherwise(None)
+        ).otherwise(
+             # Already parsed as double
+             col("temperature").cast("double")
+        )
     )
 
-    # Wind speed: Format '160,1,N,0046,1' -> extract 4th element (0046) and divide by 10
+    # Wind speed: Check if already parsed or needs parsing
     enriched_df = enriched_df.withColumn(
         "wind_speed_ms",
-        when(col("wind").isNotNull() & (col("wind") != ""),
+        when(col("wind").cast("string").contains(","),
+             # Parse coded string: Format '160,1,N,0046,1' -> extract 4th element (0046) and divide by 10
              expr("CAST(split(wind, ',')[3] AS DOUBLE) / 10.0")
-        ).otherwise(None)
+        ).otherwise(
+             # If single value, assume already in m/s
+             col("wind").cast("double")
+        )
     )
 
-    # Visibility: Format '016000,1,9,9' -> extract first element
+    # Visibility: Check if already parsed or needs parsing
     enriched_df = enriched_df.withColumn(
         "visibility_m",
-        when(col("visibility").isNotNull() & (col("visibility") != ""),
+        when(col("visibility").cast("string").contains(","),
+             # Parse coded string: Format '016000,1,9,9' -> extract first element
              expr("CAST(split(visibility, ',')[0] AS DOUBLE)")
-        ).otherwise(None)
+        ).otherwise(
+             # Already parsed as meters
+             col("visibility").cast("double")
+        )
     )
 
     # Temperature buckets (5-degree intervals)
     enriched_df = enriched_df.withColumn(
         "temp_bucket",
-        when(col("temperature_celsius").isNull(), "unknown")
-        .when(col("temperature_celsius") < -10, "below_-10C")
-        .when(col("temperature_celsius") < -5, "-10_to_-5C")
-        .when(col("temperature_celsius") < 0, "-5_to_0C")
-        .when(col("temperature_celsius") < 5, "0_to_5C")
-        .when(col("temperature_celsius") < 10, "5_to_10C")
-        .when(col("temperature_celsius") < 15, "10_to_15C")
-        .when(col("temperature_celsius") < 20, "15_to_20C")
-        .when(col("temperature_celsius") < 25, "20_to_25C")
-        .when(col("temperature_celsius") < 30, "25_to_30C")
+        when(col("temp_c").isNull(), "unknown")
+        .when(col("temp_c") < -10, "below_-10C")
+        .when(col("temp_c") < -5, "-10_to_-5C")
+        .when(col("temp_c") < 0, "-5_to_0C")
+        .when(col("temp_c") < 5, "0_to_5C")
+        .when(col("temp_c") < 10, "5_to_10C")
+        .when(col("temp_c") < 15, "10_to_15C")
+        .when(col("temp_c") < 20, "15_to_20C")
+        .when(col("temp_c") < 25, "20_to_25C")
+        .when(col("temp_c") < 30, "25_to_30C")
         .otherwise("above_30C"),
     )
 
@@ -90,12 +101,12 @@ def enrich_weather_data(df: DataFrame) -> DataFrame:
     # Based on: temperature comfort, low wind, good visibility
     enriched_df = enriched_df.withColumn(
         "weather_condition_score",
-        when(col("temperature_celsius").isNull(), 50.0).otherwise(
-            when(col("temperature_celsius").between(15, 25), 40.0)
-            .when(col("temperature_celsius").between(10, 15), 35.0)
-            .when(col("temperature_celsius").between(25, 30), 35.0)
-            .when(col("temperature_celsius").between(5, 10), 25.0)
-            .when(col("temperature_celsius").between(0, 5), 20.0)
+        when(col("temp_c").isNull(), 50.0).otherwise(
+            when(col("temp_c").between(15, 25), 40.0)
+            .when(col("temp_c").between(10, 15), 35.0)
+            .when(col("temp_c").between(25, 30), 35.0)
+            .when(col("temp_c").between(5, 10), 25.0)
+            .when(col("temp_c").between(0, 5), 20.0)
             .otherwise(10.0)
             +
             when(col("wind_speed_ms") < 1.5, 30.0)
