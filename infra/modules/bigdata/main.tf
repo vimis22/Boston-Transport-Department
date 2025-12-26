@@ -125,27 +125,27 @@ resource "kubernetes_deployment_v1" "streamer" {
 
           env {
             name  = "WEBHDFS_URL"
-            value = "http://hdfs-namenode.${var.namespace}.svc.cluster.local:9870"
+            value = "http://hdfs-namenode:9870"
           }
 
           env {
             name  = "WEBHDFS_DATANODE_URL"
-            value = "http://hdfs-datanode.${var.namespace}.svc.cluster.local:9864"
+            value = "http://hdfs-datanode:9864"
           }
 
           env {
             name  = "SCHEMA_REGISTRY_URL"
-            value = "http://schema-registry.${var.namespace}.svc.cluster.local:8081"
+            value = "http://schema-registry:8081"
           }
 
           env {
             name  = "KAFKA_REST_PROXY_URL"
-            value = "http://kafka-rest-proxy.${var.namespace}.svc.cluster.local:8082"
+            value = "http://kafka-rest-proxy:8082"
           }
 
           env {
             name  = "TIME_MANAGER_URL"
-            value = "http://timemanager.${var.namespace}.svc.cluster.local:8000"
+            value = "http://timemanager:8000"
           }
         }
       }
@@ -296,17 +296,17 @@ resource "kubernetes_deployment_v1" "dashboard" {
 
           env {
             name  = "TIMEMANAGER_URL"
-            value = "http://timemanager.${var.namespace}.svc.cluster.local:8000"
+            value = "http://timemanager:8000"
           }
 
           env {
             name  = "HIVE_HTTP_PROXY_URL"
-            value = "http://hive-http-proxy.${var.namespace}.svc.cluster.local:10001"
+            value = "http://hive-http-proxy:10001"
           }
 
           env {
             name  = "KAFKA_UI_URL"
-            value = "http://kafka-ui.${var.namespace}.svc.cluster.local:8080"
+            value = "http://kafka-ui:8080"
           }
 
           env {

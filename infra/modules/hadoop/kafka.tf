@@ -89,7 +89,7 @@ resource "kubernetes_stateful_set_v1" "kafka" {
           }
           env {
             name  = "KAFKA_ADVERTISED_LISTENERS"
-            value = "PLAINTEXT://$(POD_NAME).kafka-broker-headless.${var.namespace}.svc.cluster.local:9092"
+            value = "PLAINTEXT://$(POD_NAME).kafka-broker-headless:9092"
           }
           env {
             name  = "KAFKA_ZOOKEEPER_CONNECT"

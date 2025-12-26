@@ -21,7 +21,7 @@ resource "kubernetes_job_v1" "bike-weather-data-aggregation" {
         active_deadline_seconds = 600
         init_container {
           name  = "init-container"
-          image = "ghcr.io/vimis22/etl:1.0.11"
+          image = "ghcr.io/vimis22/etl:1.0.15"
           command = [
             "cp",
             "-r",
@@ -44,15 +44,15 @@ resource "kubernetes_job_v1" "bike-weather-data-aggregation" {
           ]
           env {
             name  = "SPARK_CONNECT_URL"
-            value = "sc://spark-connect-server.${var.namespace}.svc.cluster.local:15002"
+            value = "sc://spark-connect-server:15002"
           }
           env {
             name  = "SCHEMA_REGISTRY_URL"
-            value = "http://schema-registry.${var.namespace}.svc.cluster.local:8081"
+            value = "http://schema-registry:8081"
           }
           env {
             name  = "KAFKA_BOOTSTRAP"
-            value = "kafka-broker.${var.namespace}.svc.cluster.local:9092"
+            value = "kafka-broker:9092"
           }
           env {
             name  = "OUTPUT_TOPIC"
@@ -92,7 +92,7 @@ resource "kubernetes_job_v1" "bike-weather-distance" {
         active_deadline_seconds = 600
         init_container {
           name  = "init-container"
-          image = "ghcr.io/vimis22/etl:1.0.11"
+          image = "ghcr.io/vimis22/etl:1.0.15"
           command = [
             "cp",
             "-r",
@@ -115,15 +115,15 @@ resource "kubernetes_job_v1" "bike-weather-distance" {
           ]
           env {
             name  = "SPARK_CONNECT_URL"
-            value = "sc://spark-connect-server.${var.namespace}.svc.cluster.local:15002"
+            value = "sc://spark-connect-server:15002"
           }
           env {
             name  = "SCHEMA_REGISTRY_URL"
-            value = "http://schema-registry.${var.namespace}.svc.cluster.local:8081"
+            value = "http://schema-registry:8081"
           }
           env {
             name  = "KAFKA_BOOTSTRAP"
-            value = "kafka-broker.${var.namespace}.svc.cluster.local:9092"
+            value = "kafka-broker:9092"
           }
           env {
             name  = "CHECKPOINT_LOCATION"

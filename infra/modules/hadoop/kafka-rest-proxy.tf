@@ -58,7 +58,7 @@ resource "kubernetes_deployment_v1" "kafka_rest_proxy" {
           }
           env {
             name  = "KAFKA_REST_SCHEMA_REGISTRY_URL"
-            value = "http://schema-registry.${var.namespace}.svc.cluster.local:8081"
+            value = "http://schema-registry:8081"
           }
           env {
             name  = "KAFKA_REST_LISTENERS"

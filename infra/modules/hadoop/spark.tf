@@ -124,7 +124,7 @@ resource "kubernetes_stateful_set_v1" "spark_thrift" {
           args = [
             <<-EOT
             /opt/spark/sbin/start-thriftserver.sh \
-            --master k8s://https://kubernetes.default.svc.cluster.local:443 \
+            --master k8s://https://kubernetes.default:443 \
             --hiveconf hive.server2.thrift.port=10000 \
             --hiveconf hive.server2.thrift.bind.host=0.0.0.0 \
             --hiveconf hive.metastore.uris=thrift://hive-metastore:9083 \
@@ -241,7 +241,7 @@ resource "kubernetes_deployment_v1" "spark_connect" {
             <<-EOT
             /opt/spark/bin/spark-submit \
             --class org.apache.spark.sql.connect.service.SparkConnectServer \
-            --master k8s://https://kubernetes.default.svc.cluster.local:443 \
+            --master k8s://https://kubernetes.default:443 \
             --conf spark.hadoop.hive.metastore.uris=thrift://hive-metastore:9083 \
             --conf spark.hadoop.fs.defaultFS=hdfs://hdfs-namenode:8020 \
             --conf spark.hadoop.hive.metastore.warehouse.dir=/user/hive/warehouse \
