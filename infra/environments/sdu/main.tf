@@ -1,14 +1,15 @@
 terraform {
   backend "kubernetes" {
     secret_suffix    = "state"
-    config_path      = "~/.kube/config"
+    config_path      = "~/Downloads/bd-stud-magre21-sa-bd-bd-stud-magre21-kubeconfig.yaml"
+    namespace        = "bd-bd-stud-magre21"
   }
 }
 
 locals {
-  kubeconfig_path = "~/.kube/config"
-  context = "docker-desktop"
-  namespace = "bigdata"
+  kubeconfig_path = "~/Downloads/bd-stud-magre21-sa-bd-bd-stud-magre21-kubeconfig.yaml"
+  context = "bd-bd-stud-magre21-context"
+  namespace = "bd-bd-stud-magre21"
 }
 
 provider "kubernetes" {
@@ -16,25 +17,25 @@ provider "kubernetes" {
   config_context = local.context
 }
 
-
-resource "kubernetes_namespace_v1" "default" {
-  metadata {
-    name = local.namespace
-  }
-}
-
 # Deploy Hadoop cluster
 module "hadoop" {
-  depends_on = [kubernetes_namespace_v1.default]
   source     = "../../modules/hadoop"
   namespace  = local.namespace
+}
+
+# Create datasets
+resource "terraform_data" "create_datasets" {
+  depends_on = [module.hadoop]
+  provisioner "local-exec" {
+    command = "uv run ../../../tools/create-datasets.py --namespace ${local.namespace} --kubeconfig ${pathexpand(local.kubeconfig_path)} --context ${local.context}"
+  }
 }
 
 # Publish schemas to Schema Registry
 resource "terraform_data" "publish_schemas" {
   depends_on = [module.hadoop]
   provisioner "local-exec" {
-    command = "uv run ../../../tools/create-schemas.py"
+    command = "uv run ../../../tools/create-schemas.py --namespace ${local.namespace} --kubeconfig ${pathexpand(local.kubeconfig_path)} --context ${local.context}"
   }
 }
 
@@ -42,7 +43,7 @@ resource "terraform_data" "publish_schemas" {
 resource "terraform_data" "publish_topics" {
   depends_on = [module.hadoop]
   provisioner "local-exec" {
-    command = "uv run ../../../tools/create-topics.py"
+    command = "uv run ../../../tools/create-topics.py --namespace ${local.namespace} --kubeconfig ${pathexpand(local.kubeconfig_path)} --context ${local.context}"
   }
 }
 
@@ -50,7 +51,7 @@ resource "terraform_data" "publish_topics" {
 resource "terraform_data" "create_connectors" {
   depends_on = [module.hadoop, terraform_data.publish_topics]
   provisioner "local-exec" {
-    command = "uv run ../../../tools/create-connectors.py"
+    command = "uv run ../../../tools/create-connectors.py --namespace ${local.namespace} --kubeconfig ${pathexpand(local.kubeconfig_path)} --context ${local.context}"
   }
 }
 

@@ -26,6 +26,9 @@ Then run the following to create the services:
 - `terraform init`
 - `terraform apply`
 
+After deploying, scale the namenode statefulset for the HDFS cluster to 1 replica, as not all services have high availability enabled.
+- `kubectl -n bigdata scale statefulsets hdfs-cluster-namenode-default --replicas=1`
+
 To forward the relevant ports to your local machine, use the `tools/forward-all.py` script:
 - Start by running `uv sync` to install all the dependencies.
 - Then execute `uv run tools/forward-all.py`
@@ -41,6 +44,11 @@ This will download the datasets, convert them to parquet and upload them to the 
 To upload the schemas to the Schema Registry, you can use the `tools/create-schemas.py` script.
 - Start by running `uv sync` to install all the dependencies.
 - Then execute `uv run tools/create-schemas.py`
+
+## Create the Kafka topics
+To create the Kafka topics, you can use the `tools/create-topics.py` script.
+- Start by running `uv sync` to install all the dependencies.
+- Then execute `uv run tools/create-topics.py`
 
 ## Check the streamer pod in kubernetes
 To check the streamer pod in kubernetes, you can use the following command:
@@ -63,6 +71,7 @@ Now you can run the notebook and it will connect to the jupyter kernel.
 ## TODO:
 - Make video tutorial for bringup
 - Deploy to sdu cluster
+    - Okay, since sdu cluster doesn't permit operators/crd's, we will need to dump all the resources and deploy them manually.(config map, pvc, statefulset, service, deployment, etc.)
 
 Release strategy:
 - git tag -f v1.0.4 HEAD

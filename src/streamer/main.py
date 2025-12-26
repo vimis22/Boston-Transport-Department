@@ -164,6 +164,7 @@ def main():
     kafka = KafkaProxy(
         base_url=config.kafka_rest_proxy_url,
         cluster_id=config.kafka_cluster_id,
+        timeout=config.kafka_rest_timeout,
     )
     
     # Auto-discover cluster ID if not provided

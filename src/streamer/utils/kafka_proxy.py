@@ -14,7 +14,7 @@ class KafkaProxy:
         self,
         base_url: str = "http://localhost:8082",
         cluster_id: Optional[str] = None,
-        timeout: int = 30,
+        timeout: int = 60,
     ):
         """
         Initialize Kafka Proxy client.

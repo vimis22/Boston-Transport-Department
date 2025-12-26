@@ -163,6 +163,7 @@ def upload_schemas(
     Upload all Avro schemas to the Schema Registry.
     
     Args:
+        namespace: Kubernetes namespace to use
         schema_registry_url: Base URL for Schema Registry
         recreate: If True, delete existing schemas before registering new ones
     """
@@ -230,6 +231,24 @@ def main():
         description="Upload Avro schemas to Schema Registry"
     )
     parser.add_argument(
+        "--namespace",
+        type=str,
+        default="bigdata",
+        help="Kubernetes namespace to use (default: bigdata)",
+    )
+    parser.add_argument(
+        "--kubeconfig",
+        type=str,
+        default=None,
+        help="Path to kubeconfig file",
+    )
+    parser.add_argument(
+        "--context",
+        type=str,
+        default=None,
+        help="Kubernetes context to use",
+    )
+    parser.add_argument(
         "--schema-registry-url",
         type=str,
         default=None,
@@ -251,12 +270,28 @@ def main():
             local_port = s.getsockname()[1]
         
         # Start port-forward
+        print(f"Auto-detecting Schema Registry in namespace '{args.namespace}'...")
+        cmd = ["kubectl"]
+        if args.kubeconfig:
+            cmd.extend(["--kubeconfig", args.kubeconfig])
+        if args.context:
+            cmd.extend(["--context", args.context])
+        cmd.extend(["-n", args.namespace, "port-forward", "svc/schema-registry", f"{local_port}:8081"])
+
         proc = subprocess.Popen(
-            ["kubectl", "-n", "bigdata", "port-forward", "svc/schema-registry", f"{local_port}:8081"],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
         )
+        
+        # Give it a moment to check if it started successfully
         time.sleep(2)
+        if proc.poll() is not None:
+            stdout, stderr = proc.communicate()
+            print(f"❌ Failed to start kubectl port-forward for Schema Registry:\n{stderr}\n{stdout}", file=sys.stderr)
+            sys.exit(1)
+            
         schema_registry_url = f"http://localhost:{local_port}"
         
         try:

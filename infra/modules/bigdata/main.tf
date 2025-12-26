@@ -8,7 +8,7 @@ terraform {
 }
 
 # Time Manager Deployment
-resource "kubernetes_deployment" "timemanager" {
+resource "kubernetes_deployment_v1" "timemanager" {
   metadata {
     name      = "timemanager"
     namespace = var.namespace
@@ -66,7 +66,7 @@ resource "kubernetes_deployment" "timemanager" {
 }
 
 # Time Manager Service
-resource "kubernetes_service" "timemanager" {
+resource "kubernetes_service_v1" "timemanager" {
   metadata {
     name      = "timemanager"
     namespace = var.namespace
@@ -92,7 +92,7 @@ resource "kubernetes_service" "timemanager" {
 }
 
 # Streamer Deployment
-resource "kubernetes_deployment" "streamer" {
+resource "kubernetes_deployment_v1" "streamer" {
   metadata {
     name      = "streamer"
     namespace = var.namespace
@@ -125,12 +125,12 @@ resource "kubernetes_deployment" "streamer" {
 
           env {
             name  = "WEBHDFS_URL"
-            value = "http://hdfs-cluster-namenode-default-0.hdfs-cluster-namenode-default.${var.namespace}.svc.cluster.local:9870"
+            value = "http://hdfs-namenode.${var.namespace}.svc.cluster.local:9870"
           }
 
           env {
             name  = "WEBHDFS_DATANODE_URL"
-            value = "http://hdfs-cluster-datanode-default-0.hdfs-cluster-datanode-default.${var.namespace}.svc.cluster.local:9864"
+            value = "http://hdfs-datanode.${var.namespace}.svc.cluster.local:9864"
           }
 
           env {
@@ -140,7 +140,7 @@ resource "kubernetes_deployment" "streamer" {
 
           env {
             name  = "KAFKA_REST_PROXY_URL"
-            value = "http://kafkarestproxy.${var.namespace}.svc.cluster.local:8082"
+            value = "http://kafka-rest-proxy.${var.namespace}.svc.cluster.local:8082"
           }
 
           env {
@@ -154,7 +154,7 @@ resource "kubernetes_deployment" "streamer" {
 }
 
 # Streamer Service
-resource "kubernetes_service" "streamer" {
+resource "kubernetes_service_v1" "streamer" {
   metadata {
     name      = "streamer"
     namespace = var.namespace
@@ -180,7 +180,7 @@ resource "kubernetes_service" "streamer" {
 
 
 # Hive HTTP Proxy Deployment
-resource "kubernetes_deployment" "hive_http_proxy" {
+resource "kubernetes_deployment_v1" "hive_http_proxy" {
   metadata {
     name      = "hive-http-proxy"
     namespace = var.namespace
@@ -213,7 +213,7 @@ resource "kubernetes_deployment" "hive_http_proxy" {
 
           env {
             name  = "HIVE_HOST"
-            value = "spark-thrift-service"
+            value = "spark-thrift"
           }
 
           env {
@@ -232,7 +232,7 @@ resource "kubernetes_deployment" "hive_http_proxy" {
 }
 
 # Hive HTTP Proxy Service
-resource "kubernetes_service" "hive_http_proxy" {
+resource "kubernetes_service_v1" "hive_http_proxy" {
   metadata {
     name      = "hive-http-proxy"
     namespace = var.namespace
@@ -258,7 +258,7 @@ resource "kubernetes_service" "hive_http_proxy" {
 }
 
 # Dashboard Deployment
-resource "kubernetes_deployment" "dashboard" {
+resource "kubernetes_deployment_v1" "dashboard" {
   metadata {
     name      = "dashboard"
     namespace = var.namespace
@@ -320,7 +320,7 @@ resource "kubernetes_deployment" "dashboard" {
 }
 
 # Dashboard Service
-resource "kubernetes_service" "dashboard" {
+resource "kubernetes_service_v1" "dashboard" {
   metadata {
     name      = "dashboard"
     namespace = var.namespace

@@ -3,6 +3,7 @@
 
 import subprocess
 import time
+import argparse
 from typing import List, Tuple
 
 
@@ -30,30 +31,34 @@ def print_forwarding_info(forwardings: List[Tuple[str, str, int, int]]):
     print("-" * 60)
     for service, _, local, remote in forwardings:
         print(
-            f"{service:<20} {local:<12} {remote:<12} {'RUNNING' if True else 'ERROR'}"
+            f"{service:<20} {local:<12} {remote:<12} {'RUNNING'}"
         )
     print("=" * 60)
     print("\nPress Ctrl+C to stop all forwarding.")
 
 
 def main():
-    namespace = "bigdata"
+    parser = argparse.ArgumentParser(description="Forward all relevant ports from the cluster to the local machine")
+    parser.add_argument("--namespace", type=str, default="bigdata", help="Kubernetes namespace")
+    args = parser.parse_args()
+
+    namespace = args.namespace
 
     # Define all port forwardings
     forwardings = [
-        ("webhdfs", "hdfs-proxy-service", 9870, 80),
-        ("webhdfs-datanode", "hdfs-cluster-datanode-default", 9864, 9864),
-        ("spark-connect", "spark-connect-server", 15002, 15002),
+        ("webhdfs", "hdfs-namenode", 9870, 9870),
+        ("webhdfs-datanode", "hdfs-datanode", 9864, 9864),
+        ("spark-connect", "spark-connect", 15002, 15002),
         ("spark-ui", "spark-connect-server", 4040, 4040),
         ("jupyter", "jupyterlab", 8080, 8080),
-        ("hive-metastore", "hive-cluster-metastore", 9083, 9083),
-        ("kafka-rest-proxy", "kafkarestproxy", 8082, 8082),
+        ("hive-metastore", "hive-metastore", 9083, 9083),
+        ("kafka-rest-proxy", "kafka-rest-proxy", 8082, 8082),
         ("kafka-ui", "kafka-ui", 8083, 8080),
+        ("kafka-connect", "kafka-connect", 8084, 8083),
         ("schema-registry", "schema-registry", 8081, 8081),
-        ("hive", "spark-thrift-service", 10000, 10000),
-        ("hive-http-proxy", "hive-http-proxy", 10001, 10001),
+        ("hive", "spark-thrift", 10000, 10000),
         ("timemanager", "timemanager", 8000, 8000),
-        # ("dashboard", "dashboard", 3000, 3000),
+        ("dashboard", "dashboard", 3000, 3000),
     ]
 
     processes = []
