@@ -109,79 +109,115 @@ def main():
     session.mount("http://", adapter)
     session.mount("https://", adapter)
     
-    # If no URL provided, set up kubectl port-forward
+    # If URL provided, use it. Otherwise, port-forward will be set up in the retry loop.
+    kafka_connect_url = args.kafka_connect_url.rstrip("/") if args.kafka_connect_url else None
     proc = None
-    if args.kafka_connect_url is None:
-        print(f"Auto-detecting Kafka Connect in namespace '{args.namespace}'...")
-        # Find available port
-        with socket.socket() as s:
-            s.bind(('', 0))
-            local_port = s.getsockname()[1]
-        
-        # Start port-forward
-        cmd = ["kubectl"]
-        if args.kubeconfig:
-            cmd.extend(["--kubeconfig", args.kubeconfig])
-        if args.context:
-            cmd.extend(["--context", args.context])
-        cmd.extend(["-n", args.namespace, "port-forward", "svc/kafka-connect", f"{local_port}:8083"])
-
-        proc = subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
-        
-        # Give it a moment to check if it started successfully
-        time.sleep(2)
-        if proc.poll() is not None:
-            stdout, stderr = proc.communicate()
-            print(f"❌ Failed to start kubectl port-forward for Kafka Connect:\n{stderr}\n{stdout}", file=sys.stderr)
-            sys.exit(1)
-
-        kafka_connect_url = f"http://localhost:{local_port}"
-    else:
-        kafka_connect_url = args.kafka_connect_url.rstrip("/")
 
     try:
-        print(f"Connecting to Kafka Connect at {kafka_connect_url}")
-        
         # Wait for Kafka Connect to be ready
-        max_retries = 10
+        max_retries = 30 # Increased from 10 as Kafka Connect can be slow to start with plugins
         for i in range(max_retries):
+            # If no URL provided, set up a new kubectl port-forward for each retry
+            if args.kafka_connect_url is None:
+                # Clean up previous port-forward if any
+                if proc:
+                    proc.terminate()
+                    try:
+                        proc.wait(timeout=2)
+                    except subprocess.TimeoutExpired:
+                        proc.kill()
+                        proc.wait()
+                
+                print(f"Auto-detecting Kafka Connect in namespace '{args.namespace}' (attempt {i+1}/{max_retries})...")
+                # Find available port
+                with socket.socket() as s:
+                    s.bind(('', 0))
+                    local_port = s.getsockname()[1]
+                
+                # Start port-forward
+                cmd = ["kubectl"]
+                if args.kubeconfig:
+                    cmd.extend(["--kubeconfig", args.kubeconfig])
+                if args.context:
+                    cmd.extend(["--context", args.context])
+                cmd.extend(["-n", args.namespace, "port-forward", "svc/kafka-connect", f"{local_port}:8083"])
+
+                proc = subprocess.Popen(
+                    cmd,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.PIPE,
+                    text=True
+                )
+                
+                # Wait for the port to be ready locally
+                timeout = 10
+                start_time = time.time()
+                port_ready = False
+                while time.time() - start_time < timeout:
+                    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                        if s.connect_ex(('localhost', local_port)) == 0:
+                            port_ready = True
+                            break
+                    if proc.poll() is not None:
+                        break
+                    time.sleep(0.5)
+                
+                if not port_ready:
+                    print(f"⚠️  Port-forward failed to establish on attempt {i+1}")
+                    continue
+
+                kafka_connect_url = f"http://localhost:{local_port}"
+
             try:
+                print(f"Connecting to Kafka Connect at {kafka_connect_url}...")
+                sys.stdout.flush()
                 response = session.get(kafka_connect_url, timeout=5)
                 if response.status_code == 200:
+                    print("✅ Kafka Connect is ready!")
                     break
             except Exception:
                 pass
+            
             print(f"Waiting for Kafka Connect to be ready ({i+1}/{max_retries})...")
+            sys.stdout.flush()
             time.sleep(5)
         else:
-            raise RuntimeError("Kafka Connect not ready after 50 seconds")
+            raise RuntimeError("Kafka Connect not ready after multiple retries")
 
         print(f"Found {len(CONNECTORS)} connectors to ensure\n")
+        sys.stdout.flush()
         
         for connector in CONNECTORS:
             name = connector["name"]
             config = connector["config"]
             try:
                 print(f"Creating/Updating connector '{name}'...")
+                sys.stdout.flush()
                 create_or_update_connector(kafka_connect_url, name, config, session)
                 print(f"✅ Successfully processed connector '{name}'")
+                sys.stdout.flush()
             except Exception as e:
                 print(f"❌ Failed to handle connector '{name}': {e}")
+                sys.stdout.flush()
                 
         print("\n✅ All connectors processed successfully!")
+        sys.stdout.flush()
         
     except Exception as e:
         print(f"\n❌ Error: {e}", file=sys.stderr)
         sys.exit(1)
     finally:
         if proc:
+            print("Cleaning up port-forward process...")
+            sys.stdout.flush()
             proc.terminate()
-            proc.wait()
+            try:
+                proc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                print("Port-forward process did not terminate, killing it...")
+                sys.stdout.flush()
+                proc.kill()
+                proc.wait()
 
 if __name__ == "__main__":
     main()

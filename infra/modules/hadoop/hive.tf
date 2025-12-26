@@ -105,6 +105,12 @@ resource "kubernetes_stateful_set_v1" "hive_metastore" {
 
       spec {
         init_container {
+          name  = "wait-for-postgres"
+          image = "busybox:1.28"
+          command = ["sh", "-c", "until nc -z hive-postgresql 5432; do echo waiting for postgres; sleep 2; done;"]
+        }
+
+        init_container {
           name  = "init-schema"
           image = "apache/hive:3.1.3"
           command = ["sh", "-c", "/opt/hive/bin/schematool -dbType postgres -initSchema || /opt/hive/bin/schematool -dbType postgres -upgradeSchema"]
@@ -123,6 +129,22 @@ resource "kubernetes_stateful_set_v1" "hive_metastore" {
 
           port {
             container_port = 9083
+          }
+
+          readiness_probe {
+            tcp_socket {
+              port = 9083
+            }
+            initial_delay_seconds = 30
+            period_seconds        = 10
+          }
+
+          liveness_probe {
+            tcp_socket {
+              port = 9083
+            }
+            initial_delay_seconds = 60
+            period_seconds        = 20
           }
 
           volume_mount {

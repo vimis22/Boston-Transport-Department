@@ -1,7 +1,6 @@
 terraform {
-  backend "kubernetes" {
-    secret_suffix    = "state"
-    config_path      = "~/.kube/config"
+  backend "local" {
+    path = "terraform.tfstate"
   }
 }
 
@@ -30,33 +29,18 @@ module "hadoop" {
   namespace  = local.namespace
 }
 
-# Publish schemas to Schema Registry
-resource "terraform_data" "publish_schemas" {
+# Setup datasets, schemas, topics and connectors
+module "bootstrap" {
   depends_on = [module.hadoop]
-  provisioner "local-exec" {
-    command = "uv run ../../../tools/create-schemas.py"
-  }
-}
-
-# Publish topics to Kafka
-resource "terraform_data" "publish_topics" {
-  depends_on = [module.hadoop]
-  provisioner "local-exec" {
-    command = "uv run ../../../tools/create-topics.py"
-  }
-}
-
-# Create Kafka Connectors
-resource "terraform_data" "create_connectors" {
-  depends_on = [module.hadoop, terraform_data.publish_topics]
-  provisioner "local-exec" {
-    command = "uv run ../../../tools/create-connectors.py"
-  }
+  source            = "../../modules/bootstrap"
+  namespace         = local.namespace
+  kubeconfig_path   = local.kubeconfig_path
+  context           = local.context
 }
 
 # Deploy BigData services
 module "bigdata" {
-  depends_on = [module.hadoop, terraform_data.publish_schemas, terraform_data.publish_topics]
+  depends_on = [module.hadoop, module.bootstrap]
   source     = "../../modules/bigdata"
   namespace  = local.namespace
 }

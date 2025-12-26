@@ -14,19 +14,19 @@ resource "kubernetes_role_v1" "spark" {
   rule {
     api_groups = [""]
     resources  = ["pods", "services", "configmaps", "secrets", "persistentvolumeclaims"]
-    verbs      = ["get", "list", "watch", "create", "delete", "update", "patch"]
+    verbs      = ["get", "list", "watch", "create", "delete", "update", "patch"] // "deletecollection"
   }
 
   rule {
     api_groups = ["apps"]
     resources  = ["statefulsets", "deployments"]
-    verbs      = ["get", "list", "watch", "create", "delete", "update", "patch"]
+    verbs      = ["get", "list", "watch", "create", "delete", "update", "patch"] // "deletecollection"
   }
 
   rule {
     api_groups = ["batch"]
     resources  = ["jobs"]
-    verbs      = ["get", "list", "watch", "create", "delete", "update", "patch"]
+    verbs      = ["get", "list", "watch", "create", "delete", "update", "patch"] // "deletecollection"
   }
 }
 
@@ -76,6 +76,7 @@ resource "kubernetes_service_v1" "spark_thrift" {
 }
 
 resource "kubernetes_stateful_set_v1" "spark_thrift" {
+  depends_on = [kubernetes_stateful_set_v1.hive_metastore]
   metadata {
     name      = "spark-thrift"
     namespace = var.namespace
@@ -103,6 +104,12 @@ resource "kubernetes_stateful_set_v1" "spark_thrift" {
 
       spec {
         service_account_name = kubernetes_service_account_v1.spark.metadata[0].name
+
+        init_container {
+          name  = "wait-for-hive-metastore"
+          image = "busybox:1.28"
+          command = ["sh", "-c", "until nc -z hive-metastore 9083; do echo waiting for hive-metastore; sleep 2; done;"]
+        }
 
         container {
           name  = "spark-thrift"
@@ -186,6 +193,7 @@ resource "kubernetes_service_v1" "spark_connect" {
 }
 
 resource "kubernetes_deployment_v1" "spark_connect" {
+  depends_on = [kubernetes_stateful_set_v1.hive_metastore]
   metadata {
     name      = "spark-connect-server"
     namespace = var.namespace
@@ -212,6 +220,12 @@ resource "kubernetes_deployment_v1" "spark_connect" {
 
       spec {
         service_account_name = kubernetes_service_account_v1.spark.metadata[0].name
+
+        init_container {
+          name  = "wait-for-hive-metastore"
+          image = "busybox:1.28"
+          command = ["sh", "-c", "until nc -z hive-metastore 9083; do echo waiting for hive-metastore; sleep 2; done;"]
+        }
 
         container {
           name  = "spark-connect-server"

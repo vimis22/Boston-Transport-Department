@@ -168,6 +168,7 @@ def write_to_kafka(df: DataFrame, schema: str, schema_id: int) -> None:
         .option("kafka.bootstrap.servers", KAFKA_BOOTSTRAP)
         .option("topic", OUTPUT_TOPIC)
         .option("checkpointLocation", CHECKPOINT_LOCATION)
+        .option("failOnDataLoss", "false")
         .outputMode("append")
         .trigger(processingTime=TRIGGER_INTERVAL)
         .queryName("bike-weather-data-aggregation")

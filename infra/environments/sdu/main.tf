@@ -23,41 +23,18 @@ module "hadoop" {
   namespace  = local.namespace
 }
 
-# Create datasets
-resource "terraform_data" "create_datasets" {
+# Setup datasets, schemas, topics and connectors
+module "bootstrap" {
   depends_on = [module.hadoop]
-  provisioner "local-exec" {
-    command = "uv run ../../../tools/create-datasets.py --namespace ${local.namespace} --kubeconfig ${pathexpand(local.kubeconfig_path)} --context ${local.context}"
-  }
-}
-
-# Publish schemas to Schema Registry
-resource "terraform_data" "publish_schemas" {
-  depends_on = [module.hadoop]
-  provisioner "local-exec" {
-    command = "uv run ../../../tools/create-schemas.py --namespace ${local.namespace} --kubeconfig ${pathexpand(local.kubeconfig_path)} --context ${local.context}"
-  }
-}
-
-# Publish topics to Kafka
-resource "terraform_data" "publish_topics" {
-  depends_on = [module.hadoop]
-  provisioner "local-exec" {
-    command = "uv run ../../../tools/create-topics.py --namespace ${local.namespace} --kubeconfig ${pathexpand(local.kubeconfig_path)} --context ${local.context}"
-  }
-}
-
-# Create Kafka Connectors
-resource "terraform_data" "create_connectors" {
-  depends_on = [module.hadoop, terraform_data.publish_topics]
-  provisioner "local-exec" {
-    command = "uv run ../../../tools/create-connectors.py --namespace ${local.namespace} --kubeconfig ${pathexpand(local.kubeconfig_path)} --context ${local.context}"
-  }
+  source            = "../../modules/bootstrap"
+  namespace         = local.namespace
+  kubeconfig_path   = local.kubeconfig_path
+  context           = local.context
 }
 
 # Deploy BigData services
 module "bigdata" {
-  depends_on = [module.hadoop, terraform_data.publish_schemas, terraform_data.publish_topics]
+  depends_on = [module.hadoop, module.bootstrap]
   source     = "../../modules/bigdata"
   namespace  = local.namespace
 }
