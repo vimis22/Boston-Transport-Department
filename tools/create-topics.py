@@ -180,11 +180,22 @@ def main():
             text=True
         )
         
-        # Give it a moment to check if it started successfully
-        time.sleep(2)
-        if proc.poll() is not None:
-            stdout, stderr = proc.communicate()
-            print(f"❌ Failed to start kubectl port-forward:\n{stderr}\n{stdout}", file=sys.stderr)
+        # Wait for the port to be ready
+        print(f"Waiting for port {local_port} to be ready...")
+        timeout = 10
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                if s.connect_ex(('localhost', local_port)) == 0:
+                    break
+            if proc.poll() is not None:
+                _, stderr = proc.communicate()
+                print(f"❌ Failed to start kubectl port-forward:\n{stderr}", file=sys.stderr)
+                sys.exit(1)
+            time.sleep(0.5)
+        else:
+            print(f"❌ Timeout waiting for port {local_port}", file=sys.stderr)
+            proc.terminate()
             sys.exit(1)
 
         kafka_rest_url = f"http://localhost:{local_port}"

@@ -189,38 +189,54 @@ class KafkaProxy:
         self,
         topic_name: str,
         records: list[dict[str, Any]],
-        schema: dict[str, Any],
+        schema: Optional[dict[str, Any]] = None,
+        schema_id: Optional[int] = None,
     ) -> list[dict[str, Any]]:
         """
-        Post multiple records to a Kafka topic as Avro using inline schema.
+        Post multiple records to a Kafka topic as Avro using inline schema or schema ID.
         
         Args:
             topic_name: Name of the topic
             records: List of record dictionaries matching the schema
-            schema: Avro schema dictionary
+            schema: Optional Avro schema dictionary (used if schema_id not provided)
+            schema_id: Optional Schema ID from Schema Registry (preferred)
             
         Returns:
             List of response data from the API for each record
             
         Raises:
             RuntimeError: If posting fails
+            ValueError: If neither schema nor schema_id is provided
         """
         from .avro_serializer import filter_record_to_schema
         
         if not records:
             return []
         
+        if schema_id is None and schema is None:
+            raise ValueError("Either schema or schema_id must be provided")
+        
         url = f"{self.base_url}/topics/{topic_name}"
         
+        # Use provided schema for filtering if available, otherwise we can't filter
+        # If only schema_id is provided, we assume records are already correct
         records_array = []
         for record in records:
-            filtered_record = filter_record_to_schema(record, schema)
+            if schema:
+                filtered_record = filter_record_to_schema(record, schema)
+            else:
+                filtered_record = record
             records_array.append({"value": filtered_record})
         
         payload: dict[str, Any] = {
-            "value_schema": json.dumps(schema),
             "records": records_array
         }
+        
+        if schema_id is not None:
+            payload["value_schema_id"] = schema_id
+        else:
+            payload["value_schema"] = json.dumps(schema)
+        
         content_type = "application/vnd.kafka.avro.v2+json"
         
         try:

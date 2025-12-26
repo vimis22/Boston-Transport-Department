@@ -25,6 +25,7 @@ class Config:
     kafka_rest_proxy_url: str = os.getenv("KAFKA_REST_PROXY_URL", "http://localhost:8082")
     kafka_cluster_id: str | None = os.getenv("KAFKA_CLUSTER_ID", None)
     schema_registry_url: str = os.getenv("SCHEMA_REGISTRY_URL", "http://localhost:8081")
+    kafka_rest_timeout: int = int(os.getenv("KAFKA_REST_TIMEOUT", "60"))
     
     # Kafka topics
     weather_topic: str = "weather-data"
@@ -48,6 +49,7 @@ class Config:
             kafka_rest_proxy_url=os.getenv("KAFKA_REST_PROXY_URL", cls.kafka_rest_proxy_url),
             kafka_cluster_id=os.getenv("KAFKA_CLUSTER_ID", cls.kafka_cluster_id),
             schema_registry_url=os.getenv("SCHEMA_REGISTRY_URL", cls.schema_registry_url),
+            kafka_rest_timeout=int(os.getenv("KAFKA_REST_TIMEOUT", cls.kafka_rest_timeout)),
             weather_topic=os.getenv("WEATHER_TOPIC", cls.weather_topic),
             taxi_topic=os.getenv("TAXI_TOPIC", cls.taxi_topic),
             bike_topic=os.getenv("BIKE_TOPIC", cls.bike_topic),

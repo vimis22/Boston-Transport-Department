@@ -117,12 +117,12 @@ resource "kubernetes_deployment_v1" "kafka_ui" {
 
           env {
             name  = "KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS"
-            value = "kafka-0.kafka-broker-headless.bigdata.svc.cluster.local:9092,kafka-1.kafka-broker-headless.bigdata.svc.cluster.local:9092,kafka-2.kafka-broker-headless.bigdata.svc.cluster.local:9092"
+            value = "kafka-0.kafka-broker-headless.${var.namespace}.svc.cluster.local:9092,kafka-1.kafka-broker-headless.${var.namespace}.svc.cluster.local:9092,kafka-2.kafka-broker-headless.${var.namespace}.svc.cluster.local:9092"
           }
 
           env {
             name  = "KAFKA_CLUSTERS_0_SCHEMAREGISTRY"
-            value = "http://schema-registry.bigdata.svc.cluster.local:8081"
+            value = "http://schema-registry.${var.namespace}.svc.cluster.local:8081"
           }
 
           env {

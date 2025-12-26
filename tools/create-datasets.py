@@ -291,11 +291,22 @@ def main():
                 text=True
             )
             
-            # Give it a moment to check if it started successfully
-            time.sleep(2)
-            if nn_proc.poll() is not None:
-                stdout, stderr = nn_proc.communicate()
-                print(f"❌ Failed to start kubectl port-forward for NameNode:\n{stderr}\n{stdout}", file=sys.stderr)
+            # Wait for the port to be ready
+            print(f"Waiting for NameNode port {nn_port} to be ready...")
+            timeout = 10
+            start_time = time.time()
+            while time.time() - start_time < timeout:
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                    if s.connect_ex(('localhost', nn_port)) == 0:
+                        break
+                if nn_proc.poll() is not None:
+                    _, stderr = nn_proc.communicate()
+                    print(f"❌ Failed to start kubectl port-forward for NameNode:\n{stderr}", file=sys.stderr)
+                    sys.exit(1)
+                time.sleep(0.5)
+            else:
+                print(f"❌ Timeout waiting for port {nn_port}", file=sys.stderr)
+                nn_proc.terminate()
                 sys.exit(1)
                 
             namenode_url = f"http://localhost:{nn_port}"
@@ -317,16 +328,27 @@ def main():
 
             dn_proc = subprocess.Popen(
                 cmd,
-                stdout=subprocess.PIPE,
+                stdout=subprocess.DEVNULL,
                 stderr=subprocess.PIPE,
                 text=True
             )
             
-            # Give it a moment to check if it started successfully
-            time.sleep(2)
-            if dn_proc.poll() is not None:
-                stdout, stderr = dn_proc.communicate()
-                print(f"❌ Failed to start kubectl port-forward for DataNode:\n{stderr}\n{stdout}", file=sys.stderr)
+            # Wait for the port to be ready
+            print(f"Waiting for DataNode port {dn_port} to be ready...")
+            timeout = 10
+            start_time = time.time()
+            while time.time() - start_time < timeout:
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                    if s.connect_ex(('localhost', dn_port)) == 0:
+                        break
+                if dn_proc.poll() is not None:
+                    _, stderr = dn_proc.communicate()
+                    print(f"❌ Failed to start kubectl port-forward for DataNode:\n{stderr}", file=sys.stderr)
+                    sys.exit(1)
+                time.sleep(0.5)
+            else:
+                print(f"❌ Timeout waiting for port {dn_port}", file=sys.stderr)
+                dn_proc.terminate()
                 sys.exit(1)
                 
             datanode_netloc = f"localhost:{dn_port}"
