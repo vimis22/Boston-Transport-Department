@@ -173,11 +173,31 @@ def main():
         logger.info("\n=== ETL streaming query started successfully! ===")
         logger.info("Kafka Connect vil automatisk synkronisere til Hive...")
         logger.info("Dashboard kan nu query data fra Hive tabel: bike_weather_distance")
-        logger.info("\nNote: Streaming query runs in Spark Connect server, job kan nu afslutte.")
+        logger.info("\nKeeping job alive to maintain streaming query...")
 
-        # IKKE kald awaitTermination() - lad Spark Connect serveren håndtere streaming
-        # Jobbet terminerer med success, men query fortsætter i baggrunden
-        
+        # Keep the job running to maintain streaming query
+        import signal
+        import time
+
+        def signal_handler(sig, frame):
+            logger.info("\n=== Received termination signal, stopping query ===")
+            query.stop()
+            logger.info("Query stopped successfully")
+            raise SystemExit(0)
+
+        signal.signal(signal.SIGTERM, signal_handler)
+        signal.signal(signal.SIGINT, signal_handler)
+
+        # Wait indefinitely (query runs in Spark Connect server)
+        try:
+            while True:
+                time.sleep(60)
+                # Log status every minute
+                logger.info(f"Simplified ETL alive - Query active: {query.isActive}")
+        except KeyboardInterrupt:
+            logger.info("\n=== KeyboardInterrupt received, stopping query ===")
+            query.stop()
+
     except Exception as e:
         logger.error(f"Error in ETL: {e}", exc_info=True)
         raise

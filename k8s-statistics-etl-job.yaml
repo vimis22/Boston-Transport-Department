@@ -1,0 +1,47 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: statistics-etl
+  namespace: bigdata
+  labels:
+    app: statistics-etl
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      initContainers:
+      - name: copy-etl-code
+        image: boston-etl-statistics:latest
+        imagePullPolicy: Never
+        command: ["sh", "-c", "cp -r /app/* /shared/"]
+        volumeMounts:
+        - name: shared-jobs
+          mountPath: /shared
+
+      containers:
+      - name: spark-etl-job
+        image: oci.stackable.tech/stackable/spark-connect-client:4.0.1-stackable0.0.0-dev
+        imagePullPolicy: IfNotPresent
+        command: ["python", "/app/jobs/statistics_etl.py"]
+        env:
+        - name: USE_SPARK_CONNECT
+          value: "true"
+        - name: SPARK_CONNECT_URL
+          value: "sc://spark-connect-server.bigdata.svc.cluster.local:15002"
+        - name: SCHEMA_REGISTRY_URL
+          value: "http://schema-registry.bigdata.svc.cluster.local:8081"
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          value: "kafka-broker.bigdata.svc.cluster.local:9092"
+        - name: OUTPUT_BASE_PATH
+          value: "/data/processed"
+        - name: CHECKPOINT_BASE_PATH
+          value: "/tmp/spark_checkpoints_statistics"
+        volumeMounts:
+        - name: shared-jobs
+          mountPath: /app
+
+      restartPolicy: Never
+
+      volumes:
+      - name: shared-jobs
+        emptyDir: {}

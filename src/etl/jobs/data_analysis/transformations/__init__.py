@@ -28,6 +28,14 @@ from data_analysis.transformations.calculate_trip_metrics import (
     validate_coordinates,
 )
 
+# Import descriptive statistics functions (Mulighed 2 - Fase 1)
+from data_analysis.transformations.calculate_descriptive_statistics import (
+    calculate_overall_statistics,
+    calculate_statistics_by_weather_condition,
+    calculate_statistics_by_temperature_bucket,
+    calculate_statistics_by_precipitation_level,
+)
+
 # Export all functions for backward compatibility
 __all__ = [
     "decode_avro_payload",
@@ -35,11 +43,16 @@ __all__ = [
     "parse_taxi_stream",
     "parse_weather_stream",
     "parse_accident_stream",
-    # NEW exports
+    # NEW exports (Mulighed 1)
     "join_bike_weather_data",
     "add_weather_condition_category",
     "add_precipitation_indicator",
     "calculate_trip_distance_and_speed",
     "filter_outliers",
     "validate_coordinates",
+    # NEW exports (Mulighed 2 - Descriptive Statistics)
+    "calculate_overall_statistics",
+    "calculate_statistics_by_weather_condition",
+    "calculate_statistics_by_temperature_bucket",
+    "calculate_statistics_by_precipitation_level",
 ]
