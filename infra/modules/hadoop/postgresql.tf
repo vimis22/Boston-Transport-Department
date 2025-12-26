@@ -131,6 +131,10 @@ resource "kubernetes_stateful_set_v1" "hive_postgresql" {
         }
       }
     }
+
+    persistent_volume_claim_retention_policy {
+      when_deleted = "Delete"
+    }
   }
 }
 

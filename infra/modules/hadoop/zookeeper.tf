@@ -127,6 +127,10 @@ resource "kubernetes_stateful_set_v1" "zookeeper" {
         }
       }
     }
+
+    persistent_volume_claim_retention_policy {
+      when_deleted = "Delete"
+    }
   }
 }
 

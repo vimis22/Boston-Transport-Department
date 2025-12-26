@@ -235,6 +235,10 @@ resource "kubernetes_stateful_set_v1" "hdfs_namenode" {
         }
       }
     }
+
+    persistent_volume_claim_retention_policy {
+      when_deleted = "Delete"
+    }
   }
 }
 
@@ -326,6 +330,10 @@ resource "kubernetes_stateful_set_v1" "hdfs_datanode" {
           }
         }
       }
+    }
+
+    persistent_volume_claim_retention_policy {
+      when_deleted = "Delete"
     }
   }
 }
