@@ -5,7 +5,7 @@ from pyspark import SparkConf
 # The ETL-Analysis listens on 3 topics and in this context the 3 datasets are defined in the KAFKA_TOPIC.
 KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 SCHEMA_REGISTRY_URL = os.getenv(
-    "SCHEMA_REGISTRY_URL", "http://schema-registry:8081"
+    "SCHEMA_REGISTRY_URL", "http://schema-registry.bigdata.svc.cluster.local:8081"
 )
 
 # Spark Connect Configuration (for Kubernetes deployment)
@@ -24,7 +24,7 @@ SCHEMA_SUBJECTS = {
     "bike": "bike-data-value",
     "taxi": "taxi-data-value",
     "weather": "weather-data-value",
-    "accidents": "accidents-value",
+    "accidents": "accident-data-value",
 }
 
 # This is where Spark Structured Streaming runs and saves the state here.

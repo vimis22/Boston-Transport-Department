@@ -31,7 +31,10 @@ After deploying, scale the namenode statefulset for the HDFS cluster to 1 replic
 
 To forward the relevant ports to your local machine, use the `tools/forward-all.py` script:
 - Start by running `uv sync` to install all the dependencies.
-- Then execute `uv run tools/forward-all.py`
+- Then execute `uv run tools/forward-all.py --namespace bigdata`
+
+For the SDU cluster, you need to specify the kubeconfig and context in the `tools/forward-all.py` script.
+- `KUBECONFIG=~/Downloads/bd-stud-magre21-sa-bd-bd-stud-magre21-kubeconfig.yaml uv run tools/forward-all.py --namespace bd-bd-stud-magre21`
 
 ## Add the datasets to the Hadoop cluster
 To add the datasets to the Hadoop cluster, you can use the `tools/create-datasets.py` script.
@@ -70,8 +73,6 @@ Now you can run the notebook and it will connect to the jupyter kernel.
 
 ## TODO:
 - Make video tutorial for bringup
-- Deploy to sdu cluster
-    - Okay, since sdu cluster doesn't permit operators/crd's, we will need to dump all the resources and deploy them manually.(config map, pvc, statefulset, service, deployment, etc.)
 
 Release strategy:
 - git tag -f v1.0.4 HEAD

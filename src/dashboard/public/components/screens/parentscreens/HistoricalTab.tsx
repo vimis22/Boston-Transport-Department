@@ -4,6 +4,9 @@ import { TripSpeedDistribution } from "../childscreens/TripSpeedDistribution";
 import { PrecipitationImpact } from "../childscreens/PrecipitationImpact";
 import { TripsByTimeOfDay } from "../childscreens/TripsByTimeOfDay";
 import { TripDistanceDistribution } from "../childscreens/TripDistanceHeatmap";
+import { OverallStatistics } from "../childscreens/OverallStatistics";
+import { StatisticsByWeatherCondition } from "../childscreens/StatisticsByWeatherCondition";
+import { StatisticsByTemperature } from "../childscreens/StatisticsByTemperature";
 import { useHistoricalHiveQuery } from "../../../api/hooks";
 
 // Date range context for child components
@@ -169,6 +172,25 @@ export function HistoricalTab() {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+
+        {/* Descriptive Statistics Section */}
+        <div className="border-l-4 border-purple-400 pl-4">
+          <h3 className="mb-2 text-base font-semibold text-slate-700">Descriptive Statistics</h3>
+          <p className="mb-4 text-xs text-slate-500">
+            Statistical analysis of bike trips grouped by weather conditions and temperature ranges
+          </p>
+
+          {/* Overall Statistics */}
+          <div className="mb-4">
+            <OverallStatistics />
+          </div>
+
+          {/* Statistics by grouping */}
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <StatisticsByWeatherCondition />
+            <StatisticsByTemperature />
           </div>
         </div>
 

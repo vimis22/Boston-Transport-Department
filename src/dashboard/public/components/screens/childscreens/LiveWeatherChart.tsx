@@ -136,7 +136,7 @@ export function LiveWeatherChart() {
 
       {/* Latest observation info */}
       {latestWeather && (
-        <div className="mb-3 rounded-lg border border-slate-200 bg-linear-to-r from-sky-50 to-blue-50 p-3">
+        <div className="mb-3 rounded-lg border border-slate-200 bg-gradient-to-r from-sky-50 to-blue-50 p-3">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-medium text-slate-500">Latest Observation</p>

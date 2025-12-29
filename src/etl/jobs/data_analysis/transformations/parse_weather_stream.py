@@ -25,24 +25,25 @@ def parse_weather_stream(df: DataFrame, schema: str) -> DataFrame:
         col("timestamp").alias("kafka_timestamp"),
     )
 
-    # Extract fields from decoded Avro structure (UPPERCASE field names from NCEI)
+    # Extract fields from decoded Avro structure (lowercase field names)
     result_df = decoded_df.select(
-        col("weather.STATION").alias("station"),
-        col("weather.DATE").alias("datetime"),
-        col("weather.SOURCE").alias("data_source"),
-        col("weather.LATITUDE").cast("double").alias("latitude"),
-        col("weather.LONGITUDE").cast("double").alias("longitude"),
-        col("weather.ELEVATION").cast("double").alias("elevation"),
-        col("weather.NAME").alias("station_name"),
-        col("weather.REPORT_TYPE").alias("report_type"),
-        col("weather.CALL_SIGN").alias("call_sign"),
-        col("weather.QUALITY_CONTROL").alias("quality_control"),
-        col("weather.WND").alias("wind"),
-        col("weather.CIG").alias("ceiling"),
-        col("weather.VIS").alias("visibility"),
-        col("weather.TMP").alias("temperature"),
-        col("weather.DEW").alias("dew_point"),
-        col("weather.SLP").alias("sea_level_pressure"),
+        col("weather.station_id").alias("station"),
+        col("weather.observation_date").alias("datetime"),
+        col("weather.source_code").alias("data_source"),
+        col("weather.latitude").cast("double").alias("latitude"),
+        col("weather.longitude").cast("double").alias("longitude"),
+        col("weather.elevation_meters").cast("double").alias("elevation"),
+        col("weather.station_name").alias("station_name"),
+        col("weather.report_type").alias("report_type"),
+        col("weather.call_sign").alias("call_sign"),
+        col("weather.quality_control").alias("quality_control"),
+        col("weather.wind_observation").alias("wind"),
+        col("weather.sky_condition_observation").alias("ceiling"),
+        col("weather.visibility_observation").alias("visibility"),
+        col("weather.dry_bulb_temperature_celsius").alias("temperature"),
+        col("weather.dew_point_temperature_celsius").alias("dew_point"),
+        col("weather.sea_level_pressure").alias("sea_level_pressure"),
+        col("weather.precip_daily_mm").alias("precip_daily_mm"),
         col("kafka_timestamp"),
     )
 
