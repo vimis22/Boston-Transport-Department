@@ -16,7 +16,7 @@ CONNECTORS = [
         "config": {
             "connector.class": "io.confluent.connect.hdfs.HdfsSinkConnector",
             "tasks.max": "1",
-            "topics": "weather-data, bike-data, taxi-data, bike-weather-aggregate, bike-weather-distance",
+            "topics": "weather-data, bike-data, taxi-data, bike-weather-aggregate, bike-weather-distance, weather-transport-statistics-overall, weather-transport-statistics-by-condition, weather-transport-statistics-by-temperature, weather-transport-statistics-by-precipitation",
             "hdfs.url": "hdfs://hdfs-namenode:8020",
             "flush.size": "500",
             "hadoop.conf.dir": "/etc/hadoop/",

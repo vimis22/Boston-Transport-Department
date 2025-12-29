@@ -32,6 +32,14 @@ def parse_taxi_stream(df: DataFrame, schema: str) -> DataFrame:
         col("taxi.destination").alias("dropoff_location"),
         col("taxi.cab_type").alias("cab_type"),
         col("taxi.product_id").alias("product_id"),
+        col("taxi.price").alias("price"),
+        col("taxi.distance").alias("distance"),
+        col("taxi.surge_multiplier").alias("surge_multiplier"),
+        col("taxi.temperature").alias("temperature"),
+        col("taxi.apparent_temperature").alias("apparent_temperature"),
+        col("taxi.humidity").alias("humidity"),
+        col("taxi.wind_speed").alias("wind_speed"),
+        col("taxi.precip_intensity").alias("precip_intensity"),
         col("kafka_timestamp"),
     )
 

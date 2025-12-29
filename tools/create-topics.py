@@ -17,6 +17,10 @@ TOPICS = [
     "bike-weather-aggregate",
     "bike-weather-distance",
     "accident-data",
+    "weather-transport-statistics-overall",
+    "weather-transport-statistics-by-condition",
+    "weather-transport-statistics-by-temperature",
+    "weather-transport-statistics-by-precipitation",
 ]
 
 def get_cluster_id(base_url: str, session: requests.Session) -> str:

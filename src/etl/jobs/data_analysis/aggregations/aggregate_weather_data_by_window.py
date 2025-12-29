@@ -44,9 +44,9 @@ def aggregate_weather_data_by_window(
     result = windowed.agg(
         count("*").alias("observation_count"),
         # Temperature stats
-        avg("temperature_celsius").alias("avg_temperature_c"),
-        spark_min("temperature_celsius").alias("min_temperature_c"),
-        spark_max("temperature_celsius").alias("max_temperature_c"),
+        avg("temp_c").alias("avg_temperature_c"),
+        spark_min("temp_c").alias("min_temperature_c"),
+        spark_max("temp_c").alias("max_temperature_c"),
         # Wind stats
         avg("wind_speed_ms").alias("avg_wind_speed_ms"),
         spark_max("wind_speed_ms").alias("max_wind_speed_ms"),

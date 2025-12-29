@@ -21,7 +21,7 @@ resource "kubernetes_job_v1" "bike-weather-data-aggregation" {
         active_deadline_seconds = 600
         init_container {
           name  = "init-container"
-          image = "ghcr.io/vimis22/etl:1.0.16"
+          image = "ghcr.io/vimis22/etl:1.0.18"
           command = [
             "cp",
             "-r",
@@ -92,7 +92,7 @@ resource "kubernetes_job_v1" "bike-weather-distance" {
         active_deadline_seconds = 600
         init_container {
           name  = "init-container"
-          image = "ghcr.io/vimis22/etl:1.0.16"
+          image = "ghcr.io/vimis22/etl:1.0.18"
           command = [
             "cp",
             "-r",
@@ -160,7 +160,7 @@ resource "kubernetes_job_v1" "data-analysis" {
         active_deadline_seconds = 600
         init_container {
           name  = "init-container"
-          image = "ghcr.io/vimis22/etl:dev"
+          image = "ghcr.io/vimis22/etl:1.0.18"
           command = [
             "cp",
             "-r",
@@ -179,7 +179,7 @@ resource "kubernetes_job_v1" "data-analysis" {
           image_pull_policy = "IfNotPresent"
           command = [
             "python",
-            "/app/jobs/data_analysis.py",
+            "/app/jobs/statistics_etl.py",
           ]
 
           env {
@@ -196,7 +196,7 @@ resource "kubernetes_job_v1" "data-analysis" {
             value = "http://schema-registry.${var.namespace}.svc.cluster.local:8081"
           }
           env {
-            name  = "KAFKA_BOOTSTRAP"
+            name  = "KAFKA_BOOTSTRAP_SERVERS"
             value = "kafka-broker.${var.namespace}.svc.cluster.local:9092"
           }
           env {
