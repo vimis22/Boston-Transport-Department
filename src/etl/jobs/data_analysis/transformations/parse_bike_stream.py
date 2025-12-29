@@ -56,6 +56,9 @@ def parse_bike_stream(df: DataFrame, schema: str) -> DataFrame:
         col("bike.end_station_longitude")
         .cast("double")
         .alias("end_station_longitude"),
+        col("bike.usertype").alias("user_type"),
+        col("bike.birth_year").cast("integer").alias("birth_year"),
+        col("bike.gender").cast("integer").alias("gender"),
         col("kafka_timestamp"),
     )
 

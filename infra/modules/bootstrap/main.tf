@@ -15,6 +15,7 @@ resource "terraform_data" "create_datasets" {
 
 # Publish schemas to Schema Registry
 resource "terraform_data" "publish_schemas" {
+  depends_on = [terraform_data.create_datasets]
   provisioner "local-exec" {
     command = "uv run ../../../tools/create-schemas.py ${local.common_args}"
   }
@@ -22,6 +23,7 @@ resource "terraform_data" "publish_schemas" {
 
 # Publish topics to Kafka
 resource "terraform_data" "publish_topics" {
+  depends_on = [terraform_data.publish_schemas]
   provisioner "local-exec" {
     command = "uv run ../../../tools/create-topics.py ${local.common_args}"
   }

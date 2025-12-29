@@ -42,7 +42,11 @@ def get_schema_topic_mapping() -> dict[str, str]:
         str(schemas_dir / "bike_data_raw.avsc"): "bike-data",
         str(schemas_dir / "bike_weather_aggregate.avsc"): "bike-weather-aggregate",
         str(schemas_dir / "bike_weather_distance.avsc"): "bike-weather-distance",
-        str(schemas_dir / "accident_data_raw.avsc"): "accident-data",
+        str(schemas_dir / "accidents_data_raw.avsc"): "accident-data",
+        str(schemas_dir / "weather_transport_statistics_overall.avsc"): "weather-transport-statistics-overall",
+        str(schemas_dir / "weather_transport_statistics_by_condition.avsc"): "weather-transport-statistics-by-condition",
+        str(schemas_dir / "weather_transport_statistics_by_precipitation.avsc"): "weather-transport-statistics-by-precipitation",
+        str(schemas_dir / "weather_transport_statistics_by_temperature.avsc"): "weather-transport-statistics-by-temperature",
     }
 
 
