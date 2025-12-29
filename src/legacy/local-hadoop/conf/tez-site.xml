@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<configuration>
+  <property>
+    <name>tez.lib.uris</name>
+    <value>hdfs:///apps/tez/*</value>
+  </property>
+  <property>
+    <name>tez.use.cluster.hadoop-libs</name>
+    <value>true</value>
+  </property>
+  <property>
+    <name>tez.history.logging.service.class</name>
+    <value>org.apache.tez.dag.history.logging.ats.ATSHistoryLoggingService</value>
+  </property>
+  <property>
+    <name>tez.am.resource.memory.mb</name>
+    <value>2048</value>
+  </property>
+  <property>
+    <name>tez.task.resource.memory.mb</name>
+    <value>1536</value>
+  </property>
+</configuration>

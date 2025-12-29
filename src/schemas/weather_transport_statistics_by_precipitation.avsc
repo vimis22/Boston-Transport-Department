@@ -1,0 +1,21 @@
+{
+  "type": "record",
+  "name": "WeatherTransportStatisticsByPrecipitation",
+  "namespace": "statistics.by_precipitation",
+  "doc": "Descriptive statistics grouped by precipitation level",
+  "fields": [
+    {"name": "precip_level", "type": "string", "doc": "Precipitation level category"},
+
+    {"name": "mean_speed", "type": "double", "doc": "Mean cycling speed (km/h)"},
+    {"name": "median_speed", "type": "double", "doc": "Median cycling speed"},
+    {"name": "stddev_speed", "type": "double", "doc": "Standard deviation of speed"},
+
+    {"name": "mean_distance", "type": "double", "doc": "Mean trip distance (meters)"},
+    {"name": "mean_duration", "type": "double", "doc": "Mean trip duration (seconds)"},
+
+    {"name": "avg_precip_in_level", "type": "double", "doc": "Average precipitation in this level"},
+    {"name": "mean_temp", "type": "double", "doc": "Mean temperature"},
+
+    {"name": "sample_size", "type": "long", "doc": "Number of trips in this level"}
+  ]
+}

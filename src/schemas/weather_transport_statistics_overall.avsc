@@ -1,0 +1,37 @@
+{
+  "type": "record",
+  "name": "WeatherTransportStatisticsOverall",
+  "namespace": "statistics.overall",
+  "doc": "Overall descriptive statistics for weather-transport data",
+  "fields": [
+    {"name": "mean_speed", "type": "double", "doc": "Mean cycling speed (km/h)"},
+    {"name": "median_speed", "type": "double", "doc": "Median cycling speed (km/h)"},
+    {"name": "stddev_speed", "type": "double", "doc": "Standard deviation of speed"},
+    {"name": "variance_speed", "type": "double", "doc": "Variance of speed"},
+    {"name": "min_speed", "type": "double", "doc": "Minimum speed"},
+    {"name": "max_speed", "type": "double", "doc": "Maximum speed"},
+    {"name": "range_speed", "type": "double", "doc": "Range (max - min)"},
+    {"name": "skewness_speed", "type": "double", "doc": "Skewness of speed distribution"},
+    {"name": "kurtosis_speed", "type": "double", "doc": "Kurtosis of speed distribution"},
+    {"name": "p25_speed", "type": "double", "doc": "25th percentile (Q1)"},
+    {"name": "p75_speed", "type": "double", "doc": "75th percentile (Q3)"},
+    {"name": "iqr_speed", "type": "double", "doc": "Interquartile range (Q3 - Q1)"},
+    {"name": "cv_speed", "type": "double", "doc": "Coefficient of variation (stddev/mean)"},
+
+    {"name": "mean_temp", "type": "double", "doc": "Mean temperature (°C)"},
+    {"name": "median_temp", "type": "double", "doc": "Median temperature"},
+    {"name": "stddev_temp", "type": "double", "doc": "Std dev of temperature"},
+    {"name": "min_temp", "type": "double", "doc": "Minimum temperature"},
+    {"name": "max_temp", "type": "double", "doc": "Maximum temperature"},
+
+    {"name": "mean_distance", "type": "double", "doc": "Mean trip distance (meters)"},
+    {"name": "median_distance", "type": "double", "doc": "Median trip distance"},
+    {"name": "stddev_distance", "type": "double", "doc": "Std dev of distance"},
+
+    {"name": "mean_duration", "type": "double", "doc": "Mean trip duration (seconds)"},
+    {"name": "median_duration", "type": "double", "doc": "Median trip duration"},
+    {"name": "stddev_duration", "type": "double", "doc": "Std dev of duration"},
+
+    {"name": "total_trips", "type": "long", "doc": "Total number of trips in dataset"}
+  ]
+}

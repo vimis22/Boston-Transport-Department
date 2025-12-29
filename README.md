@@ -1,15 +1,79 @@
-<h1>Boston Transport Department</h1>
-<h2>The Objective</h2>
-<p>
+# Boston Transport Department
+
+## The Objective
 The project is apart of a 10 ECTS Course of Big Data and Science Technologies (E25). 
 The objective with this course is to work different datasets where they overlap eachtother and thereby finding something valuable for the Customer.
 Our main objective is to study the relationsship between transportation and weather.
 Please note, that this project is also a part of our Scientific Methods Course (E25), where we will have a more theoretical approach there.
-</p>
 
-<h2>Who is our Customer</h2>
-<p>Our Customer in this context is the Boston Transportation Department, since we are working with datasets of weather reports from different weather stations in Bostom City.</p>
 
-<h2>How is our Architecture Structured?</h2>
-<p>The following image shows how we have structured our image.</p>
-<img src="src/assets/BD_Architecture.png">
+## Who is our Customer
+Our Customer in this context is the Boston Transportation Department, since we are working with datasets of weather reports from different weather stations in Bostom City.
+
+
+## How is our Architecture Structured?
+The following image shows how we have structured our image.
+<img src="docs/assets/BD_Architecture.png">
+
+
+## Getting started
+To run this project you need the following:
+- A kubernetes cluster, with a given kubeconf location and context(default is `~/.kube/config"` and `docker-desktop` context)
+- Installed uv, kubectl and terraform
+
+Then run the following to create the services:
+- `cd infra/environments/local`
+- `terraform init`
+- `terraform apply`
+
+After deploying, scale the namenode statefulset for the HDFS cluster to 1 replica, as not all services have high availability enabled.
+- `kubectl -n bigdata scale statefulsets hdfs-cluster-namenode-default --replicas=1`
+
+To forward the relevant ports to your local machine, use the `tools/forward-all.py` script:
+- Start by running `uv sync` to install all the dependencies.
+- Then execute `uv run tools/forward-all.py --namespace bigdata`
+
+For the SDU cluster, you need to specify the kubeconfig and context in the `tools/forward-all.py` script.
+- `KUBECONFIG=~/Downloads/bd-stud-magre21-sa-bd-bd-stud-magre21-kubeconfig.yaml uv run tools/forward-all.py --namespace bd-bd-stud-magre21`
+
+## Add the datasets to the Hadoop cluster
+To add the datasets to the Hadoop cluster, you can use the `tools/create-datasets.py` script.
+- Start by running `uv sync` to install all the dependencies.
+- Then execute `uv run tools/create-datasets.py`
+
+This will download the datasets, convert them to parquet and upload them to the Hadoop cluster.
+
+## Upload the schemas to the Schema Registry
+To upload the schemas to the Schema Registry, you can use the `tools/create-schemas.py` script.
+- Start by running `uv sync` to install all the dependencies.
+- Then execute `uv run tools/create-schemas.py`
+
+## Create the Kafka topics
+To create the Kafka topics, you can use the `tools/create-topics.py` script.
+- Start by running `uv sync` to install all the dependencies.
+- Then execute `uv run tools/create-topics.py`
+
+## Check the streamer pod in kubernetes
+To check the streamer pod in kubernetes, you can use the following command:
+- `kubectl get pods -n bigdata`
+
+To check the logs of the streamer pod, you can use the following command:
+- `kubectl logs -n bigdata streamer-<pod-name>`
+
+Note, that the streamer must run before the kafka topics are created, and before the kafka connect HDFS sink is able to write to the HDFS cluster.
+
+## Connect VSCode to jupyter kernel
+1. Open a notebook and click on the kernel icon in the top right corner.
+2. Click "Select another kernel..."
+3. Click "Existing Jupyter server"
+4. Enter the URL `http://localhost:8080/`
+5. Type the token `adminadmin`
+6. Click "Select Kernel"
+Now you can run the notebook and it will connect to the jupyter kernel.
+
+## TODO:
+- Make video tutorial for bringup
+
+Release strategy:
+- git tag -f v1.0.4 HEAD
+- git push origin v1.0.4

@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+.venv/
+uv.lock  # Optional: uncomment if not committing locks
+.venv/
+
+# Kubernetes
+k8s/*.log
+k8s/generated/
+
+# IDE
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+*.tmp
+
+# Terraform
+.terraform/
+.terraform.lock.hcl
+terraform.tfstate
+terraform.tfstate.backup
+
+# Datasets
+**/boston_datasets/
+**/boston_datasets.zip
+
+# Node Modules
+node_modules/

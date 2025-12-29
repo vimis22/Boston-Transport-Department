@@ -1,0 +1,24 @@
+{
+  "type": "record",
+  "name": "WeatherDataRaw",
+  "namespace": "bigdata",
+  "fields": [
+    { "name": "station_id", "type": "long" },
+    { "name": "observation_date", "type": "string" },
+    { "name": "source_code", "type": "int" },
+    { "name": "latitude", "type": "double" },
+    { "name": "longitude", "type": "double" },
+    { "name": "elevation_meters", "type": "double" },
+    { "name": "station_name", "type": "string" },
+    { "name": "report_type", "type": "string" },
+    { "name": "call_sign", "type": "string" },
+    { "name": "quality_control", "type": "string" },
+    { "name": "wind_observation", "type": "string" },
+    { "name": "sky_condition_observation", "type": "string" },
+    { "name": "visibility_observation", "type": "string" },
+    { "name": "dry_bulb_temperature_celsius", "type": "double" },
+    { "name": "dew_point_temperature_celsius", "type": "double" },
+    { "name": "sea_level_pressure", "type": "string" },
+    { "name": "precip_daily_mm", "type": "double" }
+  ]
+}

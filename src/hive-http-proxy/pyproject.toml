@@ -1,0 +1,11 @@
+[project]
+name = "hive-http-proxy"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.123.0",
+    "pyhive[hive-pure-sasl]>=0.7.0",
+    "uvicorn>=0.38.0",
+]

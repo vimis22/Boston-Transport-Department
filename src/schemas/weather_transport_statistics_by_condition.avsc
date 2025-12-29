@@ -1,0 +1,36 @@
+{
+  "type": "record",
+  "name": "WeatherTransportStatisticsByCondition",
+  "namespace": "statistics.by_condition",
+  "doc": "Descriptive statistics grouped by weather condition (good/fair/poor)",
+  "fields": [
+    {"name": "weather_condition", "type": "string", "doc": "Weather condition category"},
+
+    {"name": "mean_speed", "type": "double", "doc": "Mean cycling speed (km/h)"},
+    {"name": "median_speed", "type": "double", "doc": "Median cycling speed"},
+    {"name": "stddev_speed", "type": "double", "doc": "Standard deviation of speed"},
+    {"name": "min_speed", "type": "double", "doc": "Minimum speed"},
+    {"name": "max_speed", "type": "double", "doc": "Maximum speed"},
+    {"name": "range_speed", "type": "double", "doc": "Range (max - min)"},
+    {"name": "p25_speed", "type": "double", "doc": "25th percentile"},
+    {"name": "p75_speed", "type": "double", "doc": "75th percentile"},
+    {"name": "iqr_speed", "type": "double", "doc": "Interquartile range"},
+    {"name": "cv_speed", "type": "double", "doc": "Coefficient of variation"},
+
+    {"name": "mean_temp", "type": "double", "doc": "Mean temperature in this condition"},
+    {"name": "stddev_temp", "type": "double", "doc": "Std dev of temperature"},
+    {"name": "min_temp", "type": "double", "doc": "Minimum temperature"},
+    {"name": "max_temp", "type": "double", "doc": "Maximum temperature"},
+
+    {"name": "mean_distance", "type": "double", "doc": "Mean trip distance (meters)"},
+    {"name": "stddev_distance", "type": "double", "doc": "Std dev of distance"},
+
+    {"name": "mean_duration", "type": "double", "doc": "Mean trip duration (seconds)"},
+    {"name": "stddev_duration", "type": "double", "doc": "Std dev of duration"},
+
+    {"name": "mean_precip", "type": "double", "doc": "Mean precipitation in this condition"},
+    {"name": "max_precip", "type": "double", "doc": "Max precipitation"},
+
+    {"name": "sample_size", "type": "long", "doc": "Number of trips in this condition"}
+  ]
+}

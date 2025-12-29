@@ -1,0 +1,22 @@
+{
+  "type": "record",
+  "name": "WeatherTransportStatisticsByTemperature",
+  "namespace": "statistics.by_temperature",
+  "doc": "Descriptive statistics grouped by temperature buckets",
+  "fields": [
+    {"name": "temp_bucket", "type": "string", "doc": "Temperature range category"},
+
+    {"name": "mean_speed", "type": "double", "doc": "Mean cycling speed (km/h)"},
+    {"name": "median_speed", "type": "double", "doc": "Median cycling speed"},
+    {"name": "stddev_speed", "type": "double", "doc": "Standard deviation of speed"},
+    {"name": "min_speed", "type": "double", "doc": "Minimum speed"},
+    {"name": "max_speed", "type": "double", "doc": "Maximum speed"},
+
+    {"name": "mean_distance", "type": "double", "doc": "Mean trip distance (meters)"},
+    {"name": "mean_duration", "type": "double", "doc": "Mean trip duration (seconds)"},
+
+    {"name": "avg_temp_in_bucket", "type": "double", "doc": "Average temperature within this bucket"},
+
+    {"name": "sample_size", "type": "long", "doc": "Number of trips in this bucket"}
+  ]
+}
