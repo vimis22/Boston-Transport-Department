@@ -1,16 +1,29 @@
 {
   "type": "record",
   "name": "BikeWeatherDistance",
-  "namespace": "aggregate",
+  "namespace": "bike.weather",
+  "doc": "Combined bike trip and weather data with calculated distance and speed metrics",
   "fields": [
-    { "name": "starttime", "type": "string" },
-    { "name": "stoptime", "type": "string" },
-    { "name": "weather_ts", "type": "string" },
-    { "name": "temp_c", "type": "double" },
-    { "name": "precip_daily_mm", "type": "double" },
-    { "name": "tripduration", "type": "double" },
-    { "name": "distance_meters", "type": "double" },
-    { "name": "average_speed_kmh", "type": "double" }
+    {"name": "trip_id", "type": "string", "doc": "Unique trip identifier"},
+    {"name": "starttime", "type": "string", "doc": "Trip start timestamp"},
+    {"name": "stoptime", "type": "string", "doc": "Trip stop timestamp"},
+    {"name": "tripduration", "type": "double", "doc": "Duration in seconds"},
+    {"name": "start_station_id", "type": "string"},
+    {"name": "start_station_name", "type": "string"},
+    {"name": "start_station_latitude", "type": "double"},
+    {"name": "start_station_longitude", "type": "double"},
+    {"name": "end_station_id", "type": "string"},
+    {"name": "end_station_name", "type": "string"},
+    {"name": "end_station_latitude", "type": "double"},
+    {"name": "end_station_longitude", "type": "double"},
+    {"name": "distance_meters", "type": "double", "doc": "Haversine distance"},
+    {"name": "average_speed_kmh", "type": "double", "doc": "Average speed"},
+    {"name": "temp_c", "type": ["null", "double"], "default": null},
+    {"name": "wind_speed_ms", "type": ["null", "double"], "default": null},
+    {"name": "visibility_m", "type": ["null", "double"], "default": null},
+    {"name": "precip_daily_mm", "type": ["null", "double"], "default": null},
+    {"name": "weather_condition", "type": ["null", "string"], "default": null},
+    {"name": "date", "type": "string", "doc": "Date YYYY-MM-DD"},
+    {"name": "hour", "type": "int", "doc": "Hour of day 0-23"}
   ]
 }
-

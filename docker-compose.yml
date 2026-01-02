@@ -1,14 +1,193 @@
 services:
+  namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    container_name: btd-namenode
+    restart: unless-stopped
+    environment:
+      CLUSTER_NAME: boston-transport
+      CORE_CONF_fs_defaultFS: hdfs://namenode:8020
+      HDFS_CONF_dfs_replication: 1
+    volumes:
+      - nn-data:/hadoop/dfs/name
+      - ./conf/core-site.xml:/opt/hadoop/etc/hadoop/core-site.xml:ro
+      - ./conf/hdfs-site.xml:/opt/hadoop/etc/hadoop/hdfs-site.xml:ro
+    ports:
+      - "9870:9870"
+      - "8020:8020"
+    networks:
+      hadoop:
+        ipv4_address: 172.28.0.2
+
+  datanode:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: btd-datanode
+    restart: unless-stopped
+    environment:
+      CORE_CONF_fs_defaultFS: hdfs://namenode:8020
+      HDFS_CONF_dfs_datanode_data_dir: file:///hadoop/dfs/data
+    volumes:
+      - dn-data:/hadoop/dfs/data
+      - ./conf/core-site.xml:/opt/hadoop/etc/hadoop/core-site.xml:ro
+      - ./conf/hdfs-site.xml:/opt/hadoop/etc/hadoop/hdfs-site.xml:ro
+    depends_on:
+      - namenode
+    networks:
+      hadoop:
+        ipv4_address: 172.28.0.3
+
+  metastore-db:
+    image: postgres:13-alpine
+    container_name: btd-metastore-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: hive
+      POSTGRES_USER: hive
+      POSTGRES_PASSWORD: hivepassword
+    volumes:
+      - metastore-db:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      hadoop:
+        ipv4_address: 172.28.0.4
+
+  hive-metastore:
+    image: apache/hive:3.1.3
+    container_name: btd-hive-metastore
+    hostname: hms
+    restart: unless-stopped
+    entrypoint: ["/opt/hive/bin/hive","--service","metastore"]
+    command: ["--hiveconf","hive.execution.engine=mr"]
+    environment:
+      HIVE_CONF_DIR: /opt/hive/conf
+      HADOOP_HEAPSIZE: 1024
+      HADOOP_OPTS: -Djava.net.preferIPv4Stack=true
+      HIVE_DB_TYPE: postgres
+      SKIP_SCHEMA_INIT: 'true'
+    volumes:
+      - ./conf:/opt/hive/conf:ro
+      - ./conf/core-site.xml:/opt/hadoop/etc/hadoop/core-site.xml:ro
+      - ./conf/hdfs-site.xml:/opt/hadoop/etc/hadoop/hdfs-site.xml:ro
+      - ./conf/hive-site.xml:/opt/hadoop/etc/hadoop/hive-site.xml:ro
+      - ./lib/postgresql-jdbc.jar:/opt/hive/lib/postgresql-jdbc.jar:ro
+    depends_on:
+      - namenode
+      - datanode
+      - metastore-db
+    ports:
+      - "9083:9083"
+    networks:
+      hadoop:
+        ipv4_address: 172.28.0.10
+
+  hive-server2:
+    image: apache/hive:3.1.3
+    container_name: btd-hive-server2
+    hostname: hs2
+    restart: unless-stopped
+    entrypoint: ["/opt/hive/bin/hiveserver2"]
+    command: ["--hiveconf","hive.execution.engine=mr","--hiveconf","hive.root.logger=INFO,console","--hiveconf","hive.metastore.uris=thrift://172.28.0.10:9083"]
+    environment:
+      HIVE_CONF_DIR: /opt/hive/conf
+      HADOOP_HEAPSIZE: 2048
+      HADOOP_OPTS: -Djava.net.preferIPv4Stack=true
+    volumes:
+      - ./conf:/opt/hive/conf:ro
+      - ./conf/core-site.xml:/opt/hadoop/etc/hadoop/core-site.xml:ro
+      - ./conf/hdfs-site.xml:/opt/hadoop/etc/hadoop/hdfs-site.xml:ro
+      - ./conf/hive-site.xml:/opt/hadoop/etc/hadoop/hive-site.xml:ro
+      - ./scripts:/scripts:ro
+      - ./lib/postgresql-jdbc.jar:/opt/hive/lib/postgresql-jdbc.jar:ro
+    depends_on:
+      - hive-metastore
+    ports:
+      - "10000:10000"
+    networks:
+      hadoop:
+        ipv4_address: 172.28.0.11
+
+  hdfs-bootstrap:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    container_name: btd-hdfs-bootstrap
+    command: ["bash","-lc","/scripts/bootstrap-hdfs.sh"]
+    environment:
+      CORE_CONF_fs_defaultFS: hdfs://namenode:8020
+      HADOOP_USER_NAME: root
+    volumes:
+      - ./scripts:/scripts:ro
+      - ./conf/core-site.xml:/opt/hadoop/etc/hadoop/core-site.xml:ro
+      - ./conf/hdfs-site.xml:/opt/hadoop/etc/hadoop/hdfs-site.xml:ro
+    depends_on:
+      - namenode
+      - datanode
+    networks:
+      hadoop:
+        ipv4_address: 172.28.0.12
+    restart: "no"
+
+  metastore-init:
+    image: apache/hive:3.1.3
+    container_name: btd-metastore-init
+    entrypoint: ["bash","-lc"]
+    command: ["/scripts/init-metastore.sh"]
+    environment:
+      HIVE_CONF_DIR: /opt/hive/conf
+      HIVE_DB_TYPE: postgres
+      HIVE_JDBC_URL: jdbc:postgresql://metastore-db:5432/hive
+      HIVE_DB_USER: hive
+      HIVE_DB_PASS: hivepassword
+    volumes:
+      - ./scripts:/scripts:ro
+      - ./conf:/opt/hive/conf:ro
+      - ./conf/core-site.xml:/opt/hadoop/etc/hadoop/core-site.xml:ro
+      - ./conf/hdfs-site.xml:/opt/hadoop/etc/hadoop/hdfs-site.xml:ro
+    depends_on:
+      - metastore-db
+      - namenode
+      - datanode
+    networks:
+      hadoop:
+        ipv4_address: 172.28.0.13
+    restart: "no"
+
+  tez-installer:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    container_name: btd-tez-installer
+    command: ["bash","-lc","/scripts/upload-tez-libs.sh"]
+    environment:
+      CORE_CONF_fs_defaultFS: hdfs://namenode:8020
+      HADOOP_HOME: /opt/hadoop
+      TEZ_HOME: /opt/tez
+      HADOOP_USER_NAME: root
+    volumes:
+      - ./scripts:/scripts:ro
+      - ./conf/core-site.xml:/opt/hadoop/etc/hadoop/core-site.xml:ro
+      - ./conf/hdfs-site.xml:/opt/hadoop/etc/hadoop/hdfs-site.xml:ro
+      - ./tez:/opt/tez:ro
+    depends_on:
+      - namenode
+      - datanode
+    networks:
+      hadoop:
+        ipv4_address: 172.28.0.14
+    restart: "no"
+
   timemanager:
     build: src/timemanager
+    container_name: btd-timemanager
     environment:
       - PORT=8000
       - INITIAL_TIME=2018-01-01T00:00:00
       - INITIAL_SPEED=300
     ports:
       - 8000:8000
+    networks:
+      hadoop:
+        ipv4_address: 172.28.0.20
+
   streamer:
     build: src/streamer
+    container_name: btd-streamer
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
@@ -17,6 +196,13 @@ services:
       - SCHEMA_REGISTRY_URL=http://host.docker.internal:8081
       - KAFKA_REST_PROXY_URL=http://host.docker.internal:8082
       - TIME_MANAGER_URL=http://timemanager:8000
+    depends_on:
+      - timemanager
+      - namenode
+      - datanode
+    networks:
+      hadoop:
+
   dashboard:
     build: src/dashboard
     environment:
@@ -28,3 +214,20 @@ services:
       - 3000:3000
     depends_on:
       - timemanager
+    networks:
+      hadoop:
+        ipv4_address: 172.28.0.21
+
+networks:
+  hadoop:
+    driver: bridge
+    name: btd-hadoop
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/16
+
+volumes:
+  nn-data:
+  dn-data:
+  metastore-db:

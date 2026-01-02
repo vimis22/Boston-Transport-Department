@@ -1,0 +1,69 @@
+{
+  "type": "record",
+  "name": "Accidents",
+  "namespace": "com.boston.transport.accidents",
+  "doc": "Schema for Accidents data",
+  "fields": [
+    {
+      "name": "dispatch_ts",
+      "type": "string",
+      "doc": "The dispatch timestamp of the accident (format: YYYY-MM-DD HH:MM:SS+TZ)"
+    },
+    {
+      "name": "mode_type",
+      "type": {
+        "type": "enum",
+        "name": "ModeType",
+        "symbols": ["mv", "bike", "ped"]
+      },
+      "doc": "The mode of transportation involved in the accident (mv=motor vehicle, bike=bicycle, ped=pedestrian)"
+    },
+    {
+      "name": "location_type",
+      "type": {
+        "type": "enum",
+        "name": "LocationType",
+        "symbols": ["Street", "Intersection", "Other"]
+      },
+      "doc": "The location type of the accident"
+    },
+    {
+      "name": "street",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "The street name where the accident occurred (nullable for intersections)"
+    },
+    {
+      "name": "xstreet1",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "The first cross street at the accident location"
+    },
+    {
+      "name": "xstreet2",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "The second cross street at the accident location"
+    },
+    {
+      "name": "x_cord",
+      "type": "double",
+      "doc": "The x coordinate of the accident (projected coordinate system)"
+    },
+    {
+      "name": "y_cord",
+      "type": "double",
+      "doc": "The y coordinate of the accident (projected coordinate system)"
+    },
+    {
+      "name": "lat",
+      "type": "double",
+      "doc": "The latitude of the accident (WGS84)"
+    },
+    {
+      "name": "long",
+      "type": "double",
+      "doc": "The longitude of the accident (WGS84)"
+    }
+  ]
+}
