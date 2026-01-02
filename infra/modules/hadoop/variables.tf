@@ -1,5 +1,5 @@
 variable "namespace" {
-  type = string
-  description = "The namespace to deploy the hadoop to"
-  default = "bigdata"
+  description = "Namespace to deploy the resources into"
+  type        = string
 }
+

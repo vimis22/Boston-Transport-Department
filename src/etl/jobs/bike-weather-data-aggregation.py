@@ -18,8 +18,8 @@ import requests
 # =============================================================================
 
 SPARK_CONNECT_URL = os.getenv("SPARK_CONNECT_URL", "sc://spark-connect-server:15002")
-SCHEMA_REGISTRY_URL = os.getenv("SCHEMA_REGISTRY_URL", "http://schema-registry.bigdata.svc.cluster.local:8081")
-KAFKA_BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP", "kafka-broker.bigdata.svc.cluster.local:9092")
+SCHEMA_REGISTRY_URL = os.getenv("SCHEMA_REGISTRY_URL", "http://schema-registry:8081")
+KAFKA_BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP", "kafka-broker:9092")
 
 # Topic configuration
 BIKE_TOPIC = os.getenv("BIKE_TOPIC", "bike-data")
@@ -168,6 +168,7 @@ def write_to_kafka(df: DataFrame, schema: str, schema_id: int) -> None:
         .option("kafka.bootstrap.servers", KAFKA_BOOTSTRAP)
         .option("topic", OUTPUT_TOPIC)
         .option("checkpointLocation", CHECKPOINT_LOCATION)
+        .option("failOnDataLoss", "false")
         .outputMode("append")
         .trigger(processingTime=TRIGGER_INTERVAL)
         .queryName("bike-weather-data-aggregation")

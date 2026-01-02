@@ -42,8 +42,6 @@ def get_schema_topic_mapping() -> dict[str, str]:
         str(schemas_dir / "bike_data_raw.avsc"): "bike-data",
         str(schemas_dir / "bike_weather_aggregate.avsc"): "bike-weather-aggregate",
         str(schemas_dir / "bike_weather_distance.avsc"): "bike-weather-distance",
-        str(schemas_dir / "accident_data_raw.avsc"): "accident-data",
-        # Mulighed 2 - Descriptive Statistics schemas
         str(schemas_dir / "weather_transport_statistics_overall.avsc"): "weather-transport-statistics-overall",
         str(schemas_dir / "weather_transport_statistics_by_condition.avsc"): "weather-transport-statistics-by-condition",
         str(schemas_dir / "weather_transport_statistics_by_temperature.avsc"): "weather-transport-statistics-by-temperature",
@@ -168,6 +166,7 @@ def upload_schemas(
     Upload all Avro schemas to the Schema Registry.
     
     Args:
+        namespace: Kubernetes namespace to use
         schema_registry_url: Base URL for Schema Registry
         recreate: If True, delete existing schemas before registering new ones
     """
@@ -235,6 +234,24 @@ def main():
         description="Upload Avro schemas to Schema Registry"
     )
     parser.add_argument(
+        "--namespace",
+        type=str,
+        default="bigdata",
+        help="Kubernetes namespace to use (default: bigdata)",
+    )
+    parser.add_argument(
+        "--kubeconfig",
+        type=str,
+        default=None,
+        help="Path to kubeconfig file",
+    )
+    parser.add_argument(
+        "--context",
+        type=str,
+        default=None,
+        help="Kubernetes context to use",
+    )
+    parser.add_argument(
         "--schema-registry-url",
         type=str,
         default=None,
@@ -256,12 +273,39 @@ def main():
             local_port = s.getsockname()[1]
         
         # Start port-forward
+        print(f"Auto-detecting Schema Registry in namespace '{args.namespace}'...")
+        cmd = ["kubectl"]
+        if args.kubeconfig:
+            cmd.extend(["--kubeconfig", args.kubeconfig])
+        if args.context:
+            cmd.extend(["--context", args.context])
+        cmd.extend(["-n", args.namespace, "port-forward", "svc/schema-registry", f"{local_port}:8081"])
+
         proc = subprocess.Popen(
-            ["kubectl", "-n", "bigdata", "port-forward", "svc/schema-registry", f"{local_port}:8081"],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
         )
-        time.sleep(2)
+        
+        # Wait for the port to be ready
+        print(f"Waiting for port {local_port} to be ready...")
+        timeout = 10
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                if s.connect_ex(('localhost', local_port)) == 0:
+                    break
+            if proc.poll() is not None:
+                _, stderr = proc.communicate()
+                print(f"❌ Failed to start kubectl port-forward for Schema Registry:\n{stderr}", file=sys.stderr)
+                sys.exit(1)
+            time.sleep(0.5)
+        else:
+            print(f"❌ Timeout waiting for port {local_port}", file=sys.stderr)
+            proc.terminate()
+            sys.exit(1)
+            
         schema_registry_url = f"http://localhost:{local_port}"
         
         try:

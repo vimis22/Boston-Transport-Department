@@ -5,7 +5,12 @@ import gdown
 import zipfile
 import duckdb
 import os
+import sys
+import argparse
 import requests
+import socket
+import subprocess
+import time
 import urllib.parse
 
 DATASETS_DIR = "./boston_datasets/bigdata"
@@ -179,13 +184,13 @@ def convert_to_parquet():
 
     db.close()
 
-def upload_to_hadoop():
-    print("Uploading to hadoop...")
+def upload_to_hadoop(namenode_url: str, datanode_netloc: str):
+    print(f"Uploading to hadoop (NameNode: {namenode_url}, DataNode: {datanode_netloc})...")
     
     def upload_file(local_path: str, hdfs_path: str):
         """Upload a file to HDFS using WebHDFS REST API."""
         # Step 1: Initial request to get redirect URL
-        url = f"http://localhost:9870/webhdfs/v1{hdfs_path}?user.name=stackable&op=CREATE&overwrite=true"
+        url = f"{namenode_url}/webhdfs/v1{hdfs_path}?user.name=stackable&op=CREATE&overwrite=true"
         
         response = requests.put(url, allow_redirects=False)
         
@@ -193,10 +198,10 @@ def upload_to_hadoop():
             print(f"Failed to get redirect: {response.status_code}")
             return False
         
-        # Step 2: Rewrite redirect URL to use localhost:9864
+        # Step 2: Rewrite redirect URL to use local datanode address
         redirect_url = response.headers["Location"]
         parts = urllib.parse.urlparse(redirect_url)
-        new_redirect_url = parts._replace(netloc="localhost:9864").geturl()
+        new_redirect_url = parts._replace(netloc=datanode_netloc).geturl()
         
         print(f"Uploading {local_path} to {hdfs_path}...")
         
@@ -221,7 +226,150 @@ def upload_to_hadoop():
     upload_file(f"{DATASETS_DIR}/accident/tmpw8i0zd4_.csv", "/bigdata/accidents.csv")
     print("Done uploading to hadoop")
 
-if __name__ == "__main__":
+def main():
+    parser = argparse.ArgumentParser(
+        description="Upload datasets to hadoop for the data streamers"
+    )
+    parser.add_argument(
+        "--namespace",
+        type=str,
+        default="bigdata",
+        help="Kubernetes namespace to use (default: bigdata)",
+    )
+    parser.add_argument(
+        "--kubeconfig",
+        type=str,
+        default=None,
+        help="Path to kubeconfig file",
+    )
+    parser.add_argument(
+        "--context",
+        type=str,
+        default=None,
+        help="Kubernetes context to use",
+    )
+    parser.add_argument(
+        "--namenode-url",
+        type=str,
+        default=None,
+        help="HDFS NameNode WebHDFS URL (default: auto-detect via kubectl port-forward)",
+    )
+    parser.add_argument(
+        "--datanode-url",
+        type=str,
+        default=None,
+        help="HDFS DataNode WebHDFS URL (default: auto-detect via kubectl port-forward)",
+    )
+    
+    args = parser.parse_args()
+    
     download_datasets()
     convert_to_parquet()
-    upload_to_hadoop()
+    
+    # Port forwarding setup
+    nn_proc = None
+    dn_proc = None
+    
+    try:
+        if args.namenode_url is None:
+            print(f"Auto-detecting HDFS NameNode in namespace '{args.namespace}'...")
+            with socket.socket() as s:
+                s.bind(('', 0))
+                nn_port = s.getsockname()[1]
+            
+            cmd = ["kubectl"]
+            if args.kubeconfig:
+                cmd.extend(["--kubeconfig", args.kubeconfig])
+            if args.context:
+                cmd.extend(["--context", args.context])
+            cmd.extend(["-n", args.namespace, "port-forward", "svc/hdfs-namenode", f"{nn_port}:9870"])
+
+            nn_proc = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+            
+            # Wait for the port to be ready
+            print(f"Waiting for NameNode port {nn_port} to be ready...")
+            timeout = 10
+            start_time = time.time()
+            while time.time() - start_time < timeout:
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                    if s.connect_ex(('localhost', nn_port)) == 0:
+                        break
+                if nn_proc.poll() is not None:
+                    _, stderr = nn_proc.communicate()
+                    print(f"❌ Failed to start kubectl port-forward for NameNode:\n{stderr}", file=sys.stderr)
+                    sys.exit(1)
+                time.sleep(0.5)
+            else:
+                print(f"❌ Timeout waiting for port {nn_port}", file=sys.stderr)
+                nn_proc.terminate()
+                sys.exit(1)
+                
+            namenode_url = f"http://localhost:{nn_port}"
+        else:
+            namenode_url = args.namenode_url.rstrip("/")
+            
+        if args.datanode_url is None:
+            print(f"Auto-detecting HDFS DataNode in namespace '{args.namespace}'...")
+            with socket.socket() as s:
+                s.bind(('', 0))
+                dn_port = s.getsockname()[1]
+            
+            cmd = ["kubectl"]
+            if args.kubeconfig:
+                cmd.extend(["--kubeconfig", args.kubeconfig])
+            if args.context:
+                cmd.extend(["--context", args.context])
+            cmd.extend(["-n", args.namespace, "port-forward", "svc/hdfs-datanode", f"{dn_port}:9864"])
+
+            dn_proc = subprocess.Popen(
+                cmd,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+            
+            # Wait for the port to be ready
+            print(f"Waiting for DataNode port {dn_port} to be ready...")
+            timeout = 10
+            start_time = time.time()
+            while time.time() - start_time < timeout:
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                    if s.connect_ex(('localhost', dn_port)) == 0:
+                        break
+                if dn_proc.poll() is not None:
+                    _, stderr = dn_proc.communicate()
+                    print(f"❌ Failed to start kubectl port-forward for DataNode:\n{stderr}", file=sys.stderr)
+                    sys.exit(1)
+                time.sleep(0.5)
+            else:
+                print(f"❌ Timeout waiting for port {dn_port}", file=sys.stderr)
+                dn_proc.terminate()
+                sys.exit(1)
+                
+            datanode_netloc = f"localhost:{dn_port}"
+        else:
+            parts = urllib.parse.urlparse(args.datanode_url)
+            datanode_netloc = parts.netloc
+            
+        time.sleep(1) # Wait a bit more for port-forwards to fully establish
+        
+        upload_to_hadoop(namenode_url, datanode_netloc)
+        
+    except Exception as e:
+        print(f"\n❌ Error: {e}", file=sys.stderr)
+        sys.exit(1)
+    finally:
+        if nn_proc:
+            nn_proc.terminate()
+            nn_proc.wait()
+        if dn_proc:
+            dn_proc.terminate()
+            dn_proc.wait()
+
+if __name__ == "__main__":
+    main()

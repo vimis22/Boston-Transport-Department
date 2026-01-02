@@ -13,6 +13,14 @@
     { "name": "source", "type": "string" },
     { "name": "destination", "type": "string" },
     { "name": "cab_type", "type": "string" },
-    { "name": "product_id", "type": "string" }
+    { "name": "product_id", "type": "string" },
+    { "name": "price", "type": "double" },
+    { "name": "distance", "type": "double" },
+    { "name": "surge_multiplier", "type": "double" },
+    { "name": "temperature", "type": "double" },
+    { "name": "apparent_temperature", "type": "double" },
+    { "name": "humidity", "type": "double" },
+    { "name": "wind_speed", "type": "double" },
+    { "name": "precip_intensity", "type": "double" }
   ]
 }

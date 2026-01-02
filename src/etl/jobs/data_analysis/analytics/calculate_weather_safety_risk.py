@@ -32,7 +32,7 @@ def calculate_weather_safety_risk(
     weather_window = (
         weather_df.groupBy(window(col("datetime_ts"), window_duration))
         .agg(
-            avg("temperature_celsius").alias("avg_temp"),
+            avg("temp_c").alias("avg_temp"),
             avg("wind_speed_ms").alias("avg_wind"),
             avg("visibility_m").alias("avg_visibility"),
             avg("weather_condition_score").alias("avg_weather_score"),

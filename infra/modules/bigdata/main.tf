@@ -8,7 +8,7 @@ terraform {
 }
 
 # Time Manager Deployment
-resource "kubernetes_deployment" "timemanager" {
+resource "kubernetes_deployment_v1" "timemanager" {
   metadata {
     name      = "timemanager"
     namespace = var.namespace
@@ -36,7 +36,7 @@ resource "kubernetes_deployment" "timemanager" {
       spec {
         container {
           name              = "timemanager"
-          image             = "ghcr.io/vimis22/timemanager:1.0.9"
+          image             = "ghcr.io/vimis22/timemanager:1.0.18"
           image_pull_policy = "IfNotPresent"
 
           port {
@@ -66,7 +66,7 @@ resource "kubernetes_deployment" "timemanager" {
 }
 
 # Time Manager Service
-resource "kubernetes_service" "timemanager" {
+resource "kubernetes_service_v1" "timemanager" {
   metadata {
     name      = "timemanager"
     namespace = var.namespace
@@ -92,7 +92,7 @@ resource "kubernetes_service" "timemanager" {
 }
 
 # Streamer Deployment
-resource "kubernetes_deployment" "streamer" {
+resource "kubernetes_deployment_v1" "streamer" {
   metadata {
     name      = "streamer"
     namespace = var.namespace
@@ -120,32 +120,32 @@ resource "kubernetes_deployment" "streamer" {
       spec {
         container {
           name              = "streamer"
-          image             = "ghcr.io/vimis22/streamer:1.0.9"
+          image             = "ghcr.io/vimis22/streamer:1.0.18"
           image_pull_policy = "IfNotPresent"
 
           env {
             name  = "WEBHDFS_URL"
-            value = "http://hdfs-cluster-namenode-default-0.hdfs-cluster-namenode-default.${var.namespace}.svc.cluster.local:9870"
+            value = "http://hdfs-namenode:9870"
           }
 
           env {
             name  = "WEBHDFS_DATANODE_URL"
-            value = "http://hdfs-cluster-datanode-default-0.hdfs-cluster-datanode-default.${var.namespace}.svc.cluster.local:9864"
+            value = "http://hdfs-datanode:9864"
           }
 
           env {
             name  = "SCHEMA_REGISTRY_URL"
-            value = "http://schema-registry.${var.namespace}.svc.cluster.local:8081"
+            value = "http://schema-registry:8081"
           }
 
           env {
             name  = "KAFKA_REST_PROXY_URL"
-            value = "http://kafkarestproxy.${var.namespace}.svc.cluster.local:8082"
+            value = "http://kafka-rest-proxy:8082"
           }
 
           env {
             name  = "TIME_MANAGER_URL"
-            value = "http://timemanager.${var.namespace}.svc.cluster.local:8000"
+            value = "http://timemanager:8000"
           }
         }
       }
@@ -154,7 +154,7 @@ resource "kubernetes_deployment" "streamer" {
 }
 
 # Streamer Service
-resource "kubernetes_service" "streamer" {
+resource "kubernetes_service_v1" "streamer" {
   metadata {
     name      = "streamer"
     namespace = var.namespace
@@ -180,7 +180,7 @@ resource "kubernetes_service" "streamer" {
 
 
 # Hive HTTP Proxy Deployment
-resource "kubernetes_deployment" "hive_http_proxy" {
+resource "kubernetes_deployment_v1" "hive_http_proxy" {
   metadata {
     name      = "hive-http-proxy"
     namespace = var.namespace
@@ -208,12 +208,12 @@ resource "kubernetes_deployment" "hive_http_proxy" {
       spec {
         container {
           name              = "hive-http-proxy"
-          image             = "ghcr.io/vimis22/hive-http-proxy:1.0.9"
+          image             = "ghcr.io/vimis22/hive-http-proxy:1.0.18"
           image_pull_policy = "IfNotPresent"
 
           env {
             name  = "HIVE_HOST"
-            value = "spark-thrift-service"
+            value = "spark-thrift"
           }
 
           env {
@@ -232,7 +232,7 @@ resource "kubernetes_deployment" "hive_http_proxy" {
 }
 
 # Hive HTTP Proxy Service
-resource "kubernetes_service" "hive_http_proxy" {
+resource "kubernetes_service_v1" "hive_http_proxy" {
   metadata {
     name      = "hive-http-proxy"
     namespace = var.namespace
@@ -258,7 +258,7 @@ resource "kubernetes_service" "hive_http_proxy" {
 }
 
 # Dashboard Deployment
-resource "kubernetes_deployment" "dashboard" {
+resource "kubernetes_deployment_v1" "dashboard" {
   metadata {
     name      = "dashboard"
     namespace = var.namespace
@@ -286,7 +286,7 @@ resource "kubernetes_deployment" "dashboard" {
       spec {
         container {
           name              = "dashboard"
-          image             = "ghcr.io/vimis22/dashboard:1.0.9"
+          image             = "ghcr.io/vimis22/dashboard:1.0.18"
           image_pull_policy = "IfNotPresent"
 
           env {
@@ -296,17 +296,17 @@ resource "kubernetes_deployment" "dashboard" {
 
           env {
             name  = "TIMEMANAGER_URL"
-            value = "http://timemanager.${var.namespace}.svc.cluster.local:8000"
+            value = "http://timemanager:8000"
           }
 
           env {
             name  = "HIVE_HTTP_PROXY_URL"
-            value = "http://hive-http-proxy.${var.namespace}.svc.cluster.local:10001"
+            value = "http://hive-http-proxy:10001"
           }
 
           env {
             name  = "KAFKA_UI_URL"
-            value = "http://kafka-ui.${var.namespace}.svc.cluster.local:8080"
+            value = "http://kafka-ui:8080"
           }
 
           env {
@@ -320,7 +320,7 @@ resource "kubernetes_deployment" "dashboard" {
 }
 
 # Dashboard Service
-resource "kubernetes_service" "dashboard" {
+resource "kubernetes_service_v1" "dashboard" {
   metadata {
     name      = "dashboard"
     namespace = var.namespace

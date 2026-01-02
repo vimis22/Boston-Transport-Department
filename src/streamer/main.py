@@ -126,7 +126,7 @@ def main():
     # Initialize Schema Registry
     schema_registry = SchemaRegistry(base_url=config.schema_registry_url)
     
-    # Fetch Avro schemas from Schema Registry
+    # Fetch Avro schemas and IDs from Schema Registry
     try:
         logger.info("Fetching Avro schemas from Schema Registry...")
         weather_subject = f"{config.weather_topic}-value"
@@ -137,15 +137,19 @@ def main():
         taxi_schema_info = schema_registry.get_schema(taxi_subject)
         bike_schema_info = schema_registry.get_schema(bike_subject)
         
-        # Extract schema dictionaries from the response
-        # Schema Registry returns schema as a JSON string, so we need to parse it
+        # Extract schema dictionaries and IDs
         weather_schema = json.loads(weather_schema_info["schema"])
-        taxi_schema = json.loads(taxi_schema_info["schema"])
-        bike_schema = json.loads(bike_schema_info["schema"])
+        weather_schema_id = weather_schema_info["id"]
         
-        logger.info(f"  Weather schema (ID: {weather_schema_info['id']}, version: {weather_schema_info['version']})")
-        logger.info(f"  Taxi schema (ID: {taxi_schema_info['id']}, version: {taxi_schema_info['version']})")
-        logger.info(f"  Bike schema (ID: {bike_schema_info['id']}, version: {bike_schema_info['version']})")
+        taxi_schema = json.loads(taxi_schema_info["schema"])
+        taxi_schema_id = taxi_schema_info["id"]
+        
+        bike_schema = json.loads(bike_schema_info["schema"])
+        bike_schema_id = bike_schema_info["id"]
+        
+        logger.info(f"  Weather schema (ID: {weather_schema_id}, version: {weather_schema_info['version']})")
+        logger.info(f"  Taxi schema (ID: {taxi_schema_id}, version: {taxi_schema_info['version']})")
+        logger.info(f"  Bike schema (ID: {bike_schema_id}, version: {bike_schema_info['version']})")
         logger.info("Avro schemas fetched successfully")
     except Exception as e:
         logger.error(f"Failed to fetch Avro schemas from Schema Registry: {e}", exc_info=True)
@@ -164,6 +168,7 @@ def main():
     kafka = KafkaProxy(
         base_url=config.kafka_rest_proxy_url,
         cluster_id=config.kafka_cluster_id,
+        timeout=config.kafka_rest_timeout,
     )
     
     # Auto-discover cluster ID if not provided
@@ -237,7 +242,8 @@ def main():
                         results = kafka.post_records_avro(
                             config.weather_topic,
                             weather_rows,
-                            weather_schema,
+                            schema=weather_schema,
+                            schema_id=weather_schema_id,
                         )
                         # Log first result for verification
                         if results:
@@ -259,7 +265,8 @@ def main():
                         results = kafka.post_records_avro(
                             config.taxi_topic,
                             taxi_rows,
-                            taxi_schema,
+                            schema=taxi_schema,
+                            schema_id=taxi_schema_id,
                         )
                         if results:
                             first_result = results[0]
@@ -280,7 +287,8 @@ def main():
                         results = kafka.post_records_avro(
                             config.bike_topic,
                             bike_rows,
-                            bike_schema,
+                            schema=bike_schema,
+                            schema_id=bike_schema_id,
                         )
                         if results:
                             first_result = results[0]

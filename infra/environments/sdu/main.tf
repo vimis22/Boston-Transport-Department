@@ -1,13 +1,15 @@
 terraform {
-  backend "local" {
-    path = "terraform.tfstate"
+  backend "kubernetes" {
+    secret_suffix    = "state"
+    config_path      = "~/Downloads/bd-stud-magre21-sa-bd-bd-stud-magre21-kubeconfig.yaml"
+    namespace        = "bd-bd-stud-magre21"
   }
 }
 
 locals {
-  kubeconfig_path = "~/.kube/config"
-  context = "docker-desktop"
-  namespace = "bigdata"
+  kubeconfig_path = "~/Downloads/bd-stud-magre21-sa-bd-bd-stud-magre21-kubeconfig.yaml"
+  context = "bd-bd-stud-magre21-context"
+  namespace = "bd-bd-stud-magre21"
 }
 
 provider "kubernetes" {
@@ -15,16 +17,8 @@ provider "kubernetes" {
   config_context = local.context
 }
 
-
-resource "kubernetes_namespace_v1" "default" {
-  metadata {
-    name = local.namespace
-  }
-}
-
 # Deploy Hadoop cluster
 module "hadoop" {
-  depends_on = [kubernetes_namespace_v1.default]
   source     = "../../modules/hadoop"
   namespace  = local.namespace
 }

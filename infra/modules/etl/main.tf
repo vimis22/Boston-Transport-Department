@@ -4,41 +4,11 @@ terraform {
       source  = "hashicorp/kubernetes"
       version = ">= 2.0.0"
     }
-    kubectl = {
-      source  = "gavinbunney/kubectl"
-      version = "1.19.0"
-    }
   }
 }
 
-// Create Topics
-resource "kubectl_manifest" "bike-weather-distance" {
-  yaml_body = <<YAML
-apiVersion: platform.confluent.io/v1beta1
-kind: KafkaTopic
-metadata:
-  name: bike-weather-distance
-  namespace: ${var.namespace}
-spec:
-  replicas: 1
-  partitionCount: 1
-YAML
-}
-
-resource "kubectl_manifest" "bike-weather-aggregate" {
-  yaml_body = <<YAML
-apiVersion: platform.confluent.io/v1beta1
-kind: KafkaTopic
-metadata:
-  name: bike-weather-aggregate
-  namespace: ${var.namespace}
-spec:
-  replicas: 1
-  partitionCount: 1
-YAML
-}
 // Create ETL Jobs
-resource "kubernetes_job" "bike-weather-data-aggregation" {
+resource "kubernetes_job_v1" "bike-weather-data-aggregation" {
   metadata {
     name      = "bike-weather-data-aggregation"
     namespace = var.namespace
@@ -51,7 +21,7 @@ resource "kubernetes_job" "bike-weather-data-aggregation" {
         active_deadline_seconds = 600
         init_container {
           name  = "init-container"
-          image = "ghcr.io/vimis22/etl:1.0.11"
+          image = "ghcr.io/vimis22/etl:1.0.18"
           command = [
             "cp",
             "-r",
@@ -74,15 +44,15 @@ resource "kubernetes_job" "bike-weather-data-aggregation" {
           ]
           env {
             name  = "SPARK_CONNECT_URL"
-            value = "sc://spark-connect-server.${var.namespace}.svc.cluster.local:15002"
+            value = "sc://spark-connect-server:15002"
           }
           env {
             name  = "SCHEMA_REGISTRY_URL"
-            value = "http://schema-registry.${var.namespace}.svc.cluster.local:8081"
+            value = "http://schema-registry:8081"
           }
           env {
             name  = "KAFKA_BOOTSTRAP"
-            value = "kafka-broker.${var.namespace}.svc.cluster.local:9092"
+            value = "kafka-broker:9092"
           }
           env {
             name  = "OUTPUT_TOPIC"
@@ -109,7 +79,7 @@ resource "kubernetes_job" "bike-weather-data-aggregation" {
   }
 }
 
-resource "kubernetes_job" "bike-weather-distance" {
+resource "kubernetes_job_v1" "bike-weather-distance" {
   metadata {
     name      = "bike-weather-distance"
     namespace = var.namespace
@@ -122,7 +92,7 @@ resource "kubernetes_job" "bike-weather-distance" {
         active_deadline_seconds = 600
         init_container {
           name  = "init-container"
-          image = "ghcr.io/vimis22/etl:1.0.11"
+          image = "ghcr.io/vimis22/etl:1.0.18"
           command = [
             "cp",
             "-r",
@@ -145,15 +115,15 @@ resource "kubernetes_job" "bike-weather-distance" {
           ]
           env {
             name  = "SPARK_CONNECT_URL"
-            value = "sc://spark-connect-server.${var.namespace}.svc.cluster.local:15002"
+            value = "sc://spark-connect-server:15002"
           }
           env {
             name  = "SCHEMA_REGISTRY_URL"
-            value = "http://schema-registry.${var.namespace}.svc.cluster.local:8081"
+            value = "http://schema-registry:8081"
           }
           env {
             name  = "KAFKA_BOOTSTRAP"
-            value = "kafka-broker.${var.namespace}.svc.cluster.local:9092"
+            value = "kafka-broker:9092"
           }
           env {
             name  = "CHECKPOINT_LOCATION"
@@ -177,7 +147,7 @@ resource "kubernetes_job" "bike-weather-distance" {
 }
 
 
-resource "kubernetes_job" "data-analysis" {
+resource "kubernetes_job_v1" "data-analysis" {
   metadata {
     name      = "data-analysis"
     namespace = var.namespace
@@ -190,7 +160,7 @@ resource "kubernetes_job" "data-analysis" {
         active_deadline_seconds = 600
         init_container {
           name  = "init-container"
-          image = "ghcr.io/vimis22/etl:1.0.12"
+          image = "ghcr.io/vimis22/etl:1.0.18"
           command = [
             "cp",
             "-r",
@@ -209,7 +179,7 @@ resource "kubernetes_job" "data-analysis" {
           image_pull_policy = "IfNotPresent"
           command = [
             "python",
-            "/app/jobs/data_analysis.py",
+            "/app/jobs/statistics_etl.py",
           ]
 
           env {
@@ -226,7 +196,7 @@ resource "kubernetes_job" "data-analysis" {
             value = "http://schema-registry.${var.namespace}.svc.cluster.local:8081"
           }
           env {
-            name  = "KAFKA_BOOTSTRAP"
+            name  = "KAFKA_BOOTSTRAP_SERVERS"
             value = "kafka-broker.${var.namespace}.svc.cluster.local:9092"
           }
           env {

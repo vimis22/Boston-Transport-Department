@@ -109,5 +109,5 @@ htmlcov/
 .coverage
 
 # Datasets
-boston_datasets/
-boston_datasets.zip
+**/boston_datasets/
+**/boston_datasets.zip

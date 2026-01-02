@@ -26,6 +26,9 @@ def get_rows_from_bike_data(dataset_path: str, start_time: datetime, end_time: d
             "end station name": "end_station_name",
             "end station latitude": "end_station_latitude",
             "end station longitude": "end_station_longitude",
+            "birth year": "birth_year",
+            "gender": "gender",
+            "usertype": "usertype",
         }
         
         result = []
@@ -51,13 +54,33 @@ def get_rows_from_bike_data(dataset_path: str, start_time: datetime, end_time: d
                 if field in mapped_dict and mapped_dict[field] is not None:
                     mapped_dict[field] = str(mapped_dict[field])
             
-            # Ensure numeric fields are the right type
+            # Ensure numeric fields are the right type and handle non-nullable fields
             if "tripduration" in mapped_dict and mapped_dict["tripduration"] is not None:
                 try:
                     mapped_dict["tripduration"] = float(mapped_dict["tripduration"])
                 except (ValueError, TypeError):
                     pass
+
+            # Handle non-nullable fields for Avro schema
+            if mapped_dict.get("usertype") is None:
+                mapped_dict["usertype"] = "Unknown"
             
+            if mapped_dict.get("birth_year") is None:
+                mapped_dict["birth_year"] = 0
+            else:
+                try:
+                    mapped_dict["birth_year"] = int(float(mapped_dict["birth_year"]))
+                except (ValueError, TypeError):
+                    mapped_dict["birth_year"] = 0
+            
+            if mapped_dict.get("gender") is None:
+                mapped_dict["gender"] = 0
+            else:
+                try:
+                    mapped_dict["gender"] = int(float(mapped_dict["gender"]))
+                except (ValueError, TypeError):
+                    mapped_dict["gender"] = 0
+
             for field in ["start_station_latitude", "start_station_longitude", "end_station_latitude", "end_station_longitude"]:
                 if field in mapped_dict and mapped_dict[field] is not None:
                     try:
