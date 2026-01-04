@@ -28,6 +28,7 @@ Then run the following to create the services:
 To forward the relevant ports to your local machine, use the `tools/forward-all.py` script:
 - Start by running `uv sync` to install all the dependencies.
 - Then execute `uv run tools/forward-all.py --namespace bigdata`
+- *If this doesn't work right away, try to wait a few minutes for the cluster to be ready and try again.*
 
 For the SDU cluster, you need to specify the kubeconfig and context in the `tools/forward-all.py` script.
 - `KUBECONFIG=~/Downloads/bd-stud-magre21-sa-bd-bd-stud-magre21-kubeconfig.yaml uv run tools/forward-all.py --namespace bd-bd-stud-magre21`
